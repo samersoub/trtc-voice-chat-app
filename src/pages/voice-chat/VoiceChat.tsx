@@ -47,6 +47,7 @@ const VoiceChat = () => {
   const rtcRef = React.useRef<WebRTCService | null>(null);
   const trtcClientRef = React.useRef<any>(null);
   const trtcLocalStreamRef = React.useRef<any>(null);
+  const trtcJoinedRef = React.useRef<boolean>(false);
   // Track remote streams (IDs) so we can render containers and play video/audio
   const [trtcRemoteIds, setTrtcRemoteIds] = useState<(string | number)[]>([]);
 
@@ -128,8 +129,22 @@ const VoiceChat = () => {
 
   // Join TRTC test room and publish local audio
   const handleJoinTRTC = async () => {
-    // Use the authenticated user's ID if available; fallback to a simple anon ID
-    const currentUserID = user?.id || "anon_test_user";
+    if (trtcJoinedRef.current) {
+      console.log("TRTC: Already joined; skipping duplicate join.");
+      return;
+    }
+
+    // Use the authenticated user's ID if available; otherwise generate a unique anon ID to avoid collisions.
+    const currentUserID =
+      user?.id ||
+      (() => {
+        const key = "trtcAnonId";
+        const existing = localStorage.getItem(key);
+        if (existing) return existing;
+        const generated = `anon_${Math.random().toString(36).slice(2)}_${Date.now()}`;
+        localStorage.setItem(key, generated);
+        return generated;
+      })();
 
     console.log("TRTC: Starting join flow for user:", currentUserID, "room:", TRTC_TEST_ROOM_ID);
     try {
@@ -144,10 +159,16 @@ const VoiceChat = () => {
       });
       trtcClientRef.current = client;
 
-      // Detailed event logging
+      // Detailed event logging for connection/media diagnostics
       client.on("error", (err: any) => {
         console.error("TRTC: Client error event:", err);
         showError(err?.message || "TRTC client error");
+      });
+      client.on("connection-state-changed", (payload: any) => {
+        console.log("TRTC: Connection state changed:", payload);
+      });
+      client.on("network-quality", (event: any) => {
+        console.log("TRTC: Network quality:", event);
       });
       client.on("peer-join", (event: any) => {
         console.log("TRTC: Peer joined:", event?.userId ?? event);
@@ -155,15 +176,31 @@ const VoiceChat = () => {
       client.on("peer-leave", (event: any) => {
         console.log("TRTC: Peer left:", event?.userId ?? event);
       });
+      client.on("mute-audio", (event: any) => {
+        console.log("TRTC: Peer muted audio:", event?.userId ?? event);
+      });
+      client.on("unmute-audio", (event: any) => {
+        console.log("TRTC: Peer unmuted audio:", event?.userId ?? event);
+      });
+      client.on("mute-video", (event: any) => {
+        console.log("TRTC: Peer muted video:", event?.userId ?? event);
+      });
+      client.on("unmute-video", (event: any) => {
+        console.log("TRTC: Peer unmuted video:", event?.userId ?? event);
+      });
 
       // Subscribe and play remote audio/video when others publish
       client.on("stream-added", async (event: any) => {
         const remoteStream = event.stream;
         const id = remoteStream?.getId?.() ?? "unknown";
-        console.log("TRTC: Remote stream added:", id, remoteStream);
+        console.log("TRTC: Remote stream added:", id, {
+          hasAudio: remoteStream?.hasAudio?.(),
+          hasVideo: remoteStream?.hasVideo?.(),
+          stream: remoteStream,
+        });
 
         try {
-          await client.subscribe(remoteStream);
+          await client.subscribe(remoteStream, { audio: true, video: true });
           console.log("TRTC: Subscribe requested for remote stream:", id);
         } catch (err) {
           console.error("TRTC: Failed to subscribe to remote stream:", id, err);
@@ -174,7 +211,10 @@ const VoiceChat = () => {
       client.on("stream-subscribed", (event: any) => {
         const remoteStream = event.stream;
         const id = remoteStream?.getId?.() ?? "unknown";
-        console.log("TRTC: Remote stream subscribed:", id, remoteStream);
+        console.log("TRTC: Remote stream subscribed:", id, {
+          hasAudio: remoteStream?.hasAudio?.(),
+          hasVideo: remoteStream?.hasVideo?.(),
+        });
 
         // Ensure we render a container for playing video
         setTrtcRemoteIds((prev) => (prev.includes(id) ? prev : [...prev, id]));
@@ -202,9 +242,8 @@ const VoiceChat = () => {
         setTrtcRemoteIds((prev) => prev.filter((x) => x !== id));
       });
 
-      await client.join({
-        roomId: TRTC_TEST_ROOM_ID,
-      });
+      await client.join({ roomId: TRTC_TEST_ROOM_ID });
+      trtcJoinedRef.current = true;
       console.log("TRTC: Join Success, room:", TRTC_TEST_ROOM_ID);
       showSuccess(`Joined TRTC room ${TRTC_TEST_ROOM_ID}`);
 
@@ -214,7 +253,10 @@ const VoiceChat = () => {
 
       console.log("TRTC: Initializing local stream (audio+video)...");
       await localStream.initialize();
-      console.log("TRTC: Local stream initialized");
+      console.log("TRTC: Local stream initialized; capabilities:", {
+        audio: localStream.hasAudio?.(),
+        video: localStream.hasVideo?.(),
+      });
 
       // Show local preview (muted by SDK; safe to render)
       try {
@@ -256,6 +298,10 @@ const VoiceChat = () => {
         const ls = trtcLocalStreamRef.current;
         if (ls) {
           try {
+            // Unpublish before closing local stream for clean leave
+            c.unpublish?.(ls);
+          } catch {}
+          try {
             ls.stop?.();
             ls.close?.();
           } catch {}
@@ -266,6 +312,7 @@ const VoiceChat = () => {
       } catch {}
       trtcClientRef.current = null;
     }
+    trtcJoinedRef.current = false;
 
     navigate("/");
   };
