@@ -30,7 +30,7 @@ const ReportPanel: React.FC<Props> = ({ roomId, userId }) => {
   };
 
   return (
-    <Card className="w-[360px]">
+    <Card className="w-full max-w-sm">
       <CardHeader>
         <CardTitle>Reports</CardTitle>
       </CardHeader>

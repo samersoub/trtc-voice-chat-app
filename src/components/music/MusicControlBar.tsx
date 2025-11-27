@@ -16,7 +16,7 @@ const MusicControlBar: React.FC<{ roomId: string; userId: string }> = ({ roomId,
   }, [roomId]);
 
   return (
-    <Card className="w-[360px]">
+    <Card className="w-full max-w-sm">
       <CardContent className="p-3 flex items-center justify-between">
         <div>
           <div className="text-xs text-muted-foreground">Now Playing</div>

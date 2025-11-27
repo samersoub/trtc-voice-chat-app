@@ -53,7 +53,7 @@ const MusicQueue: React.FC<Props> = ({ roomId, userId }) => {
   };
 
   return (
-    <Card className="w-[360px]">
+    <Card className="w-full max-w-sm">
       <CardHeader>
         <CardTitle className="flex items-center justify-between">
           <span>Music Queue</span>

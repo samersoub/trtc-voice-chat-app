@@ -15,8 +15,8 @@ type ControlBarProps = {
 const ControlBar: React.FC<ControlBarProps> = ({ micOn, onToggleMic, onOpenChat, onSendGift, onEmoji }) => {
   return (
     <div className="fixed bottom-0 left-0 right-0 z-20">
-      <div className="mx-auto max-w-4xl px-4 pb-6">
-        <div className="flex items-center justify-center gap-4 bg-black/30 backdrop-blur rounded-full p-2 border border-white/10">
+      <div className="mx-auto max-w-4xl px-4 pb-6" style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 1rem)" }}>
+        <div className="flex items-center justify-center gap-4 bg-black/30 backdrop-blur rounded-full p-2 border border-white/10 flex-wrap">
           <Button
             variant="ghost"
             className="text-white hover:bg-white/10"
