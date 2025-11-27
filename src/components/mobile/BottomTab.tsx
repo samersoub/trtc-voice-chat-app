@@ -16,9 +16,9 @@ const items = [
 const BottomTab: React.FC = () => {
   const loc = useLocation();
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-30">
-      <div className="mx-auto max-w-4xl bg-white/80 backdrop-blur border-t">
-        <div className="grid grid-cols-5">
+    <div className="fixed bottom-0 left-0 right-0 z-30" style={{ paddingBottom: "env(safe-area-inset-bottom)" }}>
+      <div className="mx-auto w-full max-w-4xl bg-white/80 backdrop-blur border-t">
+        <div className="grid grid-cols-5 min-w-0">
           {items.map(({ to, label, icon: Icon, center }) => {
             const active = loc.pathname === to;
             return (
@@ -26,7 +26,7 @@ const BottomTab: React.FC = () => {
                 key={to}
                 to={to}
                 className={cn(
-                  "flex flex-col items-center justify-center py-2 text-xs",
+                  "flex flex-col items-center justify-center py-2 text-xs min-w-0",
                   active ? "text-teal-600" : "text-muted-foreground",
                   center ? "relative" : ""
                 )}
@@ -41,7 +41,7 @@ const BottomTab: React.FC = () => {
                 >
                   <Icon className={cn("h-5 w-5", center ? "h-6 w-6" : "")} />
                 </div>
-                <span className={cn(center ? "mt-1 font-semibold text-[10px]" : "")}>{label}</span>
+                <span className={cn(center ? "mt-1 font-semibold text-[10px] whitespace-nowrap" : "whitespace-nowrap")}>{label}</span>
               </Link>
             );
           })}

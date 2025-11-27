@@ -41,7 +41,7 @@ const Index: React.FC = () => {
 
   return (
     <ChatLayout hideHeader>
-      <div className="p-4 sm:p-6 max-w-6xl mx-auto space-y-4" dir="rtl">
+      <div className="p-4 sm:p-6 max-w-6xl mx-auto space-y-4 pb-24 sm:pb-28" dir="rtl">
         <DiscoverHeader activeTab={activeTab} onTabChange={setActiveTab} />
         <LuxBannerCarousel />
         <ArabicQuickActions />

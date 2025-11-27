@@ -31,7 +31,7 @@ const LuxRoomsGrid: React.FC<{ rooms: RoomData[]; filter: string; onEnter?: (id:
   }
 
   return (
-    <div className="grid grid-cols-2 gap-3 sm:gap-4" dir="rtl">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4" dir="rtl">
       {items.map(({ room }) => (
         <LuxRoomCard key={room.id} room={room} onEnter={onEnter} />
       ))}

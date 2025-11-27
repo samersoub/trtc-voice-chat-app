@@ -39,7 +39,7 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({ children, title = "دندنة �
   const { t, dir } = useLocale();
 
   return (
-    <div dir={dir}>
+    <div dir={dir} className="min-h-[100svh] w-full overflow-x-hidden">
       <SidebarProvider className="bg-background">
         <Sidebar variant="inset" collapsible="icon" className="border-r">
           <SidebarHeader className="px-3 py-2">
@@ -147,7 +147,7 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({ children, title = "دندنة �
           </SidebarFooter>
         </Sidebar>
 
-        <SidebarInset className="flex flex-col">
+        <SidebarInset className="flex flex-col min-h-[100svh] w-full">
           {!hideHeader && (
             <header
               className={cn(
@@ -169,7 +169,12 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({ children, title = "دندنة �
               </div>
             </header>
           )}
-          <div className="flex-1">{children}</div>
+          <div
+            className="flex-1 w-full"
+            style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 4.5rem)" }}
+          >
+            {children}
+          </div>
         </SidebarInset>
       </SidebarProvider>
     </div>

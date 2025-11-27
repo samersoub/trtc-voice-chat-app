@@ -11,7 +11,7 @@ type DiscoverHeaderProps = {
 
 const DiscoverHeader: React.FC<DiscoverHeaderProps> = ({ activeTab, onTabChange }) => {
   return (
-    <div className="flex items-center justify-between py-3 px-2" dir="rtl">
+    <div className="flex flex-wrap items-center justify-between gap-2 sm:gap-3 py-3 px-2 min-w-0" dir="rtl">
       {/* Left icons */}
       <div className="flex items-center gap-3">
         <button className="h-9 w-9 rounded-full bg-teal-500/10 text-teal-600 flex items-center justify-center">
@@ -23,7 +23,7 @@ const DiscoverHeader: React.FC<DiscoverHeaderProps> = ({ activeTab, onTabChange 
       </div>
 
       {/* Right tabs */}
-      <div className="flex items-center gap-6">
+      <div className="flex items-center justify-end gap-3 sm:gap-6 flex-wrap min-w-0">
         {[
           { key: "popular", label: "الشائع" },
           { key: "following", label: "المتابعين" },
@@ -34,7 +34,7 @@ const DiscoverHeader: React.FC<DiscoverHeaderProps> = ({ activeTab, onTabChange 
               key={t.key}
               onClick={() => onTabChange(t.key as "popular" | "following")}
               className={cn(
-                "text-sm font-medium relative pb-1 transition-colors",
+                "text-sm font-medium relative pb-1 transition-colors whitespace-nowrap",
                 active ? "text-foreground" : "text-muted-foreground"
               )}
             >

@@ -33,7 +33,7 @@ const Item: React.FC<{ to: string; color: "pink" | "blue" | "gold"; icon: React.
 
 const ArabicQuickActions: React.FC = () => {
   return (
-    <div className="grid grid-cols-3 gap-3" dir="rtl">
+    <div className="grid grid-cols-3 gap-3 sm:gap-4" dir="rtl">
       <Item to="/plaza" color="pink" icon={IceCream} label="حدث بلازا" />
       <Item to="/matching" color="blue" icon={Users} label="مطابقة الصوت" />
       <Item to="/rankings" color="gold" icon={Trophy} label="قائمة الترتيب" />

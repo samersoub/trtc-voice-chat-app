@@ -26,14 +26,14 @@ const LuxBannerCarousel: React.FC = () => {
   }, [api]);
 
   return (
-    <div className="relative rounded-xl overflow-hidden">
+    <div className="relative rounded-xl overflow-hidden w-full">
       <Carousel setApi={setApi} opts={{ loop: true }}>
         <CarouselContent>
           {slides.map((s) => (
             <CarouselItem key={s.id} className="basis-full">
               <a
                 href={s.linkUrl || "#"}
-                className="block h-40 sm:h-56 w-full bg-cover bg-center relative"
+                className="block h-36 sm:h-48 md:h-56 lg:h-64 w-full bg-cover bg-center relative"
                 style={{ backgroundImage: `linear-gradient(135deg, #3b2f2f 0%, #1f1b14 60%), url('${s.imageUrl}')`, backgroundBlendMode: "multiply" }}
               >
                 <div className="absolute inset-0 bg-gradient-to-r from-yellow-500/10 to-red-500/10" />
