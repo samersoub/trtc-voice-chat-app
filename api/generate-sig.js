@@ -5,6 +5,12 @@ const SDK_APP_ID = process.env.TRTC_SDK_APP_ID;
 const SECRET_KEY = process.env.TRTC_SECRET_KEY; 
 
 module.exports = (req, res) => {
+    // Prevent caching by browsers/CDNs
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+    res.setHeader('Content-Type', 'application/json');
+
     // Essential security and validation checks
     if (!SDK_APP_ID || !SECRET_KEY) {
         return res.status(500).send({ 
@@ -19,14 +25,13 @@ module.exports = (req, res) => {
     }
 
     try {
-        // Generate the secure UserSig token
+        const { genTestUserSig } = require('trtc-js-sdk/plugins/GenerateTestUserSig');
         const userSig = genTestUserSig({
             sdkAppId: Number(SDK_APP_ID),
             secretKey: SECRET_KEY,
             userId: userId,
         }).userSig;
 
-        // Return the secure token to the frontend client
         res.status(200).json({ userSig: userSig, userId: userId });
 
     } catch (e) {

@@ -9,7 +9,7 @@ export async function fetchUserSig(userId: string): Promise<string> {
     throw new Error("USERSIG_API_ENDPOINT is not configured. Please set it in src/config/trtcConfig.ts");
   }
 
-  const url = `${USERSIG_API_ENDPOINT}?userId=${encodeURIComponent(userId)}`;
+  const url = `${USERSIG_API_ENDPOINT}?userId=${encodeURIComponent(userId)}&ts=${Date.now()}`;
   const res = await fetch(url, {
     method: "GET",
     headers: { "Accept": "application/json" },
