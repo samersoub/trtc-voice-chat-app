@@ -47,6 +47,8 @@ const VoiceChat = () => {
   const rtcRef = React.useRef<WebRTCService | null>(null);
   const trtcClientRef = React.useRef<any>(null);
   const trtcLocalStreamRef = React.useRef<any>(null);
+  // Track remote streams (IDs) so we can render containers and play video/audio
+  const [trtcRemoteIds, setTrtcRemoteIds] = useState<(string | number)[]>([]);
 
   const user = AuthService.getCurrentUser();
   const roomSeats = React.useMemo(() => (id ? MicService.getSeats(id) : []), [id]);
@@ -128,8 +130,11 @@ const VoiceChat = () => {
   const handleJoinTRTC = async () => {
     // Use the authenticated user's ID if available; fallback to a simple anon ID
     const currentUserID = user?.id || "anon_test_user";
+
+    console.log("TRTC: Starting join flow for user:", currentUserID, "room:", TRTC_TEST_ROOM_ID);
     try {
       const userSig = await fetchUserSig(currentUserID);
+      console.log("TRTC: Fetched UserSig OK");
 
       const client = TRTC.createClient({
         mode: "rtc",
@@ -139,34 +144,89 @@ const VoiceChat = () => {
       });
       trtcClientRef.current = client;
 
-      // Subscribe and play remote audio when others publish
+      // Detailed event logging
+      client.on("error", (err: any) => {
+        console.error("TRTC: Client error event:", err);
+        showError(err?.message || "TRTC client error");
+      });
+      client.on("peer-join", (event: any) => {
+        console.log("TRTC: Peer joined:", event?.userId ?? event);
+      });
+      client.on("peer-leave", (event: any) => {
+        console.log("TRTC: Peer left:", event?.userId ?? event);
+      });
+
+      // Subscribe and play remote audio/video when others publish
       client.on("stream-added", async (event: any) => {
         const remoteStream = event.stream;
-        console.log("TRTC: Remote stream added", remoteStream?.getId?.() ?? remoteStream);
-        await client.subscribe(remoteStream);
+        const id = remoteStream?.getId?.() ?? "unknown";
+        console.log("TRTC: Remote stream added:", id, remoteStream);
+
+        try {
+          await client.subscribe(remoteStream);
+          console.log("TRTC: Subscribe requested for remote stream:", id);
+        } catch (err) {
+          console.error("TRTC: Failed to subscribe to remote stream:", id, err);
+          showError("Failed to subscribe remote stream");
+        }
       });
+
       client.on("stream-subscribed", (event: any) => {
         const remoteStream = event.stream;
+        const id = remoteStream?.getId?.() ?? "unknown";
+        console.log("TRTC: Remote stream subscribed:", id, remoteStream);
+
+        // Ensure we render a container for playing video
+        setTrtcRemoteIds((prev) => (prev.includes(id) ? prev : [...prev, id]));
+
+        // Play after container renders
+        setTimeout(() => {
+          try {
+            remoteStream.play(`trtc-remote-${id}`);
+            console.log("TRTC: Playing remote stream in container:", `trtc-remote-${id}`);
+          } catch (err) {
+            console.error("TRTC: Failed to play remote stream:", id, err);
+            showError("Failed to play remote stream");
+          }
+        }, 0);
+      });
+
+      client.on("stream-removed", (event: any) => {
+        const remoteStream = event.stream;
+        const id = remoteStream?.getId?.() ?? "unknown";
+        console.log("TRTC: Remote stream removed:", id);
+
         try {
-          remoteStream.play();
-          console.log("TRTC: Subscribed & playing remote stream");
-        } catch (err) {
-          console.error("TRTC: Failed to play remote stream", err);
-        }
+          remoteStream.stop?.();
+        } catch {}
+        setTrtcRemoteIds((prev) => prev.filter((x) => x !== id));
       });
 
       await client.join({
         roomId: TRTC_TEST_ROOM_ID,
       });
-      console.log("TRTC: Join Success");
-      showSuccess("Joined TRTC test room");
+      console.log("TRTC: Join Success, room:", TRTC_TEST_ROOM_ID);
+      showSuccess(`Joined TRTC room ${TRTC_TEST_ROOM_ID}`);
 
-      const localStream = TRTC.createStream({ audio: true, video: false });
+      // Create and publish local audio+video for better visibility during testing
+      const localStream = TRTC.createStream({ audio: true, video: true });
       trtcLocalStreamRef.current = localStream;
+
+      console.log("TRTC: Initializing local stream (audio+video)...");
       await localStream.initialize();
+      console.log("TRTC: Local stream initialized");
+
+      // Show local preview (muted by SDK; safe to render)
+      try {
+        localStream.play("trtc-local-player");
+        console.log("TRTC: Local stream preview playing in container: trtc-local-player");
+      } catch (err) {
+        console.error("TRTC: Failed to play local preview", err);
+      }
+
       await client.publish(localStream);
       console.log("TRTC: Publish Success");
-      showSuccess("Published local audio");
+      showSuccess("Published local audio/video");
     } catch (err: any) {
       console.error("TRTC: Join/Publish failed", err);
       showError(err?.message || "Failed to join/publish TRTC");
@@ -222,6 +282,29 @@ const VoiceChat = () => {
     <div className="relative min-h-screen w-full overflow-hidden">
       {/* Hidden audio element for local mic preview */}
       <audio ref={audioRef} className="hidden" />
+
+      {/* TRTC debug players: local preview + remote grid */}
+      <div className="absolute top-24 left-4 z-30 space-y-2">
+        <div
+          id="trtc-local-player"
+          className="w-56 h-32 bg-black/40 rounded-md overflow-hidden flex items-center justify-center text-[10px] text-white/70"
+        >
+          Local Preview
+        </div>
+        {trtcRemoteIds.length > 0 && (
+          <div className="grid grid-cols-2 gap-2">
+            {trtcRemoteIds.map((id) => (
+              <div
+                key={String(id)}
+                id={`trtc-remote-${id}`}
+                className="w-56 h-32 bg-black/30 rounded-md overflow-hidden flex items-center justify-center text-[10px] text-white/70"
+              >
+                Remote {String(id)}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
 
       {/* Background: keep mystical gradients for now */}
       <div className="absolute inset-0 -z-10">
