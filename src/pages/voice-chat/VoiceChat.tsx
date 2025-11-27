@@ -28,6 +28,8 @@ import VoiceHeader from "@/components/voice/VoiceHeader";
 import WallpaperControls from "@/components/voice/WallpaperControls";
 import TrtcDebugPlayers from "@/components/trtc/TrtcDebugPlayers";
 import { useTrtc } from "@/hooks/useTrtc";
+import { useMicControl } from "@/hooks/useMicControl";
+import { mapSeatsToGuests } from "@/utils/voiceSeats";
 
 const VoiceChat = () => {
   const { id } = useParams<{ id: string }>();
@@ -44,7 +46,6 @@ const VoiceChat = () => {
   const [messages, setMessages] = useState<Message[]>([]);
 
   const audioRef = React.useRef<HTMLAudioElement | null>(null);
-  const rtcRef = React.useRef<WebRTCService | null>(null);
 
   // TRTC hook for join/publish/subscribe/leave
   const { localStream, remoteStreams, join: trtcJoin, leave: trtcLeave } = useTrtc();
@@ -76,50 +77,11 @@ const VoiceChat = () => {
     };
   }, [id, user?.id, trtcLeave]);
 
-  // Ghost mic detection: if micOn but not seated, turn off mic
-  React.useEffect(() => {
-    if (!id || !user?.id) return;
-    const onSeat = seatsState.some((s) => s.userId === user.id);
-    if (micOn && !onSeat) {
-      const rtc = (rtcRef.current ||= new WebRTCService());
-      rtc.stopMic();
-      if (audioRef.current) {
-        AudioManager.detach(audioRef.current);
-      }
-      setMicOn(false);
-      try {
-        const updated = MicService.setSpeaking(id, user.id, false);
-        setSeatsState([...updated]);
-      } catch {}
-      showError("Detected ghost mic. Mic muted until you take a seat.");
-    }
-  }, [micOn, seatsState, id, user?.id]);
+  // Hook: mic control (handles mic preview & ghost mic)
+  const { micOn: micOnHook, toggleMic, stopMic } = useMicControl(id, user?.id, audioRef, seatsState, (s) => setSeatsState([...s]));
 
-  // Load and subscribe to room messages
-  React.useEffect(() => {
-    if (!id) return;
-    const unsub = LocalChatService.on(id, (msgs) => setMessages(msgs));
-    return () => {
-      unsub?.();
-    };
-  }, [id]);
-
-  // Map seats into 8 guest seats (1..8). Seat index 0..7 map to guest 1..8.
-  const guestSeats = React.useMemo(
-    () =>
-      Array.from({ length: 8 }, (_, i) => {
-        const s = seatsState[i];
-        return {
-          index: i + 1,
-          userId: s?.userId,
-          name: s?.userId ? s.name || "User" : undefined,
-          muted: !!s?.muted,
-          locked: !!s?.locked,
-          speaking: !!s?.speaking,
-        };
-      }),
-    [seatsState]
-  );
+  // Map seats into 8 guest seats via utility
+  const guestSeats = React.useMemo(() => mapSeatsToGuests(seatsState), [seatsState]);
 
   React.useEffect(() => {
     const t = setTimeout(() => setLoading(false), 3000);
@@ -135,12 +97,8 @@ const VoiceChat = () => {
         }
       } catch {}
     }
-    const rtc = (rtcRef.current ||= new WebRTCService());
-    rtc.stopMic();
-    if (audioRef.current) {
-      AudioManager.detach(audioRef.current);
-    }
-    setMicOn(false);
+    // Use hook cleanup for mic
+    stopMic();
     trtcLeave();
     navigate("/");
   };
@@ -206,7 +164,7 @@ const VoiceChat = () => {
             if (!id) return;
             const updated = MicService.leaveMic(id, user?.id || "you");
             setSeatsState([...updated]);
-            setMicOn(false);
+            stopMic();
             showSuccess("Left mic");
           } catch (e: any) {
             showSuccess(e.message || "Unable to leave mic");
@@ -286,37 +244,9 @@ const VoiceChat = () => {
 
       {/* Bottom control bar */}
       <ControlBar
-        micOn={micOn}
+        micOn={micOnHook}
         onToggleMic={async () => {
-          const rtc = (rtcRef.current ||= new WebRTCService());
-          if (!micOn) {
-            const onSeat = seatsState.some((s) => s.userId === (user?.id || "you"));
-            if (!onSeat) {
-              showSuccess("Take a mic first");
-              return;
-            }
-            const stream = await rtc.getMicStream();
-            if (audioRef.current) {
-              AudioManager.attachStream(audioRef.current, stream);
-            }
-            setMicOn(true);
-            if (id) {
-              const updated = MicService.setSpeaking(id, user?.id || "you", true);
-              setSeatsState([...updated]);
-            }
-            showSuccess("Microphone On");
-          } else {
-            rtc.stopMic();
-            if (audioRef.current) {
-              AudioManager.detach(audioRef.current);
-            }
-            setMicOn(false);
-            if (id) {
-              const updated = MicService.setSpeaking(id, user?.id || "you", false);
-              setSeatsState([...updated]);
-            }
-            showSuccess("Microphone Off");
-          }
+          await toggleMic();
         }}
         onOpenChat={() => setChatOpen(true)}
         onSendGift={() => setGiftOpen(true)}
