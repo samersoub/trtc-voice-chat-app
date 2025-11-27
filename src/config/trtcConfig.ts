@@ -12,4 +12,4 @@ export const TRTC_TEST_ROOM_ID = 10086;
  * Secure backend endpoint that returns a UserSig for a given userId.
  * Uses the same domain as the deployed app to avoid stale caches.
  */
-export const USERSIG_API_ENDPOINT = "/api/generate-sig";
+export const USERSIG_API_ENDPOINT = "https://trtc-sig-service.vercel.app/api/generate-sig";
