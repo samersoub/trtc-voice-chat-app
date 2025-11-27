@@ -41,7 +41,7 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({ children, title = "دندنة �
   return (
     <div dir={dir} className="min-h-[100svh] w-full overflow-x-hidden">
       <SidebarProvider className="bg-background">
-        <Sidebar variant="inset" collapsible="icon" className="border-r">
+        <Sidebar variant="inset" collapsible="offcanvas" className="border-r">
           <SidebarHeader className="px-3 py-2">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
