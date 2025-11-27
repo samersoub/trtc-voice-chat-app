@@ -3,6 +3,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { Suspense, lazy } from "react";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import Login from "./pages/auth/Login";
@@ -54,63 +55,65 @@ const App = () => (
         <Toaster />
         <Sonner />
         <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<Index />} />
-            {/* Admin Panel */}
-            <Route path="/admin" element={<AdminDashboard />} />
-            <Route path="/admin/login" element={<AdminLogin />} />
-            {/* ADDED: Admin Status */}
-            <Route path="/admin/status" element={<AdminStatus />} />
-            <Route path="/admin/users" element={<AdminUsers />} />
-            <Route path="/admin/rooms" element={<AdminRooms />} />
-            <Route path="/admin/reports" element={<AdminReports />} />
-            <Route path="/admin/agencies" element={<AgenciesAdmin />} />
-            <Route path="/admin/banners" element={<BannersAdmin />} />
-            <Route path="/admin/settings" element={<AdminSettings />} />
-            <Route path="/admin/gifts" element={<GiftsAdmin />} />
-            <Route path="/admin/coins" element={<CoinsAdmin />} />
-            {/* Auth */}
-            <Route path="/auth/login" element={<Login />} />
-            <Route path="/auth/register" element={<Register />} />
-            <Route path="/auth/verify" element={<PhoneVerification />} />
-            <Route path="/auth/forgot" element={<ForgotPassword />} />
-            {/* Voice Chat */}
-            <Route path="/voice/rooms" element={<RoomList />} />
-            <Route path="/voice/create" element={<CreateRoom />} />
-            <Route path="/voice/rooms/:id" element={<RoomDetails />} />
-            <Route path="/voice/rooms/:id/join" element={<VoiceChat />} />
-            {/* Finance & Store */}
-            <Route path="/wallet" element={<Wallet />} />
-            <Route path="/store" element={<Store />} />
-            {/* Earnings & Withdrawal */}
-            <Route path="/earnings" element={<Earnings />} />
-            <Route path="/withdrawal" element={<Withdrawal />} />
-            {/* Coin purchase */}
-            <Route path="/coins" element={<CoinPurchase />} />
-            {/* Music */}
-            <Route path="/music" element={<MusicLibrary />} />
-            {/* Agency */}
-            <Route path="/agency/host" element={<HostAgency />} />
-            <Route path="/agency/recharge" element={<RechargeAgency />} />
-            {/* Social */}
-            <Route path="/moments" element={<Moments />} />
-            <Route path="/messages" element={<Messages />} />
-            <Route path="/hosts" element={<Hosts />} />
-            {/* Notifications */}
-            <Route path="/inbox" element={<Inbox />} />
-            {/* Contacts */}
-            <Route path="/contacts" element={<Contacts />} />
-            <Route path="/contacts/invite" element={<InviteFriends />} />
-            {/* Profile */}
-            <Route path="/profile" element={<Profile />} />
-            <Route path="/settings" element={<Settings />} />
-            {/* Matching */}
-            <Route path="/matching" element={<Matching />} />
-            <Route path="/matching/call/:id" element={<PrivateCall />} />
-            <Route path="/matching/rate/:id" element={<RateMatch />} />
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
+          <Suspense fallback={<div className="flex items-center justify-center p-6 text-muted-foreground">Loading...</div>}>
+            <Routes>
+              <Route path="/" element={<Index />} />
+              {/* Admin Panel */}
+              <Route path="/admin" element={<AdminDashboard />} />
+              <Route path="/admin/login" element={<AdminLogin />} />
+              {/* ADDED: Admin Status */}
+              <Route path="/admin/status" element={<AdminStatus />} />
+              <Route path="/admin/users" element={<AdminUsers />} />
+              <Route path="/admin/rooms" element={<AdminRooms />} />
+              <Route path="/admin/reports" element={<AdminReports />} />
+              <Route path="/admin/agencies" element={<AgenciesAdmin />} />
+              <Route path="/admin/banners" element={<BannersAdmin />} />
+              <Route path="/admin/settings" element={<AdminSettings />} />
+              <Route path="/admin/gifts" element={<GiftsAdmin />} />
+              <Route path="/admin/coins" element={<CoinsAdmin />} />
+              {/* Auth */}
+              <Route path="/auth/login" element={<Login />} />
+              <Route path="/auth/register" element={<Register />} />
+              <Route path="/auth/verify" element={<PhoneVerification />} />
+              <Route path="/auth/forgot" element={<ForgotPassword />} />
+              {/* Voice Chat */}
+              <Route path="/voice/rooms" element={<RoomList />} />
+              <Route path="/voice/create" element={<CreateRoom />} />
+              <Route path="/voice/rooms/:id" element={<RoomDetails />} />
+              <Route path="/voice/rooms/:id/join" element={<VoiceChat />} />
+              {/* Finance & Store */}
+              <Route path="/wallet" element={<Wallet />} />
+              <Route path="/store" element={<Store />} />
+              {/* Earnings & Withdrawal */}
+              <Route path="/earnings" element={<Earnings />} />
+              <Route path="/withdrawal" element={<Withdrawal />} />
+              {/* Coin purchase */}
+              <Route path="/coins" element={<CoinPurchase />} />
+              {/* Music */}
+              <Route path="/music" element={<MusicLibrary />} />
+              {/* Agency */}
+              <Route path="/agency/host" element={<HostAgency />} />
+              <Route path="/agency/recharge" element={<RechargeAgency />} />
+              {/* Social */}
+              <Route path="/moments" element={<Moments />} />
+              <Route path="/messages" element={<Messages />} />
+              <Route path="/hosts" element={<Hosts />} />
+              {/* Notifications */}
+              <Route path="/inbox" element={<Inbox />} />
+              {/* Contacts */}
+              <Route path="/contacts" element={<Contacts />} />
+              <Route path="/contacts/invite" element={<InviteFriends />} />
+              {/* Profile */}
+              <Route path="/profile" element={<Profile />} />
+              <Route path="/settings" element={<Settings />} />
+              {/* Matching */}
+              <Route path="/matching" element={<Matching />} />
+              <Route path="/matching/call/:id" element={<PrivateCall />} />
+              <Route path="/matching/rate/:id" element={<RateMatch />} />
+              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </Suspense>
         </BrowserRouter>
       </TooltipProvider>
     </QueryClientProvider>
