@@ -2,6 +2,70 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Fix: Mobile-first global type scale and media fluidity */
+@layer base {
+  html {
+    /* Fix: Use clamp for scalable base font-size across viewport sizes */
+    font-size: clamp(15px, 1rem + 0.25vw, 18px);
+    /* Fix: Better text rendering across devices */
+    -webkit-text-size-adjust: 100%;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* Fix: Responsive media defaults (images, videos, iframes) */
+  img,
+  svg,
+  video,
+  canvas,
+  iframe {
+    max-width: 100%;
+    height: auto;
+    display: block; /* Fix: Avoid inline gaps and ensure block flow */
+  }
+
+  /* Fix: Tables should be fluid without forcing horizontal scroll at page level */
+  table {
+    width: 100%;
+    table-layout: auto;
+  }
+  th,
+  td {
+    word-break: break-word; /* Fix: Prevent overflow from long content */
+  }
+
+  /* Fix: Headings scale with viewport using clamp; readable line-height */
+  h1 {
+    font-size: clamp(1.5rem, 1.25rem + 2vw, 2.5rem);
+    line-height: 1.2;
+  }
+  h2 {
+    font-size: clamp(1.375rem, 1.1rem + 1.5vw, 2rem);
+    line-height: 1.25;
+  }
+  h3 {
+    font-size: clamp(1.25rem, 1.05rem + 1vw, 1.75rem);
+    line-height: 1.3;
+  }
+  h4 {
+    font-size: clamp(1.125rem, 1rem + 0.75vw, 1.5rem);
+    line-height: 1.35;
+  }
+  p,
+  small,
+  li {
+    font-size: clamp(0.95rem, 0.9rem + 0.25vw, 1.1rem);
+    line-height: 1.55;
+  }
+
+  /* Fix: Use border-box globally to make fluid width calculations predictable */
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+}
+
+/* Keep existing CSS variables and theme tokens */
 @layer base {
   :root {
     --background: 0 0% 100%;
@@ -90,12 +154,26 @@
   }
 }
 
+/* Keep Tailwind base application and add small global layout safety */
 @layer base {
   * {
     @apply border-border;
   }
 
   body {
+    /* Fix: Fluid background and text color via design tokens */
     @apply bg-background text-foreground;
+    /* Fix: Prevent accidental global horizontal overflow while allowing component-level scrolls */
+    overflow-x: hidden;
+    min-height: 100svh; /* Fix: Use small viewport height unit for mobile browser UI */
+  }
+
+  /* Fix: Root container fluid padding using clamp, avoids cramped mobile or huge desktop spacing */
+  #root {
+    padding-left: clamp(0.75rem, 2vw, 2rem);
+    padding-right: clamp(0.75rem, 2vw, 2rem);
+    padding-top: clamp(0.75rem, 2vw, 2rem);
+    padding-bottom: clamp(0.75rem, 2vw, 2rem);
+    width: 100%;
   }
 }
