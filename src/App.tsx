@@ -45,6 +45,7 @@ import Earnings from "./pages/finance/Earnings";
 import Withdrawal from "./pages/finance/Withdrawal";
 import CoinPurchase from "./pages/finance/CoinPurchase";
 import MusicLibrary from "./pages/music/MusicLibrary";
+import BottomTabController from "@/components/mobile/BottomTabController";
 
 const queryClient = new QueryClient();
 
@@ -114,6 +115,8 @@ const App = () => (
               <Route path="*" element={<NotFound />} />
             </Routes>
           </Suspense>
+          {/* Global bottom bar controller */}
+          <BottomTabController />
         </BrowserRouter>
       </TooltipProvider>
     </QueryClientProvider>

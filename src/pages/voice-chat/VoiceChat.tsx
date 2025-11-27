@@ -21,7 +21,7 @@ import ModeratorTools from "@/components/moderation/ModeratorTools";
 import ReportPanel from "@/components/moderation/ReportPanel";
 import MusicQueue from "@/components/music/MusicQueue";
 import EmojiPicker from "@/components/voice/EmojiPicker";
-import ChatInputSheet from "@/components/voice/ChatInputSheet";
+import VoiceChatInputBar from "@/components/voice/VoiceChatInputBar";
 import { LocalChatService } from "@/services/LocalChatService";
 import { Message } from "@/models/Message";
 import VoiceHeader from "@/components/voice/VoiceHeader";
@@ -42,10 +42,12 @@ const VoiceChat = () => {
   const [activeGift, setActiveGift] = useState<GiftItem | null>(null);
   const [subscribeMode, setSubscribeMode] = useState<"auto" | "manual">("auto");
   const [emojiOpen, setEmojiOpen] = useState(false);
-  const [chatOpen, setChatOpen] = useState(false);
+
+  // ADDED: Messages state for ChatOverlay
   const [messages, setMessages] = useState<Message[]>([]);
 
   const audioRef = React.useRef<HTMLAudioElement | null>(null);
+  const inputRef = React.useRef<HTMLInputElement | null>(null);
 
   // TRTC hook for join/publish/subscribe/leave
   const { localStream, remoteStreams, join: trtcJoin, leave: trtcLeave } = useTrtc();
@@ -82,6 +84,13 @@ const VoiceChat = () => {
 
   // Map seats into 8 guest seats via utility
   const guestSeats = React.useMemo(() => mapSeatsToGuests(seatsState), [seatsState]);
+
+  React.useEffect(() => {
+    // ADDED: Subscribe to local chat messages for this room
+    if (!id) return;
+    const unsubscribe = LocalChatService.on(id, (msgs) => setMessages(msgs));
+    return () => unsubscribe();
+  }, [id]);
 
   React.useEffect(() => {
     const t = setTimeout(() => setLoading(false), 3000);
@@ -238,7 +247,7 @@ const VoiceChat = () => {
       </div>
 
       {/* Bottom-left chat overlay */}
-      <div className="absolute left-4 bottom-24">
+      <div className="absolute left-4" style={{ bottom: "calc(env(safe-area-inset-bottom) + 120px)" }}>
         <ChatOverlay messages={messages} currentUserId={user?.id} />
       </div>
 
@@ -248,7 +257,10 @@ const VoiceChat = () => {
         onToggleMic={async () => {
           await toggleMic();
         }}
-        onOpenChat={() => setChatOpen(true)}
+        onOpenChat={() => {
+          // Focus the fixed input bar
+          inputRef.current?.focus();
+        }}
         onSendGift={() => setGiftOpen(true)}
         onEmoji={() => setEmojiOpen(true)}
       />
@@ -301,14 +313,9 @@ const VoiceChat = () => {
         </div>
       )}
 
-      {/* Chat input sheet */}
+      {/* Fixed message input bar above ControlBar */}
       {id && user?.id && (
-        <ChatInputSheet
-          open={chatOpen}
-          onOpenChange={setChatOpen}
-          roomId={id}
-          senderId={user.id}
-        />
+        <VoiceChatInputBar roomId={id} senderId={user.id} inputRef={inputRef} />
       )}
 
       <EmojiPicker

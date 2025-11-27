@@ -13,10 +13,17 @@ const items = [
   { to: "/profile", label: "Profile", icon: User2 },
 ];
 
-const BottomTab: React.FC = () => {
+const BottomTab: React.FC<{ visible?: boolean }> = ({ visible = true }) => {
   const loc = useLocation();
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-30" style={{ paddingBottom: "env(safe-area-inset-bottom)" }}>
+    <div
+      className={cn(
+        "fixed bottom-0 left-0 right-0 z-30 transition-all duration-200 ease-out",
+        visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-full pointer-events-none"
+      )}
+      style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
+      aria-hidden={!visible}
+    >
       <div className="mx-auto w-full max-w-4xl bg-white/80 backdrop-blur border-t">
         <div className="grid grid-cols-5 min-w-0">
           {items.map(({ to, label, icon: Icon, center }) => {

@@ -52,7 +52,6 @@ const Index: React.FC = () => {
           onEnter={(roomId) => navigate(`/voice/rooms/${roomId}/join`)}
         />
       </div>
-      <BottomTab />
     </ChatLayout>
   );
 };
