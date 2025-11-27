@@ -2,7 +2,7 @@
 
 import React from "react";
 import TRTC from "trtc-js-sdk";
-import { TRTC_SDK_APP_ID, TRTC_TEST_ROOM_ID } from "@/config/trtcConfig";
+import { TRTC_SDK_APP_ID, TRTC_TEST_ROOM_ID, USERSIG_API_ENDPOINT } from "@/config/trtcConfig";
 import { fetchUserSig } from "@/utils/trtcAuth";
 import { showError, showSuccess } from "@/utils/toast";
 
@@ -34,7 +34,10 @@ export function useTrtc() {
     console.log("TRTC: Join flow start:", { userId: currentUserID, roomId: TRTC_TEST_ROOM_ID });
 
     try {
+      // Show endpoint being used for fetching UserSig
+      showSuccess(`Requesting UserSig from: ${USERSIG_API_ENDPOINT}`);
       const userSig = await fetchUserSig(currentUserID);
+      showSuccess("UserSig received");
 
       const client = TRTC.createClient({
         mode: "rtc",
