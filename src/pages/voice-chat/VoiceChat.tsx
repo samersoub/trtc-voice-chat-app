@@ -1,6 +1,5 @@
 import React, { useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { Button } from "@/components/ui/button";
 import SeatingNine from "@/components/voice/SeatingNine";
 import ChatOverlay from "@/components/voice/ChatOverlay";
 import ControlBar from "@/components/voice/ControlBar";
@@ -25,9 +24,10 @@ import EmojiPicker from "@/components/voice/EmojiPicker";
 import ChatInputSheet from "@/components/voice/ChatInputSheet";
 import { LocalChatService } from "@/services/LocalChatService";
 import { Message } from "@/models/Message";
-import TRTC from "trtc-js-sdk";
-import { TRTC_SDK_APP_ID, TRTC_TEST_ROOM_ID } from "@/config/trtcConfig";
-import { fetchUserSig } from "@/utils/trtcAuth";
+import VoiceHeader from "@/components/voice/VoiceHeader";
+import WallpaperControls from "@/components/voice/WallpaperControls";
+import TrtcDebugPlayers from "@/components/trtc/TrtcDebugPlayers";
+import { useTrtc } from "@/hooks/useTrtc";
 
 const VoiceChat = () => {
   const { id } = useParams<{ id: string }>();
@@ -45,11 +45,9 @@ const VoiceChat = () => {
 
   const audioRef = React.useRef<HTMLAudioElement | null>(null);
   const rtcRef = React.useRef<WebRTCService | null>(null);
-  const trtcClientRef = React.useRef<any>(null);
-  const trtcLocalStreamRef = React.useRef<any>(null);
-  const trtcJoinedRef = React.useRef<boolean>(false);
-  // Track remote streams (IDs) so we can render containers and play video/audio
-  const [trtcRemoteIds, setTrtcRemoteIds] = useState<(string | number)[]>([]);
+
+  // TRTC hook for join/publish/subscribe/leave
+  const { localStream, remoteStreams, join: trtcJoin, leave: trtcLeave } = useTrtc();
 
   const user = AuthService.getCurrentUser();
   const roomSeats = React.useMemo(() => (id ? MicService.getSeats(id) : []), [id]);
@@ -58,7 +56,6 @@ const VoiceChat = () => {
   const roomTitle = room?.name || "Room";
   const hostId = room?.hostId;
   const hostName = hostId === user?.id ? user?.name || "You" : "Host";
-
   const isHost = !!(id && user && hostId === user.id);
 
   // Join on mount, leave on unmount, destroy when empty
@@ -74,10 +71,12 @@ const VoiceChat = () => {
           VoiceChatService.deleteRoom(id);
         }
       } catch {}
+      // Ensure TRTC cleanup on unmount too
+      trtcLeave();
     };
-  }, [id, user?.id]);
+  }, [id, user?.id, trtcLeave]);
 
-  // Ghost mic detection
+  // Ghost mic detection: if micOn but not seated, turn off mic
   React.useEffect(() => {
     if (!id || !user?.id) return;
     const onSeat = seatsState.some((s) => s.userId === user.id);
@@ -127,154 +126,6 @@ const VoiceChat = () => {
     return () => clearTimeout(t);
   }, []);
 
-  // Join TRTC test room and publish local audio
-  const handleJoinTRTC = async () => {
-    if (trtcJoinedRef.current) {
-      console.log("TRTC: Already joined; skipping duplicate join.");
-      return;
-    }
-
-    // Use the authenticated user's ID if available; otherwise generate a unique anon ID to avoid collisions.
-    const currentUserID =
-      user?.id ||
-      (() => {
-        const key = "trtcAnonId";
-        const existing = localStorage.getItem(key);
-        if (existing) return existing;
-        const generated = `anon_${Math.random().toString(36).slice(2)}_${Date.now()}`;
-        localStorage.setItem(key, generated);
-        return generated;
-      })();
-
-    console.log("TRTC: Starting join flow for user:", currentUserID, "room:", TRTC_TEST_ROOM_ID);
-    try {
-      const userSig = await fetchUserSig(currentUserID);
-      console.log("TRTC: Fetched UserSig OK");
-
-      const client = TRTC.createClient({
-        mode: "rtc",
-        sdkAppId: TRTC_SDK_APP_ID,
-        userId: currentUserID,
-        userSig,
-      });
-      trtcClientRef.current = client;
-
-      // Detailed event logging for connection/media diagnostics
-      client.on("error", (err: any) => {
-        console.error("TRTC: Client error event:", err);
-        showError(err?.message || "TRTC client error");
-      });
-      client.on("connection-state-changed", (payload: any) => {
-        console.log("TRTC: Connection state changed:", payload);
-      });
-      client.on("network-quality", (event: any) => {
-        console.log("TRTC: Network quality:", event);
-      });
-      client.on("peer-join", (event: any) => {
-        console.log("TRTC: Peer joined:", event?.userId ?? event);
-      });
-      client.on("peer-leave", (event: any) => {
-        console.log("TRTC: Peer left:", event?.userId ?? event);
-      });
-      client.on("mute-audio", (event: any) => {
-        console.log("TRTC: Peer muted audio:", event?.userId ?? event);
-      });
-      client.on("unmute-audio", (event: any) => {
-        console.log("TRTC: Peer unmuted audio:", event?.userId ?? event);
-      });
-      client.on("mute-video", (event: any) => {
-        console.log("TRTC: Peer muted video:", event?.userId ?? event);
-      });
-      client.on("unmute-video", (event: any) => {
-        console.log("TRTC: Peer unmuted video:", event?.userId ?? event);
-      });
-
-      // Subscribe and play remote audio/video when others publish
-      client.on("stream-added", async (event: any) => {
-        const remoteStream = event.stream;
-        const id = remoteStream?.getId?.() ?? "unknown";
-        console.log("TRTC: Remote stream added:", id, {
-          hasAudio: remoteStream?.hasAudio?.(),
-          hasVideo: remoteStream?.hasVideo?.(),
-          stream: remoteStream,
-        });
-
-        try {
-          await client.subscribe(remoteStream, { audio: true, video: true });
-          console.log("TRTC: Subscribe requested for remote stream:", id);
-        } catch (err) {
-          console.error("TRTC: Failed to subscribe to remote stream:", id, err);
-          showError("Failed to subscribe remote stream");
-        }
-      });
-
-      client.on("stream-subscribed", (event: any) => {
-        const remoteStream = event.stream;
-        const id = remoteStream?.getId?.() ?? "unknown";
-        console.log("TRTC: Remote stream subscribed:", id, {
-          hasAudio: remoteStream?.hasAudio?.(),
-          hasVideo: remoteStream?.hasVideo?.(),
-        });
-
-        // Ensure we render a container for playing video
-        setTrtcRemoteIds((prev) => (prev.includes(id) ? prev : [...prev, id]));
-
-        // Play after container renders
-        setTimeout(() => {
-          try {
-            remoteStream.play(`trtc-remote-${id}`);
-            console.log("TRTC: Playing remote stream in container:", `trtc-remote-${id}`);
-          } catch (err) {
-            console.error("TRTC: Failed to play remote stream:", id, err);
-            showError("Failed to play remote stream");
-          }
-        }, 0);
-      });
-
-      client.on("stream-removed", (event: any) => {
-        const remoteStream = event.stream;
-        const id = remoteStream?.getId?.() ?? "unknown";
-        console.log("TRTC: Remote stream removed:", id);
-
-        try {
-          remoteStream.stop?.();
-        } catch {}
-        setTrtcRemoteIds((prev) => prev.filter((x) => x !== id));
-      });
-
-      await client.join({ roomId: TRTC_TEST_ROOM_ID });
-      trtcJoinedRef.current = true;
-      console.log("TRTC: Join Success, room:", TRTC_TEST_ROOM_ID);
-      showSuccess(`Joined TRTC room ${TRTC_TEST_ROOM_ID}`);
-
-      // Create and publish local audio+video for better visibility during testing
-      const localStream = TRTC.createStream({ audio: true, video: true });
-      trtcLocalStreamRef.current = localStream;
-
-      console.log("TRTC: Initializing local stream (audio+video)...");
-      await localStream.initialize();
-      console.log("TRTC: Local stream initialized; capabilities:", {
-        audio: localStream.hasAudio?.(),
-        video: localStream.hasVideo?.(),
-      });
-
-      // Show local preview (muted by SDK; safe to render)
-      try {
-        localStream.play("trtc-local-player");
-        console.log("TRTC: Local stream preview playing in container: trtc-local-player");
-      } catch (err) {
-        console.error("TRTC: Failed to play local preview", err);
-      }
-
-      await client.publish(localStream);
-      console.log("TRTC: Publish Success");
-      showSuccess("Published local audio/video");
-    } catch (err: any) {
-      console.error("TRTC: Join/Publish failed", err);
-      showError(err?.message || "Failed to join/publish TRTC");
-    }
-  };
-
   const handleExitRoom = () => {
     if (id && user?.id) {
       try {
@@ -290,30 +141,7 @@ const VoiceChat = () => {
       AudioManager.detach(audioRef.current);
     }
     setMicOn(false);
-
-    // TRTC cleanup: stop local & leave
-    const c = trtcClientRef.current;
-    if (c) {
-      try {
-        const ls = trtcLocalStreamRef.current;
-        if (ls) {
-          try {
-            // Unpublish before closing local stream for clean leave
-            c.unpublish?.(ls);
-          } catch {}
-          try {
-            ls.stop?.();
-            ls.close?.();
-          } catch {}
-          trtcLocalStreamRef.current = null;
-        }
-        // leave without awaiting (non-async handler)
-        void c.leave?.();
-      } catch {}
-      trtcClientRef.current = null;
-    }
-    trtcJoinedRef.current = false;
-
+    trtcLeave();
     navigate("/");
   };
 
@@ -330,30 +158,10 @@ const VoiceChat = () => {
       {/* Hidden audio element for local mic preview */}
       <audio ref={audioRef} className="hidden" />
 
-      {/* TRTC debug players: local preview + remote grid */}
-      <div className="absolute top-24 left-4 z-30 space-y-2">
-        <div
-          id="trtc-local-player"
-          className="w-56 h-32 bg-black/40 rounded-md overflow-hidden flex items-center justify-center text-[10px] text-white/70"
-        >
-          Local Preview
-        </div>
-        {trtcRemoteIds.length > 0 && (
-          <div className="grid grid-cols-2 gap-2">
-            {trtcRemoteIds.map((id) => (
-              <div
-                key={String(id)}
-                id={`trtc-remote-${id}`}
-                className="w-56 h-32 bg-black/30 rounded-md overflow-hidden flex items-center justify-center text-[10px] text-white/70"
-              >
-                Remote {String(id)}
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
+      {/* TRTC debug players */}
+      <TrtcDebugPlayers localStream={localStream} remoteStreams={remoteStreams} />
 
-      {/* Background: keep mystical gradients for now */}
+      {/* Background wallpapers */}
       <div className="absolute inset-0 -z-10">
         {wallpaper === "royal" && (
           <>
@@ -378,109 +186,63 @@ const VoiceChat = () => {
         )}
       </div>
 
-      {/* Header with dynamic title and ID */}
-      <div className="absolute top-4 left-4 flex items-center gap-3">
-        <div className="text-white">
-          <div className="text-sm font-semibold">{roomTitle}</div>
-          <div className="text-xs text-white/80">ID: {id ?? "—"}</div>
-        </div>
-        <Button
-          variant="outline"
-          className="bg-white/10 text-white border-white/20 hover:bg-white/20"
-          onClick={handleExitRoom}
-        >
-          Exit Room
-        </Button>
-        <Button
-          variant="outline"
-          className="bg-white/10 text-white border-white/20 hover:bg-white/20"
-          onClick={() => {
-            try {
-              if (!id) return;
-              const updated = MicService.putOnMic(id, user?.id || "you", user?.name || "You");
-              setSeatsState([...updated]);
-              showSuccess("You took a mic");
-            } catch (e: any) {
-              showSuccess(e.message || "Unable to take mic");
-            }
-          }}
-        >
-          Take Mic
-        </Button>
-        <Button
-          variant="outline"
-          className="bg-white/10 text-white border-white/20 hover:bg-white/20"
-          onClick={() => {
-            try {
-              if (!id) return;
-              const updated = MicService.leaveMic(id, user?.id || "you");
-              setSeatsState([...updated]);
-              setMicOn(false);
-              showSuccess("Left mic");
-            } catch (e: any) {
-              showSuccess(e.message || "Unable to leave mic");
-            }
-          }}
-        >
-          Leave Mic
-        </Button>
-      </div>
+      {/* Header: title + actions */}
+      <VoiceHeader
+        roomTitle={roomTitle}
+        roomId={id}
+        onExit={handleExitRoom}
+        onTakeMic={() => {
+          try {
+            if (!id) return;
+            const updated = MicService.putOnMic(id, user?.id || "you", user?.name || "You");
+            setSeatsState([...updated]);
+            showSuccess("You took a mic");
+          } catch (e: any) {
+            showSuccess(e.message || "Unable to take mic");
+          }
+        }}
+        onLeaveMic={() => {
+          try {
+            if (!id) return;
+            const updated = MicService.leaveMic(id, user?.id || "you");
+            setSeatsState([...updated]);
+            setMicOn(false);
+            showSuccess("Left mic");
+          } catch (e: any) {
+            showSuccess(e.message || "Unable to leave mic");
+          }
+        }}
+      />
 
       {/* Wallpaper + recording controls */}
-      <div className="absolute top-4 right-4 flex items-center gap-2">
-        <Button
-          variant="outline"
-          className="bg-white/10 text-white border-white/20 hover:bg-white/20"
-          onClick={() => setWallpaper(wallpaper === "royal" ? "nebula" : wallpaper === "nebula" ? "galaxy" : "royal")}
-        >
-          Wallpaper
-        </Button>
-        <Button
-          variant="outline"
-          className="bg-white/10 text-white border-white/20 hover:bg-white/20"
-          onClick={() => {
-            if (!id) return;
-            const status = RecordingService.status(id);
-            if (!status.active) {
-              RecordingService.start(id, "companion");
-              showSuccess("Recording started (companion)");
-            } else {
-              RecordingService.stop(id);
-              showSuccess("Recording stopped");
-            }
-          }}
-        >
-          Toggle Recording
-        </Button>
-        <Button
-          variant="outline"
-          className="bg-white/10 text-white border-white/20 hover:bg-white/20"
-          onClick={() => {
-            if (!id) return;
-            RecordingService.submitForReview(id);
-            showSuccess("Submitted for review");
-          }}
-        >
-          Submit Review
-        </Button>
-        <Button
-          variant="outline"
-          className="bg-white/10 text-white border-white/20 hover:bg-white/20"
-          onClick={() => {
-            setSubscribeMode((m) => (m === "auto" ? "manual" : "auto"));
-            showSuccess(`Subscription mode: ${subscribeMode === "auto" ? "manual" : "auto"}`);
-          }}
-        >
-          Subscribe: {subscribeMode === "auto" ? "Auto" : "Manual"}
-        </Button>
-        <Button
-          variant="outline"
-          className="bg-white/10 text-white border-white/20 hover:bg-white/20"
-          onClick={handleJoinTRTC}
-        >
-          Join TRTC Test Room
-        </Button>
-      </div>
+      <WallpaperControls
+        wallpaper={wallpaper}
+        onToggleWallpaper={() =>
+          setWallpaper((w) => (w === "royal" ? "nebula" : w === "nebula" ? "galaxy" : "royal"))
+        }
+        onToggleRecording={() => {
+          if (!id) return;
+          const status = RecordingService.status(id);
+          if (!status.active) {
+            RecordingService.start(id, "companion");
+            showSuccess("Recording started (companion)");
+          } else {
+            RecordingService.stop(id);
+            showSuccess("Recording stopped");
+          }
+        }}
+        onSubmitReview={() => {
+          if (!id) return;
+          RecordingService.submitForReview(id);
+          showSuccess("Submitted for review");
+        }}
+        subscribeMode={subscribeMode}
+        onToggleSubscribeMode={() => {
+          setSubscribeMode((m) => (m === "auto" ? "manual" : "auto"));
+          showSuccess(`Subscription mode: ${subscribeMode === "auto" ? "manual" : "auto"}`);
+        }}
+        onJoinTRTC={() => trtcJoin(user?.id)}
+      />
 
       {/* Center seating: Host + 8 guests */}
       <div className="flex items-center justify-center pt-20 pb-32 px-6">
