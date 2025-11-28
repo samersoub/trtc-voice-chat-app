@@ -21,6 +21,7 @@ type SeatingNineProps = {
   onClickHost?: () => void;
   guests: GuestSeat[];
   onClickGuest?: (index: number, seat: GuestSeat) => void;
+  showFrame?: boolean;
 };
 
 function codeToFlagEmoji(code?: string): string | null {
@@ -38,6 +39,7 @@ const SeatingNine: React.FC<SeatingNineProps> = ({
   onClickHost,
   guests,
   onClickGuest,
+  showFrame = true,
 }) => {
   // Ensure exactly 8 guest slots
   const paddedGuests: GuestSeat[] = Array.from({ length: 8 }, (_, i) => {
@@ -64,7 +66,7 @@ const SeatingNine: React.FC<SeatingNineProps> = ({
         )}
       >
         <div className="cursor-pointer" onClick={onClickHost}>
-          <Seat name={hostName} imageUrl={hostAvatarUrl} speaking={false} muted={false} locked={false} />
+          <Seat name={hostName} imageUrl={hostAvatarUrl} speaking={false} muted={false} locked={false} showFrame={showFrame} />
         </div>
 
         {/* Host info badges under seat */}
@@ -103,7 +105,7 @@ const SeatingNine: React.FC<SeatingNineProps> = ({
                   className="cursor-pointer"
                   aria-label={`Seat ${seat.index} • ${seat.name ?? "Guest"}`}
                 >
-                  <Seat name={seat.name || "Guest"} speaking={!!seat.speaking} muted={!!seat.muted} locked={!!seat.locked} />
+                  <Seat name={seat.name || "Guest"} speaking={!!seat.speaking} muted={!!seat.muted} locked={!!seat.locked} showFrame={showFrame} />
                   <div className="mt-1 text-[11px] text-white/75 text-center">{seat.index}</div>
                 </button>
               )}

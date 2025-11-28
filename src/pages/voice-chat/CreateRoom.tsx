@@ -18,6 +18,7 @@ const CreateRoom = () => {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [existingImageUrl, setExistingImageUrl] = useState<string | null>(null);
   const [country, setCountry] = useState<string>("");
+  const [background, setBackground] = useState<string>("royal");
 
   // Load existing profile image
   useEffect(() => {
@@ -76,6 +77,20 @@ const CreateRoom = () => {
                 </SelectContent>
               </Select>
             </div>
+            <div className="space-y-2">
+              <div className="text-xs text-muted-foreground">Room Background</div>
+              <Select value={background} onValueChange={setBackground}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select background" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="royal">Royal (preset)</SelectItem>
+                  <SelectItem value="nebula">Nebula (preset)</SelectItem>
+                  <SelectItem value="galaxy">Galaxy (preset)</SelectItem>
+                  <SelectItem value="arabic">Arabic Wallpaper</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
             <label className="flex items-center gap-2 text-sm">
               <input type="checkbox" checked={isPrivate} onChange={e => setIsPrivate(e.target.checked)} />
               Private room
@@ -103,7 +118,9 @@ const CreateRoom = () => {
                     showSuccess("Profile image updated");
                   }
 
-                  const room = VoiceChatService.createRoom(name.trim(), isPrivate, user.id, country);
+                  // Map background selection to actual value (preset key or public path)
+                  const bg = background === "arabic" ? "/wallpapers/arabic-voice-room.jpeg" : background;
+                  const room = VoiceChatService.createRoom(name.trim(), isPrivate, user.id, country, undefined, bg);
                   showSuccess("Room created. Connecting...");
                   // Navigate directly to join route with autoJoin flag
                   nav(`/voice/rooms/${room.id}/join?autoJoin=1`);

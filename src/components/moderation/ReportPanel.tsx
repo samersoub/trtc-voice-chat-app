@@ -8,10 +8,19 @@ import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
 import { ReportService, type ReportType } from "@/services/ReportService";
 import { showSuccess, showError } from "@/utils/toast";
+import { RoomSettingsService } from "@/services/RoomSettingsService";
 
 type Props = { roomId: string; userId: string };
 
 const ReportPanel: React.FC<Props> = ({ roomId, userId }) => {
+  const settings = RoomSettingsService.getSettings(roomId);
+  if (settings.hideReports) {
+    return (
+      <div className="w-full max-w-sm">
+        <div className="rounded border p-3 text-xs text-muted-foreground">Reports are disabled for this room.</div>
+      </div>
+    );
+  }
   const [type, setType] = useState<ReportType>("voice-abuse");
   const [targetUserId, setTargetUserId] = useState("");
   const [description, setDescription] = useState("");

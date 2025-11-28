@@ -33,6 +33,9 @@ import { mapSeatsToGuests } from "@/utils/voiceSeats";
 import RoomTitlePill from "@/components/voice/RoomTitlePill";
 import { ChatRoom } from "@/models/ChatRoom";
 import MobileActionsSheet from "@/components/voice/MobileActionsSheet";
+import { RoomSettingsService } from "@/services/RoomSettingsService";
+import { db } from "@/firebase";
+import { doc, setDoc } from "firebase/firestore";
 
 const VoiceChat = () => {
   const { id } = useParams<{ id: string }>();
@@ -72,9 +75,26 @@ const VoiceChat = () => {
   // Join on mount, leave on unmount, destroy when empty
   React.useEffect(() => {
     if (!id || !user?.id) return;
-    try {
-      VoiceChatService.joinRoom(id, user.id);
-    } catch {}
+
+    // Perform Firestore save of user join data before local join
+    (async () => {
+      try {
+        const userName = user?.name || user?.id;
+        // Save into 'users' collection using userName as document ID
+        await setDoc(doc(db, "users", String(userName)), {
+          userName,
+          roomId: id,
+          joinedAt: new Date().toISOString(),
+        });
+      } catch (e) {
+        console.error("Failed to save join to Firestore:", e);
+      }
+
+      try {
+        VoiceChatService.joinRoom(id, user.id);
+      } catch {}
+    })();
+
     return () => {
       try {
         const updatedRoom = VoiceChatService.leaveRoom(id, user.id);
@@ -113,14 +133,20 @@ const VoiceChat = () => {
   const joinAnnouncedRef = React.useRef(false);
   React.useEffect(() => {
     if (!id || !user?.id || joinAnnouncedRef.current) return;
-    LocalChatService.send(id, user.id, `${user?.name || "User"} entered the room`, "system");
+    const settings = RoomSettingsService.getSettings(id);
+    if (settings.entryNotifications !== false) {
+      LocalChatService.send(id, user.id, `${user?.name || "User"} entered the room`, "system");
+    }
     joinAnnouncedRef.current = true;
   }, [id, user?.id]);
 
   React.useEffect(() => {
     return () => {
       if (id && user?.id) {
-        LocalChatService.send(id, user.id, `${user?.name || "User"} left the room`, "system");
+        const settings = RoomSettingsService.getSettings(id);
+        if (settings.entryNotifications !== false) {
+          LocalChatService.send(id, user.id, `${user?.name || "User"} left the room`, "system");
+        }
       }
     };
   }, [id, user?.id]);
@@ -152,6 +178,15 @@ const VoiceChat = () => {
     if (autoJoin) setLoading(false);
     return () => { if (t) clearTimeout(t); };
   }, [autoJoin]);
+
+  // If the room has a preset background configured, apply it to local wallpaper state
+  React.useEffect(() => {
+    if (!roomState || !roomState.background) return;
+    const preset = roomState.background;
+    if (preset === "royal" || preset === "nebula" || preset === "galaxy") {
+      setWallpaper(preset as any);
+    }
+  }, [roomState]);
 
   const handleExitRoom = () => {
     if (id && user?.id) {
@@ -203,8 +238,11 @@ const VoiceChat = () => {
     }
     const joined = curr.filter((uid) => !prev.includes(uid));
     const left = prev.filter((uid) => !curr.includes(uid));
-    joined.forEach((uid) => showSuccess(`${uid} joined the room`));
-    left.forEach((uid) => showSuccess(`${uid} left the room`));
+    const settings = id ? RoomSettingsService.getSettings(id) : undefined;
+    if (!settings || settings.entryNotifications !== false) {
+      joined.forEach((uid) => showSuccess(`${uid} joined the room`));
+      left.forEach((uid) => showSuccess(`${uid} left the room`));
+    }
     prevParticipantsRef.current = curr;
   }, [roomState]);
 
@@ -226,32 +264,35 @@ const VoiceChat = () => {
 
       {/* Background wallpapers */}
       <div className="absolute inset-0 -z-10">
-        {wallpaper === "royal" && (
+        {/* Prefer room-specific background if configured */}
+        {roomState?.background && (roomState.background.startsWith("/") || roomState.background.startsWith("http")) ? (
           <>
-            {/* Background image from attachment */}
-            <img
-              src="/wallpapers/arabic-voice-room.jpeg"
-              alt="Voice room wallpaper"
-              className="absolute inset-0 h-full w-full object-cover"
-            />
-            {/* Soft purple overlay to enhance readability */}
-            <div className="absolute inset-0 bg-gradient-to-br from-violet-700/50 via-fuchsia-600/40 to-purple-700/40 mix-blend-multiply" />
-            {/* Gentle glow accents */}
-            <div className="absolute -top-20 -left-20 h-64 w-64 bg-fuchsia-400/20 blur-3xl rounded-full animate-pulse" />
-            <div className="absolute bottom-0 right-0 h-80 w-80 bg-indigo-400/20 blur-3xl rounded-full animate-pulse" />
+            <img src={roomState.background} alt="Room background" className="absolute inset-0 h-full w-full object-cover" />
+            <div className="absolute inset-0 bg-black/20 mix-blend-multiply" />
           </>
-        )}
-        {wallpaper === "nebula" && (
+        ) : (
           <>
-            <div className="absolute inset-0 bg-gradient-to-tr from-[#3b0764] via-[#6d28d9] to-[#db2777]" />
-            <div className="absolute -top-16 left-1/3 h-72 w-72 bg-pink-500/20 blur-3xl rounded-full animate-pulse" />
-            <div className="absolute -bottom-16 right-1/4 h-64 w-64 bg-purple-500/20 blur-2xl rounded-full animate-pulse" />
-          </>
-        )}
-        {wallpaper === "galaxy" && (
-          <>
-            <div className="absolute inset-0 bg-gradient-to-br from-[#1e1b4b] via-[#312e81] to-[#7c3aed]" />
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(255,255,255,0.06),transparent_40%),radial-gradient(circle_at_80%_70%,rgba(255,255,255,0.05),transparent_50%)]" />
+            {wallpaper === "royal" && (
+              <>
+                <img src="/wallpapers/arabic-voice-room.jpeg" alt="Voice room wallpaper" className="absolute inset-0 h-full w-full object-cover" />
+                <div className="absolute inset-0 bg-gradient-to-br from-violet-700/50 via-fuchsia-600/40 to-purple-700/40 mix-blend-multiply" />
+                <div className="absolute -top-20 -left-20 h-64 w-64 bg-fuchsia-400/20 blur-3xl rounded-full animate-pulse" />
+                <div className="absolute bottom-0 right-0 h-80 w-80 bg-indigo-400/20 blur-3xl rounded-full animate-pulse" />
+              </>
+            )}
+            {wallpaper === "nebula" && (
+              <>
+                <div className="absolute inset-0 bg-gradient-to-tr from-[#3b0764] via-[#6d28d9] to-[#db2777]" />
+                <div className="absolute -top-16 left-1/3 h-72 w-72 bg-pink-500/20 blur-3xl rounded-full animate-pulse" />
+                <div className="absolute -bottom-16 right-1/4 h-64 w-64 bg-purple-500/20 blur-2xl rounded-full animate-pulse" />
+              </>
+            )}
+            {wallpaper === "galaxy" && (
+              <>
+                <div className="absolute inset-0 bg-gradient-to-br from-[#1e1b4b] via-[#312e81] to-[#7c3aed]" />
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(255,255,255,0.06),transparent_40%),radial-gradient(circle_at_80%_70%,rgba(255,255,255,0.05),transparent_50%)]" />
+              </>
+            )}
           </>
         )}
       </div>
@@ -339,6 +380,7 @@ const VoiceChat = () => {
               hostName={hostName}
               hostFlagCode={roomState?.name ? undefined : undefined}
               guests={guestSeats}
+              showFrame={roomState ? RoomSettingsService.getSettings(id || "").showSeatFrames ?? true : true}
               onClickGuest={(displayIndex, seat) => {
                 if (!id) return;
                 const targetIndex = displayIndex - 1;
@@ -367,7 +409,7 @@ const VoiceChat = () => {
 
       {/* Bottom-left chat overlay */}
       <div className="absolute left-4" style={{ bottom: "calc(env(safe-area-inset-bottom) + 120px)" }}>
-        <ChatOverlay messages={messages} currentUserId={user?.id} />
+        <ChatOverlay messages={messages} currentUserId={user?.id} roomId={id} />
       </div>
 
       {/* Bottom control bar */}

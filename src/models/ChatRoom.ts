@@ -8,4 +8,8 @@ export interface ChatRoom {
   updatedAt: string;
   description?: string;
   country?: string;
+  // Optional owner-selected background. Can be a preset key ("royal","nebula","galaxy") or a URL path.
+  background?: string;
+  // Moderators user ids
+  moderators?: string[];
 }

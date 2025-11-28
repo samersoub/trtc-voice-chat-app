@@ -27,6 +27,8 @@ async function hydrateRoomsFromDB() {
       updatedAt: r.updatedAt,
       description: r.description || undefined,
       country: r.country || undefined,
+      background: r.background || undefined,
+      moderators: Array.isArray(r.moderators) ? r.moderators : [r.hostId],
     })) as ChatRoom[];
     writeRooms(rooms);
   } catch {
@@ -47,6 +49,8 @@ function syncUpsertRoom(room: ChatRoom) {
       updatedAt: room.updatedAt,
       description: room.description ?? null,
       country: room.country ?? null,
+      background: room.background ?? null,
+      moderators: room.moderators ?? [],
     })
   );
 }
@@ -61,7 +65,7 @@ export const VoiceChatService = {
     void hydrateRoomsFromDB();
     return readRooms();
   },
-  createRoom(name: string, isPrivate: boolean, hostId: string, country: string, description?: string): ChatRoom {
+  createRoom(name: string, isPrivate: boolean, hostId: string, country: string, description?: string, background?: string): ChatRoom {
     const room: ChatRoom = {
       id: crypto.randomUUID(),
       name,
@@ -72,6 +76,8 @@ export const VoiceChatService = {
       updatedAt: new Date().toISOString(),
       description,
       country,
+      background,
+      moderators: [hostId],
     };
     const rooms = readRooms();
     rooms.push(room);
@@ -97,6 +103,18 @@ export const VoiceChatService = {
   getRoom(id: string): ChatRoom | undefined {
     void hydrateRoomsFromDB();
     return readRooms().find(r => r.id === id);
+  },
+  saveRoom(room: ChatRoom) {
+    const rooms = readRooms();
+    const idx = rooms.findIndex((r) => r.id === room.id);
+    if (idx === -1) {
+      rooms.push(room);
+    } else {
+      rooms[idx] = room;
+    }
+    writeRooms(rooms);
+    syncUpsertRoom(room);
+    return room;
   },
   joinRoom(id: string, userId: string): ChatRoom {
     const rooms = readRooms();

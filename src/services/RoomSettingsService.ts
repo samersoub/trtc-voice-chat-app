@@ -8,6 +8,11 @@ export interface RoomSettings {
   maxSpeakers: number;
   maxListeners: number;
   moderatorsLimit: number;
+  // UI / feature toggles
+  hideReports?: boolean;
+  showSeatFrames?: boolean; // whether seat avatars have decorative frames
+  chatFormatting?: "compact" | "formatted";
+  entryNotifications?: boolean;
 }
 
 const KEY = (roomId: string) => `room:settings:${roomId}`;
@@ -40,6 +45,10 @@ export const RoomSettingsService = {
       maxSpeakers: 10,
       maxListeners: 100,
       moderatorsLimit: TYPE_LIMITS["social"],
+      hideReports: false,
+      showSeatFrames: true,
+      chatFormatting: "compact",
+      entryNotifications: true,
     };
     const s = read<RoomSettings>(KEY(roomId), fallback);
     // Normalize limit based on type if missing

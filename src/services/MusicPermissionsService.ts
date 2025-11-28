@@ -19,6 +19,14 @@ export const MusicPermissionsService = {
     }
     s.add(userId);
     MODS.set(roomId, s);
+    try {
+      // Persist to room metadata as well for visibility
+      const room = VoiceChatService.getRoom(roomId);
+      if (room) {
+        room.moderators = Array.from(new Set([...(room.moderators || []), userId]));
+        VoiceChatService.saveRoom(room);
+      }
+    } catch {}
   },
   removeModerator(roomId: string, userId: string) {
     const s = MODS.get(roomId);
@@ -26,6 +34,13 @@ export const MusicPermissionsService = {
       s.delete(userId);
       MODS.set(roomId, s);
     }
+    try {
+      const room = VoiceChatService.getRoom(roomId);
+      if (room) {
+        room.moderators = (room.moderators || []).filter((u) => u !== userId);
+        VoiceChatService.saveRoom(room);
+      }
+    } catch {}
   },
   listModerators(roomId: string): string[] {
     return Array.from(MODS.get(roomId) ?? []);
