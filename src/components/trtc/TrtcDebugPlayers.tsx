@@ -10,16 +10,6 @@ type Props = {
 
 const TrtcDebugPlayers: React.FC<Props> = ({ localStream, remoteStreams }) => {
   React.useEffect(() => {
-    if (!localStream) return;
-    try {
-      localStream.play("trtc-local-player");
-      console.log("TRTC: Local preview playing.");
-    } catch (err) {
-      console.error("TRTC: Local preview play failed:", err);
-    }
-  }, [localStream]);
-
-  React.useEffect(() => {
     remoteStreams.forEach(({ id, stream }) => {
       const containerId = `trtc-remote-${id}`;
       // Defer until container exists
