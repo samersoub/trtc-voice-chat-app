@@ -31,6 +31,7 @@ import TrtcDebugPlayers from "@/components/trtc/TrtcDebugPlayers";
 import { useTrtc } from "@/hooks/useTrtc";
 import { useMicControl } from "@/hooks/useMicControl";
 import { mapSeatsToGuests } from "@/utils/voiceSeats";
+import RoomTitlePill from "@/components/voice/RoomTitlePill";
 
 const VoiceChat = () => {
   const { id } = useParams<{ id: string }>();
@@ -65,6 +66,7 @@ const VoiceChat = () => {
   const hostId = room?.hostId;
   const hostName = hostId === user?.id ? user?.name || "You" : "Host";
   const isHost = !!(id && user && hostId === user.id);
+  const participantsCount = room?.participants?.length ?? 0;
 
   // Join on mount, leave on unmount, destroy when empty
   React.useEffect(() => {
@@ -181,6 +183,9 @@ const VoiceChat = () => {
         )}
       </div>
 
+      {/* Centered title pill */}
+      <RoomTitlePill title={roomTitle} count={participantsCount} />
+
       {/* Header: title + actions */}
       <VoiceHeader
         roomTitle={roomTitle}
@@ -239,38 +244,37 @@ const VoiceChat = () => {
         onJoinTRTC={() => trtcJoin(user?.id)}
       />
 
-      {/* Center seating: Host + 8 guests */}
+      {/* Center seating: Host + 8 guests inside a glass stage frame */}
       <div className="flex items-center justify-center pt-20 pb-32 px-6">
         <div className="w-full max-w-4xl">
-          <SeatingNine
-            hostName={hostName}
-            hostFlagCode={room?.name ? undefined : undefined}
-            guests={guestSeats}
-            onClickGuest={(displayIndex, seat) => {
-              if (!id) return;
-              // displayIndex 1..8 maps to MicService seat index 0..7
-              const targetIndex = displayIndex - 1;
-              if (!seat.userId) {
-                // Take seat at target index
-                try {
-                  const updated = MicService.putOnMic(id, user?.id || "you", user?.name || "You", targetIndex);
-                  setSeatsState([...updated]);
-                  showSuccess(`Took seat ${displayIndex}`);
-                } catch (e: any) {
-                  showError(e.message || "Unable to take seat");
+          <div className="rounded-3xl border border-white/20 bg-white/10 backdrop-blur-md shadow-xl p-6 sm:p-8">
+            <SeatingNine
+              hostName={hostName}
+              hostFlagCode={room?.name ? undefined : undefined}
+              guests={guestSeats}
+              onClickGuest={(displayIndex, seat) => {
+                if (!id) return;
+                const targetIndex = displayIndex - 1;
+                if (!seat.userId) {
+                  try {
+                    const updated = MicService.putOnMic(id, user?.id || "you", user?.name || "You", targetIndex);
+                    setSeatsState([...updated]);
+                    showSuccess(`Took seat ${displayIndex}`);
+                  } catch (e: any) {
+                    showError(e.message || "Unable to take seat");
+                  }
+                } else {
+                  try {
+                    const updated = MicService.mute(id, seat.userId, !seat.muted);
+                    setSeatsState([...updated]);
+                    showSuccess(`${!seat.muted ? "Muted" : "Unmuted"} ${seat.name || "Guest"}`);
+                  } catch (e: any) {
+                    showError(e.message || "Unable to toggle mute");
+                  }
                 }
-              } else {
-                // Toggle mute for occupied seat
-                try {
-                  const updated = MicService.mute(id, seat.userId, !seat.muted);
-                  setSeatsState([...updated]);
-                  showSuccess(`${!seat.muted ? "Muted" : "Unmuted"} ${seat.name || "Guest"}`);
-                } catch (e: any) {
-                  showError(e.message || "Unable to toggle mute");
-                }
-              }
-            }}
-          />
+              }}
+            />
+          </div>
         </div>
       </div>
 
@@ -286,7 +290,6 @@ const VoiceChat = () => {
           await toggleMic();
         }}
         onOpenChat={() => {
-          // Focus the fixed input bar
           inputRef.current?.focus();
         }}
         onSendGift={() => setGiftOpen(true)}
