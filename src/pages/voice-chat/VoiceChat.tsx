@@ -35,6 +35,8 @@ import MobileActionsSheet from "@/components/voice/MobileActionsSheet";
 import { RoomSettingsService } from "@/services/RoomSettingsService";
 import { db } from "@/firebase";
 import { doc, setDoc } from "firebase/firestore";
+import { useRoomUsers } from "@/hooks/useRoomUsers";
+import RoomUserList from "@/components/voice/RoomUserList";
 
 const VoiceChat = () => {
   const { id } = useParams<{ id: string }>();
@@ -59,6 +61,9 @@ const VoiceChat = () => {
 
   const audioRef = React.useRef<HTMLAudioElement | null>(null);
   const inputRef = React.useRef<HTMLInputElement | null>(null);
+
+  // Firestore live users for this room
+  const { users: roomUsers, isLoading: usersLoading } = useRoomUsers(id ?? "");
 
   // TRTC hook for join/publish/subscribe/leave
   const { localStream, remoteStreams, join: trtcJoin, leave: trtcLeave } = useTrtc();
@@ -295,6 +300,11 @@ const VoiceChat = () => {
 
       {/* Centered title pill */}
       <RoomTitlePill title={roomTitle} count={participantsCount} />
+
+      {/* Room user list (firestore live data) */}
+      <div className="absolute right-4 top-24 hidden md:block z-40">
+        <RoomUserList users={roomUsers} />
+      </div>
 
       {/* Header: title + actions */}
       <VoiceHeader
