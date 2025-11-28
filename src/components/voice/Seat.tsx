@@ -17,19 +17,8 @@ type SeatProps = {
 const Seat: React.FC<SeatProps> = ({ name = "User", imageUrl, speaking = false, muted = false, locked = false, showFrame = true }) => {
   return (
     <div className="relative flex items-center justify-center">
-      <div
-        className={cn(
-          showFrame === false ? "p-0 bg-transparent" : "rounded-full p-1 bg-white/5 backdrop-blur-sm",
-          speaking && showFrame !== false
-            ? "ring-2 ring-fuchsia-400 shadow-[0_0_0_4px_rgba(236,72,153,0.25)] animate-[pulse_1.5s_ease_in_out_infinite]"
-            : muted && showFrame !== false
-            ? "ring-2 ring-white/40"
-            : showFrame === false
-            ? ""
-            : "ring-2 ring-white/20"
-        )}
-      >
-        <Avatar className={cn("h-16 w-16 sm:h-20 sm:w-20", showFrame === false ? "border-0 shadow-none" : "border-2 border-white/25 shadow-lg")}>
+      <div className="rounded-full p-0 transition-all">
+        <Avatar className="h-16 w-16 sm:h-20 sm:w-20">
           {imageUrl ? (
             <AvatarImage src={imageUrl} alt={name} />
           ) : (

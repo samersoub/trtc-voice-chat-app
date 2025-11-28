@@ -45,6 +45,8 @@ const VoiceChat = () => {
   const [loading, setLoading] = useState(true);
   const [micOn, setMicOn] = useState(false);
   const [wallpaper, setWallpaper] = useState<"royal" | "nebula" | "galaxy">("royal");
+  // ADD: show/hide reports state driven by room settings
+  const [showReports, setShowReports] = useState<boolean>(true);
   const [giftOpen, setGiftOpen] = useState(false);
   const [activeGift, setActiveGift] = useState<GiftItem | null>(null);
   const [subscribeMode, setSubscribeMode] = useState<"auto" | "manual">("auto");
@@ -70,7 +72,34 @@ const VoiceChat = () => {
   const hostId = roomState?.hostId;
   const hostName = hostId === user?.id ? user?.name || "You" : "Host";
   const isHost = !!(id && user && hostId === user.id);
+  const isOwner = isHost;
   const participantsCount = roomState?.participants?.length ?? 0;
+
+  // Sync wallpaper and reports from room settings and react to storage changes
+  React.useEffect(() => {
+    if (!id) return;
+    const s = RoomSettingsService.getSettings(id);
+    setWallpaper(s.wallpaper);
+    setShowReports(s.showReports);
+    const key = `room:settings:${id}`;
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === key) {
+        const ns = RoomSettingsService.getSettings(id);
+        setWallpaper(ns.wallpaper);
+        setShowReports(ns.showReports);
+      }
+    };
+    window.addEventListener("storage", onStorage);
+    const interval = setInterval(() => {
+      const ns = RoomSettingsService.getSettings(id);
+      setWallpaper(ns.wallpaper);
+      setShowReports(ns.showReports);
+    }, 1500);
+    return () => {
+      window.removeEventListener("storage", onStorage);
+      clearInterval(interval);
+    };
+  }, [id]);
 
   // Join on mount, leave on unmount, destroy when empty
   React.useEffect(() => {
@@ -312,9 +341,14 @@ const VoiceChat = () => {
       {/* Wallpaper + recording controls */}
       <WallpaperControls
         wallpaper={wallpaper}
-        onToggleWallpaper={() =>
-          setWallpaper((w) => (w === "royal" ? "nebula" : w === "nebula" ? "galaxy" : "royal"))
-        }
+        onToggleWallpaper={() => {
+          // Owner-only: cycle wallpaper and persist
+          if (!id || !isOwner) return;
+          const next = wallpaper === "royal" ? "nebula" : wallpaper === "nebula" ? "galaxy" : "royal";
+          RoomSettingsService.setWallpaper(id, next);
+          setWallpaper(next);
+          showSuccess(`Wallpaper set to ${next}`);
+        }}
         onToggleRecording={() => {
           if (!id) return;
           const status = RecordingService.status(id);
@@ -337,6 +371,14 @@ const VoiceChat = () => {
           showSuccess(`Subscription mode: ${subscribeMode === "auto" ? "manual" : "auto"}`);
         }}
         onJoinTRTC={() => trtcJoin(user?.id)}
+        isOwner={isOwner}
+        showReports={showReports}
+        onToggleReports={() => {
+          if (!id || !isOwner) return;
+          RoomSettingsService.setShowReports(id, !showReports);
+          setShowReports((v) => !v);
+          showSuccess(`${!showReports ? "Reports visible" : "Reports hidden"}`);
+        }}
       />
 
       {/* Mobile actions (sm:hidden) */}
@@ -346,9 +388,13 @@ const VoiceChat = () => {
         onLeaveMic={handleLeaveMic}
         wallpaper={wallpaper}
         subscribeMode={subscribeMode}
-        onToggleWallpaper={() =>
-          setWallpaper((w) => (w === "royal" ? "nebula" : w === "nebula" ? "galaxy" : "royal"))
-        }
+        onToggleWallpaper={() => {
+          if (!id || !isOwner) return;
+          const next = wallpaper === "royal" ? "nebula" : wallpaper === "nebula" ? "galaxy" : "royal";
+          RoomSettingsService.setWallpaper(id, next);
+          setWallpaper(next);
+          showSuccess(`Wallpaper set to ${next}`);
+        }}
         onToggleRecording={() => {
           if (!id) return;
           const status = RecordingService.status(id);
@@ -370,6 +416,14 @@ const VoiceChat = () => {
           showSuccess(`Subscription mode: ${subscribeMode === "auto" ? "manual" : "auto"}`);
         }}
         onJoinTRTC={() => trtcJoin(user?.id)}
+        isOwner={isOwner}
+        showReports={showReports}
+        onToggleReports={() => {
+          if (!id || !isOwner) return;
+          RoomSettingsService.setShowReports(id, !showReports);
+          setShowReports((v) => !v);
+          showSuccess(`${!showReports ? "Reports visible" : "Reports hidden"}`);
+        }}
       />
 
       {/* Center seating: Host + 8 guests inside a glass stage frame */}
@@ -443,7 +497,8 @@ const VoiceChat = () => {
             MusicPermissionsService.getRole(id, user.id) === "moderator") && (
             <ModeratorTools roomId={id} userId={user.id} />
           )}
-          <ReportPanel roomId={id} userId={user.id} />
+          {/* Conditionally show reports */}
+          {showReports && <ReportPanel roomId={id} userId={user.id} />}
         </div>
       )}
 

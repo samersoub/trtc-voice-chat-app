@@ -2,7 +2,7 @@
 
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { Image, Disc3, CheckCircle2, Shuffle, RadioTower } from "lucide-react";
+import { Image, Disc3, CheckCircle2, Shuffle, RadioTower, Eye, EyeOff } from "lucide-react";
 
 type Props = {
   wallpaper: "royal" | "nebula" | "galaxy";
@@ -12,6 +12,9 @@ type Props = {
   subscribeMode: "auto" | "manual";
   onToggleSubscribeMode: () => void;
   onJoinTRTC: () => void;
+  isOwner?: boolean;
+  showReports: boolean;
+  onToggleReports: () => void;
 };
 
 const WallpaperControls: React.FC<Props> = ({
@@ -22,18 +25,23 @@ const WallpaperControls: React.FC<Props> = ({
   subscribeMode,
   onToggleSubscribeMode,
   onJoinTRTC,
+  isOwner = false,
+  showReports,
+  onToggleReports,
 }) => {
   return (
     <div className="absolute top-4 right-4 hidden sm:flex items-center gap-2">
-      <Button
-        variant="outline"
-        className="h-10 w-10 rounded-full bg-white/15 text-white border-white/30 hover:bg-white/25 p-0"
-        onClick={onToggleWallpaper}
-        aria-label="Toggle wallpaper"
-        title={`Wallpaper: ${wallpaper}`}
-      >
-        <Image className="h-5 w-5" />
-      </Button>
+      {isOwner && (
+        <Button
+          variant="outline"
+          className="h-10 w-10 rounded-full bg-white/15 text-white border-white/30 hover:bg-white/25 p-0"
+          onClick={onToggleWallpaper}
+          aria-label="Toggle wallpaper"
+          title={`Wallpaper: ${wallpaper}`}
+        >
+          <Image className="h-5 w-5" />
+        </Button>
+      )}
       <Button
         variant="outline"
         className="h-10 w-10 rounded-full bg-white/15 text-white border-white/30 hover:bg-white/25 p-0"
@@ -64,6 +72,17 @@ const WallpaperControls: React.FC<Props> = ({
           {subscribeMode === "auto" ? "Auto" : "Manual"}
         </span>
       </Button>
+      {isOwner && (
+        <Button
+          variant="outline"
+          className="h-10 w-10 rounded-full bg-white/15 text-white border-white/30 hover:bg-white/25 p-0"
+          onClick={onToggleReports}
+          aria-label={showReports ? "Hide reports" : "Show reports"}
+          title={showReports ? "Hide reports" : "Show reports"}
+        >
+          {showReports ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+        </Button>
+      )}
       <Button
         variant="outline"
         className="h-10 w-10 rounded-full bg-white/15 text-white border-white/30 hover:bg-white/25 p-0"
