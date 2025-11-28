@@ -3,7 +3,7 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-import { Mic, MicOff, Image, Disc3, CheckCircle2, Shuffle, RadioTower } from "lucide-react";
+import { Mic, MicOff, Image, Disc3, CheckCircle2, Shuffle, RadioTower, Eye, EyeOff } from "lucide-react";
 
 type Props = {
   micOn: boolean;
@@ -16,6 +16,9 @@ type Props = {
   onSubmitReview: () => void;
   onToggleSubscribeMode: () => void;
   onJoinTRTC: () => void;
+  isOwner?: boolean;
+  showReports: boolean;
+  onToggleReports: () => void;
 };
 
 const MobileActionsSheet: React.FC<Props> = ({
@@ -29,6 +32,9 @@ const MobileActionsSheet: React.FC<Props> = ({
   onSubmitReview,
   onToggleSubscribeMode,
   onJoinTRTC,
+  isOwner = false,
+  showReports,
+  onToggleReports,
 }) => {
   return (
     <Sheet>
@@ -54,15 +60,17 @@ const MobileActionsSheet: React.FC<Props> = ({
             {micOn ? <MicOff className="h-5 w-5" /> : <Mic className="h-5 w-5" />}
             <span className="ml-2 text-xs">{micOn ? "Leave Mic" : "Take Mic"}</span>
           </Button>
-          <Button
-            variant="outline"
-            className="h-11 rounded-lg bg-white/10 border-white/20 text-white"
-            onClick={onToggleWallpaper}
-            title={`Wallpaper: ${wallpaper}`}
-          >
-            <Image className="h-5 w-5" />
-            <span className="ml-2 text-xs">Wallpaper</span>
-          </Button>
+          {isOwner && (
+            <Button
+              variant="outline"
+              className="h-11 rounded-lg bg-white/10 border-white/20 text-white"
+              onClick={onToggleWallpaper}
+              title={`Wallpaper: ${wallpaper}`}
+            >
+              <Image className="h-5 w-5" />
+              <span className="ml-2 text-xs">Wallpaper</span>
+            </Button>
+          )}
           <Button
             variant="outline"
             className="h-11 rounded-lg bg-white/10 border-white/20 text-white"
@@ -90,6 +98,17 @@ const MobileActionsSheet: React.FC<Props> = ({
             <Shuffle className="h-5 w-5" />
             <span className="ml-2 text-xs">{subscribeMode === "auto" ? "Auto" : "Manual"}</span>
           </Button>
+          {isOwner && (
+            <Button
+              variant="outline"
+              className="h-11 rounded-lg bg-white/10 border-white/20 text-white"
+              onClick={onToggleReports}
+              title={showReports ? "Hide reports" : "Show reports"}
+            >
+              {showReports ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+              <span className="ml-2 text-xs">{showReports ? "Hide Reports" : "Show Reports"}</span>
+            </Button>
+          )}
           <Button
             variant="outline"
             className="h-11 rounded-lg bg-white/10 border-white/20 text-white"
