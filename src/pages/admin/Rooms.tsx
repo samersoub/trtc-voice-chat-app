@@ -16,7 +16,7 @@ import { downloadCsv, toCsv } from "@/utils/csv";
 const Rooms: React.FC = () => {
   const [rooms, setRooms] = useState(VoiceChatService.listRooms());
   const [createOpen, setCreateOpen] = useState(false);
-  const [createForm, setCreateForm] = useState<{ name: string; isPrivate: "public" | "private"; hostId: string; description?: string }>({ name: "", isPrivate: "public", hostId: "", description: "" });
+  const [createForm, setCreateForm] = useState<{ name: string; isPrivate: "public" | "private"; hostId: string; description?: string; country: string }>({ name: "", isPrivate: "public", hostId: "", description: "", country: "" });
 
   const [configOpen, setConfigOpen] = useState(false);
   const [configRoomId, setConfigRoomId] = useState<string>("");
@@ -135,6 +135,35 @@ const Rooms: React.FC = () => {
                 {HostService.list().map((h) => <SelectItem key={h.id} value={h.id}>{h.name} ({h.id})</SelectItem>)}
               </SelectContent>
             </Select>
+            <Select value={createForm.country} onValueChange={(v) => setCreateForm((f) => ({ ...f, country: v }))}>
+              <SelectTrigger><SelectValue placeholder="Country Name" /></SelectTrigger>
+              <SelectContent>
+                {[
+                  "Saudi Arabia",
+                  "United Arab Emirates",
+                  "Egypt",
+                  "Morocco",
+                  "Jordan",
+                  "Lebanon",
+                  "Algeria",
+                  "Tunisia",
+                  "Iraq",
+                  "Kuwait",
+                  "Qatar",
+                  "Bahrain",
+                  "Oman",
+                  "Yemen",
+                  "Turkey",
+                  "India",
+                  "Pakistan",
+                  "Indonesia",
+                  "United States",
+                  "Global",
+                ].map((c) => (
+                  <SelectItem key={c} value={c}>{c}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           <DialogFooter className="mt-3">
             <Button onClick={() => {
@@ -142,7 +171,8 @@ const Rooms: React.FC = () => {
                 showError("Enter room name and host");
                 return;
               }
-              VoiceChatService.createRoom(createForm.name, createForm.isPrivate === "private", createForm.hostId, createForm.description);
+              const country = createForm.country || "Global";
+              VoiceChatService.createRoom(createForm.name, createForm.isPrivate === "private", createForm.hostId, country, createForm.description);
               showSuccess("Room created");
               setCreateOpen(false);
               refresh();
