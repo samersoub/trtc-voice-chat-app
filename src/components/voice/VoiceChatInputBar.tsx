@@ -42,21 +42,21 @@ const VoiceChatInputBar: React.FC<VoiceChatInputBarProps> = ({ roomId, senderId,
       aria-live="polite"
     >
       <div className="mx-auto max-w-4xl px-4">
-        <div className="bg-black/40 backdrop-blur border border-white/10 rounded-full shadow-lg p-2 flex items-center gap-2">
+        <div className="bg-violet-700/30 backdrop-blur-md border border-violet-200/30 rounded-full shadow-lg p-2 flex items-center gap-2">
           <Input
             ref={inputRef as any}
             value={text}
             onChange={(e) => setText(e.target.value)}
             onKeyDown={onKeyDown}
-            placeholder="Type a message..."
+            placeholder="اكتب رسالة..."
             aria-label="Voice room message input"
-            className="flex-1 bg-transparent text-white placeholder:text-white/60"
+            className="flex-1 bg-transparent text-white placeholder:text-white/60 focus-visible:ring-0 focus-visible:ring-offset-0"
           />
           <Button
             onClick={handleSend}
-            variant="default"
-            className="bg-purple-600 hover:bg-purple-700 text-white"
+            className="rounded-full px-4 h-10 bg-gradient-to-r from-purple-600 to-fuchsia-600 hover:from-purple-700 hover:to-fuchsia-700 text-white"
             aria-label="Send message"
+            title="Send"
           >
             <Send className="h-4 w-4" />
           </Button>
