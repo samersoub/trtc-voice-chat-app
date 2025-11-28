@@ -7,4 +7,5 @@ export interface ChatRoom {
   createdAt: string;
   updatedAt: string;
   description?: string;
+  country?: string;
 }

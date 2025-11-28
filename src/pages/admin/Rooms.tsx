@@ -247,7 +247,7 @@ const Rooms: React.FC = () => {
               for (let i = 1; i <= n; i++) {
                 const name = `${bulkBase} ${i}`;
                 const hostId = bulkHostId || crypto.randomUUID();
-                VoiceChatService.createRoom(name, bulkPrivacy === "private", hostId);
+                VoiceChatService.createRoom(name, bulkPrivacy === "private", hostId, "Global");
               }
               showSuccess(`Created ${n} rooms`);
               setBulkOpen(false);

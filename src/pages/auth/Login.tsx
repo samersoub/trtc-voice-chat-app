@@ -27,7 +27,8 @@ const Login = () => {
                 try {
                   await AuthService.loginUnified(login, password);
                   showSuccess("Logged in");
-                  nav("/voice/rooms");
+                  // Redirect to Index page after login
+                  nav("/");
                 } catch (e: any) {
                   showError(e.message || "Login failed");
                 }

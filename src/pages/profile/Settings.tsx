@@ -46,7 +46,7 @@ const Settings = () => {
                 Change Password
               </Button>
             </div>
-            <Button variant="outline" onClick={() => { AuthService.logout(); showSuccess("Logged out"); nav("/"); }}>
+            <Button variant="outline" onClick={() => { AuthService.logout(); showSuccess("Logged out"); nav("/auth/login"); }}>
               Log out
             </Button>
           </CardContent>

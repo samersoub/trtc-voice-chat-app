@@ -102,7 +102,19 @@ export const ProfileService = {
   async uploadProfileImage(userId: string, file: File): Promise<string | null> {
     if (!file) return null;
     if (!(isSupabaseReady && supabase)) {
-      return null;
+      // Local fallback: store a base64 data URL in profile_image
+      const resized = await resizeImage(file, 512, 512, 0.9);
+      const dataUrl = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = reject;
+        reader.readAsDataURL(resized);
+      });
+      const prof = await this.getByUserId(userId);
+      if (prof) {
+        await this.upsertProfile({ ...prof, profile_image: dataUrl });
+      }
+      return dataUrl;
     }
     // Resize client-side for performance
     const resized = await resizeImage(file, 512, 512, 0.9);

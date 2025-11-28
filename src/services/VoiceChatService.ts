@@ -26,6 +26,7 @@ async function hydrateRoomsFromDB() {
       createdAt: r.createdAt,
       updatedAt: r.updatedAt,
       description: r.description || undefined,
+      country: r.country || undefined,
     })) as ChatRoom[];
     writeRooms(rooms);
   } catch {
@@ -45,6 +46,7 @@ function syncUpsertRoom(room: ChatRoom) {
       createdAt: room.createdAt,
       updatedAt: room.updatedAt,
       description: room.description ?? null,
+      country: room.country ?? null,
     })
   );
 }
@@ -59,7 +61,7 @@ export const VoiceChatService = {
     void hydrateRoomsFromDB();
     return readRooms();
   },
-  createRoom(name: string, isPrivate: boolean, hostId: string, description?: string): ChatRoom {
+  createRoom(name: string, isPrivate: boolean, hostId: string, country: string, description?: string): ChatRoom {
     const room: ChatRoom = {
       id: crypto.randomUUID(),
       name,
@@ -69,6 +71,7 @@ export const VoiceChatService = {
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
       description,
+      country,
     };
     const rooms = readRooms();
     rooms.push(room);

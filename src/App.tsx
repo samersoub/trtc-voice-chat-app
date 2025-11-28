@@ -46,6 +46,7 @@ import Withdrawal from "./pages/finance/Withdrawal";
 import CoinPurchase from "./pages/finance/CoinPurchase";
 import MusicLibrary from "./pages/music/MusicLibrary";
 import BottomTabController from "@/components/mobile/BottomTabController";
+import Home from "./pages/Home";
 
 const queryClient = new QueryClient();
 
@@ -59,6 +60,7 @@ const App = () => (
           <Suspense fallback={<div className="flex items-center justify-center p-6 text-muted-foreground">Loading...</div>}>
             <Routes>
               <Route path="/" element={<Index />} />
+              <Route path="/home" element={<Home />} />
               {/* Admin Panel */}
               <Route path="/admin" element={<AdminDashboard />} />
               <Route path="/admin/login" element={<AdminLogin />} />
