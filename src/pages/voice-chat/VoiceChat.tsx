@@ -291,40 +291,8 @@ const VoiceChat = () => {
       {/* TRTC debug players */}
       <TrtcDebugPlayers localStream={localStream} remoteStreams={remoteStreams} />
 
-      {/* Background wallpapers */}
-      <div className="absolute inset-0 -z-10">
-        {/* Prefer room-specific background if configured */}
-        {roomState?.background && (roomState.background.startsWith("/") || roomState.background.startsWith("http")) ? (
-          <>
-            <img src={roomState.background} alt="Room background" className="absolute inset-0 h-full w-full object-cover" />
-            <div className="absolute inset-0 bg-black/20 mix-blend-multiply" />
-          </>
-        ) : (
-          <>
-            {wallpaper === "royal" && (
-              <>
-                <img src="/wallpapers/arabic-voice-room.jpeg" alt="Voice room wallpaper" className="absolute inset-0 h-full w-full object-cover" />
-                <div className="absolute inset-0 bg-gradient-to-br from-violet-700/50 via-fuchsia-600/40 to-purple-700/40 mix-blend-multiply" />
-                <div className="absolute -top-20 -left-20 h-64 w-64 bg-fuchsia-400/20 blur-3xl rounded-full animate-pulse" />
-                <div className="absolute bottom-0 right-0 h-80 w-80 bg-indigo-400/20 blur-3xl rounded-full animate-pulse" />
-              </>
-            )}
-            {wallpaper === "nebula" && (
-              <>
-                <div className="absolute inset-0 bg-gradient-to-tr from-[#3b0764] via-[#6d28d9] to-[#db2777]" />
-                <div className="absolute -top-16 left-1/3 h-72 w-72 bg-pink-500/20 blur-3xl rounded-full animate-pulse" />
-                <div className="absolute -bottom-16 right-1/4 h-64 w-64 bg-purple-500/20 blur-2xl rounded-full animate-pulse" />
-              </>
-            )}
-            {wallpaper === "galaxy" && (
-              <>
-                <div className="absolute inset-0 bg-gradient-to-br from-[#1e1b4b] via-[#312e81] to-[#7c3aed]" />
-                <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(255,255,255,0.06),transparent_40%),radial-gradient(circle_at_80%_70%,rgba(255,255,255,0.05),transparent_50%)]" />
-              </>
-            )}
-          </>
-        )}
-      </div>
+      {/* Background: solid dark color */}
+      <div className="absolute inset-0 -z-10 bg-[#1a1a1a]"></div>
 
       {/* Centered title pill */}
       <RoomTitlePill title={roomTitle} count={participantsCount} />

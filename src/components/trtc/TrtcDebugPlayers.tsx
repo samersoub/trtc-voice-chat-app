@@ -36,12 +36,6 @@ const TrtcDebugPlayers: React.FC<Props> = ({ localStream, remoteStreams }) => {
 
   return (
     <div className="absolute top-24 left-4 z-30 space-y-2">
-      <div
-        id="trtc-local-player"
-        className="w-56 h-32 bg-black/40 rounded-md overflow-hidden flex items-center justify-center text-[10px] text-white/70"
-      >
-        Local Preview
-      </div>
       {remoteStreams.length > 0 && (
         <div className="grid grid-cols-2 gap-2">
           {remoteStreams.map(({ id }) => (

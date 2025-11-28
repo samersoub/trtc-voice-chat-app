@@ -18,11 +18,11 @@ const Seat: React.FC<SeatProps> = ({ name = "User", imageUrl, speaking = false, 
   return (
     <div className="relative flex items-center justify-center">
       <div className="rounded-full p-0 transition-all">
-        <Avatar className="h-16 w-16 sm:h-20 sm:w-20">
+        <Avatar className="h-16 w-16 sm:h-20 sm:w-20 border-0 shadow-none">
           {imageUrl ? (
             <AvatarImage src={imageUrl} alt={name} />
           ) : (
-            <AvatarFallback className="bg-violet-500/40 text-white">{name.slice(0, 1).toUpperCase()}</AvatarFallback>
+            <AvatarFallback className="bg-transparent text-white">{name.slice(0, 1).toUpperCase()}</AvatarFallback>
           )}
         </Avatar>
       </div>
