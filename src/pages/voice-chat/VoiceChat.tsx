@@ -18,7 +18,6 @@ import MicManager from "@/components/voice/MicManager";
 import MusicControlBar from "@/components/music/MusicControlBar";
 import { MusicPermissionsService } from "@/services/MusicPermissionsService";
 import ModeratorTools from "@/components/moderation/ModeratorTools";
-import ReportPanel from "@/components/moderation/ReportPanel";
 import MusicQueue from "@/components/music/MusicQueue";
 import EmojiPicker from "@/components/voice/EmojiPicker";
 import VoiceChatInputBar from "@/components/voice/VoiceChatInputBar";
@@ -430,7 +429,7 @@ const VoiceChat = () => {
       </div>
 
       {/* Bottom-left chat overlay */}
-      <div className="absolute left-4" style={{ bottom: "calc(env(safe-area-inset-bottom) + 120px)" }}>
+      <div className="absolute left-4 vc-chat-overlay-bottom">
         <ChatOverlay messages={messages} currentUserId={user?.id} roomId={id} />
       </div>
 
@@ -465,8 +464,7 @@ const VoiceChat = () => {
             MusicPermissionsService.getRole(id, user.id) === "moderator") && (
             <ModeratorTools roomId={id} userId={user.id} />
           )}
-          {/* Conditionally show reports */}
-          {showReports && <ReportPanel roomId={id} userId={user.id} />}
+          {/* Reports UI removed per design; no reports component rendered */}
         </div>
       )}
 

@@ -177,3 +177,10 @@
     width: 100%;
   }
 }
+
+/* Voice chat specific utilities */
+@layer components {
+  .vc-chat-overlay-bottom {
+    bottom: calc(env(safe-area-inset-bottom) + 120px);
+  }
+}

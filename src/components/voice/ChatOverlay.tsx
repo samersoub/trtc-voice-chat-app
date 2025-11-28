@@ -38,26 +38,24 @@ const ChatOverlay: React.FC<Props> = ({ messages, currentUserId, roomId }) => {
                   key={m.id}
                   className={`flex ${isSystem ? "justify-center" : isSelf ? "justify-end" : "justify-start"}`}
                 >
-                  <div
-                    className={[
-                      "max-w-[85%] px-3 py-2 rounded-2xl text-xs sm:text-sm",
-                      isSystem
-                        ? "bg-white/10 text-white/80 border border-white/20"
-                        : isSelf
-                        ? "bg-fuchsia-600/70 text-white border border-white/10"
-                        : "bg-white/15 text-white border border-white/20",
-                      "pointer-events-auto",
-                    ].join(" ")}
-                  >
-                    {isSystem ? (
-                      <span className="italic">System: {m.content}</span>
-                    ) : (
-                      <>
-                        <span className="font-semibold">{isSelf ? "You" : "User"}: </span>
-                        <span className="text-white/90">{m.content}</span>
-                      </>
-                    )}
-                  </div>
+                      {isSystem ? (
+                        <span className="italic text-white/80 text-xs sm:text-sm pointer-events-auto">System: {m.content}</span>
+                      ) : (
+                        <div
+                          className={[
+                            "max-w-[85%] px-3 py-2 rounded-2xl text-xs sm:text-sm",
+                            isSelf
+                              ? "bg-fuchsia-600/70 text-white border border-white/10"
+                              : "bg-white/15 text-white border border-white/20",
+                            "pointer-events-auto",
+                          ].join(" ")}
+                        >
+                          <>
+                            <span className="font-semibold">{isSelf ? "You" : "User"}: </span>
+                            <span className="text-white/90">{m.content}</span>
+                          </>
+                        </div>
+                      )}
                 </div>
               );
             })}
