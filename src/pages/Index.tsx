@@ -11,6 +11,10 @@ import LuxRoomsGrid from "@/components/discover/LuxRoomsGrid";
 import { useLocale } from "@/contexts";
 import { fetchActiveRooms } from "@/services/roomService";
 import { RoomData } from "@/models/RoomData";
+import { Button } from "@/components/ui/button";
+import { LogOut } from "lucide-react";
+import { AuthService } from "@/services/AuthService";
+import { showSuccess } from "@/utils/toast";
 
 const Index: React.FC = () => {
   const [rooms, setRooms] = React.useState<RoomData[]>([]);
@@ -40,6 +44,21 @@ const Index: React.FC = () => {
 
   return (
     <ChatLayout hideHeader>
+      <div className="sticky top-0 z-30 flex justify-end p-3 bg-white/70 backdrop-blur" dir="rtl">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => {
+            AuthService.logout();
+            showSuccess("Logged out");
+            navigate("/auth/login");
+          }}
+          className="shadow-sm"
+        >
+          <LogOut className="h-4 w-4" />
+          <span className="ml-2">Logout</span>
+        </Button>
+      </div>
       <div className="p-4 sm:p-6 max-w-6xl mx-auto space-y-4 pb-24 sm:pb-28" dir="rtl">
         <DiscoverHeader activeTab={activeTab} onTabChange={setActiveTab} />
         <LuxBannerCarousel />

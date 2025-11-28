@@ -2,7 +2,7 @@
 
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Home, MessageSquareText, Camera, Gamepad2, User2 } from "lucide-react";
+import { Home, MessageSquareText, Camera, Gamepad2, User2, Settings } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const items = [
@@ -11,10 +11,12 @@ const items = [
   { to: "/voice/create", label: "Create", icon: Camera, center: true },
   { to: "/hosts", label: "Games", icon: Gamepad2 },
   { to: "/profile", label: "Profile", icon: User2 },
+  { to: "/settings", label: "Settings", icon: Settings },
 ];
 
 const BottomTab: React.FC<{ visible?: boolean }> = ({ visible = true }) => {
   const loc = useLocation();
+  const colsClass = items.length === 5 ? "grid-cols-5" : items.length === 6 ? "grid-cols-6" : "grid-cols-5";
   return (
     <div
       className={cn(
@@ -25,7 +27,7 @@ const BottomTab: React.FC<{ visible?: boolean }> = ({ visible = true }) => {
       aria-hidden={!visible}
     >
       <div className="mx-auto w-full max-w-4xl bg-white/80 backdrop-blur border-t">
-        <div className="grid grid-cols-5 min-w-0">
+        <div className={cn("grid min-w-0", colsClass)}>
           {items.map(({ to, label, icon: Icon, center }) => {
             const active = loc.pathname === to;
             return (
