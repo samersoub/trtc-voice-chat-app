@@ -24,7 +24,7 @@ const RoomDetails = () => {
             <div className="text-sm text-muted-foreground">ID: {room.id}</div>
             <div className="text-sm">Participants: {room.participants.length}</div>
             <div className="flex gap-2 pt-2">
-              <Button onClick={() => nav(`/voice/rooms/${room.id}/join`)}>Join voice</Button>
+              <Button onClick={() => nav(`/voice/rooms/${room.id}/join?autoJoin=1`)}>Join voice</Button>
               <Button variant="outline" onClick={() => { VoiceChatService.deleteRoom(room.id); nav("/voice/rooms"); }}>
                 Delete
               </Button>

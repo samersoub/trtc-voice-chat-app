@@ -23,7 +23,7 @@ const RoomList = () => {
                 <div className="text-sm text-muted-foreground">{r.participants.length} participant(s)</div>
                 <div className="flex gap-2">
                   <Button asChild size="sm" variant="outline"><Link to={`/voice/rooms/${r.id}`}>Details</Link></Button>
-                  <Button asChild size="sm"><Link to={`/voice/rooms/${r.id}/join`}>Join</Link></Button>
+                  <Button asChild size="sm"><Link to={`/voice/rooms/${r.id}/join?autoJoin=1`}>Join</Link></Button>
                 </div>
               </CardContent>
             </Card>

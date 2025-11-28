@@ -48,7 +48,7 @@ const Index: React.FC = () => {
         <LuxRoomsGrid
           rooms={rooms}
           filter={selectedTag}
-          onEnter={(roomId) => navigate(`/voice/rooms/${roomId}/join`)}
+          onEnter={(roomId) => navigate(`/voice/rooms/${roomId}/join?autoJoin=1`)}
         />
       </div>
     </ChatLayout>
