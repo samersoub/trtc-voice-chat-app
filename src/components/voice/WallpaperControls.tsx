@@ -24,7 +24,7 @@ const WallpaperControls: React.FC<Props> = ({
   onJoinTRTC,
 }) => {
   return (
-    <div className="absolute top-4 right-4 flex items-center gap-2">
+    <div className="absolute top-4 right-4 hidden sm:flex items-center gap-2">
       <Button
         variant="outline"
         className="h-10 w-10 rounded-full bg-white/15 text-white border-white/30 hover:bg-white/25 p-0"

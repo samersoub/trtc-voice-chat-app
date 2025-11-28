@@ -16,7 +16,6 @@ import { AuthService } from "@/services/AuthService";
 import { VoiceChatService } from "@/services/VoiceChatService";
 import MicManager from "@/components/voice/MicManager";
 import MusicControlBar from "@/components/music/MusicControlBar";
-import SongRequestPanel from "@/components/music/SongRequestPanel";
 import { MusicPermissionsService } from "@/services/MusicPermissionsService";
 import ModeratorTools from "@/components/moderation/ModeratorTools";
 import ReportPanel from "@/components/moderation/ReportPanel";
@@ -33,6 +32,7 @@ import { useMicControl } from "@/hooks/useMicControl";
 import { mapSeatsToGuests } from "@/utils/voiceSeats";
 import RoomTitlePill from "@/components/voice/RoomTitlePill";
 import { ChatRoom } from "@/models/ChatRoom";
+import MobileActionsSheet from "@/components/voice/MobileActionsSheet";
 
 const VoiceChat = () => {
   const { id } = useParams<{ id: string }>();
@@ -162,11 +162,51 @@ const VoiceChat = () => {
         }
       } catch {}
     }
-    // Use hook cleanup for mic
     stopMic();
     trtcLeave();
     navigate("/");
   };
+
+  // Shared mic handlers for header and mobile actions
+  const handleTakeMic = () => {
+    try {
+      if (!id) return;
+      const updated = MicService.putOnMic(id, user?.id || "you", user?.name || "You");
+      setSeatsState([...updated]);
+      showSuccess("You took a mic");
+    } catch (e: any) {
+      showError(e.message || "Unable to take mic");
+    }
+  };
+
+  const handleLeaveMic = () => {
+    try {
+      if (!id) return;
+      const updated = MicService.leaveMic(id, user?.id || "you");
+      setSeatsState([...updated]);
+      stopMic();
+      showSuccess("Left mic");
+    } catch (e: any) {
+      showError(e.message || "Unable to leave mic");
+    }
+  };
+
+  // Toast when participants join/leave (fix visibility of visitors entering)
+  const prevParticipantsRef = React.useRef<string[] | null>(null);
+  React.useEffect(() => {
+    if (!roomState) return;
+    const curr = roomState.participants ?? [];
+    const prev = prevParticipantsRef.current;
+    if (prev === null) {
+      prevParticipantsRef.current = curr;
+      return; // skip to avoid spamming on first render
+    }
+    const joined = curr.filter((uid) => !prev.includes(uid));
+    const left = prev.filter((uid) => !curr.includes(uid));
+    joined.forEach((uid) => showSuccess(`${uid} joined the room`));
+    left.forEach((uid) => showSuccess(`${uid} left the room`));
+    prevParticipantsRef.current = curr;
+  }, [roomState]);
 
   if (loading) {
     return (
@@ -224,27 +264,8 @@ const VoiceChat = () => {
         roomTitle={roomTitle}
         roomId={id}
         onExit={handleExitRoom}
-        onTakeMic={() => {
-          try {
-            if (!id) return;
-            const updated = MicService.putOnMic(id, user?.id || "you", user?.name || "You");
-            setSeatsState([...updated]);
-            showSuccess("You took a mic");
-          } catch (e: any) {
-            showSuccess(e.message || "Unable to take mic");
-          }
-        }}
-        onLeaveMic={() => {
-          try {
-            if (!id) return;
-            const updated = MicService.leaveMic(id, user?.id || "you");
-            setSeatsState([...updated]);
-            stopMic();
-            showSuccess("Left mic");
-          } catch (e: any) {
-            showSuccess(e.message || "Unable to leave mic");
-          }
-        }}
+        onTakeMic={handleTakeMic}
+        onLeaveMic={handleLeaveMic}
       />
 
       {/* Wallpaper + recording controls */}
@@ -270,6 +291,39 @@ const VoiceChat = () => {
           showSuccess("Submitted for review");
         }}
         subscribeMode={subscribeMode}
+        onToggleSubscribeMode={() => {
+          setSubscribeMode((m) => (m === "auto" ? "manual" : "auto"));
+          showSuccess(`Subscription mode: ${subscribeMode === "auto" ? "manual" : "auto"}`);
+        }}
+        onJoinTRTC={() => trtcJoin(user?.id)}
+      />
+
+      {/* Mobile actions (sm:hidden) */}
+      <MobileActionsSheet
+        micOn={micOnHook}
+        onTakeMic={handleTakeMic}
+        onLeaveMic={handleLeaveMic}
+        wallpaper={wallpaper}
+        subscribeMode={subscribeMode}
+        onToggleWallpaper={() =>
+          setWallpaper((w) => (w === "royal" ? "nebula" : w === "nebula" ? "galaxy" : "royal"))
+        }
+        onToggleRecording={() => {
+          if (!id) return;
+          const status = RecordingService.status(id);
+          if (!status.active) {
+            RecordingService.start(id, "companion");
+            showSuccess("Recording started (companion)");
+          } else {
+            RecordingService.stop(id);
+            showSuccess("Recording stopped");
+          }
+        }}
+        onSubmitReview={() => {
+          if (!id) return;
+          RecordingService.submitForReview(id);
+          showSuccess("Submitted for review");
+        }}
         onToggleSubscribeMode={() => {
           setSubscribeMode((m) => (m === "auto" ? "manual" : "auto"));
           showSuccess(`Subscription mode: ${subscribeMode === "auto" ? "manual" : "auto"}`);
@@ -342,7 +396,7 @@ const VoiceChat = () => {
 
       {/* Music controls and requests */}
       {id && user?.id && (
-        <div className="absolute right-4 top-24 space-y-3">
+        <div className="absolute right-4 top-24 space-y-3 hidden sm:block">
           {(MusicPermissionsService.getRole(id, user.id) === "owner" ||
             MusicPermissionsService.getRole(id, user.id) === "moderator") && (
             <ModeratorTools roomId={id} userId={user.id} />
