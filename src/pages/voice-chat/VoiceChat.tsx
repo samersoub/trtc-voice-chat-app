@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { useSearchParams } from "react-router-dom";
 import SeatingNine from "@/components/voice/SeatingNine";
 import ChatOverlay from "@/components/voice/ChatOverlay";
 import ControlBar from "@/components/voice/ControlBar";
@@ -34,6 +35,7 @@ import { mapSeatsToGuests } from "@/utils/voiceSeats";
 const VoiceChat = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
 
   const [loading, setLoading] = useState(true);
   const [micOn, setMicOn] = useState(false);
@@ -42,6 +44,9 @@ const VoiceChat = () => {
   const [activeGift, setActiveGift] = useState<GiftItem | null>(null);
   const [subscribeMode, setSubscribeMode] = useState<"auto" | "manual">("auto");
   const [emojiOpen, setEmojiOpen] = useState(false);
+
+  // ADDED: detect autoJoin query param
+  const autoJoin = searchParams.get("autoJoin") === "1";
 
   // ADDED: Messages state for ChatOverlay
   const [messages, setMessages] = useState<Message[]>([]);
@@ -92,10 +97,26 @@ const VoiceChat = () => {
     return () => unsubscribe();
   }, [id]);
 
+  // ADDED: automatically join TRTC if autoJoin flag is present
   React.useEffect(() => {
-    const t = setTimeout(() => setLoading(false), 3000);
-    return () => clearTimeout(t);
-  }, []);
+    if (!id || !user?.id || !autoJoin) return;
+    const connect = async () => {
+      try {
+        await trtcJoin(user.id);
+        showSuccess("Connected to voice room");
+      } catch (e: any) {
+        showError(e?.message || "Failed to connect to voice engine");
+      }
+    };
+    void connect();
+  }, [id, user?.id, autoJoin, trtcJoin]);
+
+  React.useEffect(() => {
+    const t = autoJoin ? null : setTimeout(() => setLoading(false), 3000);
+    // If autoJoin, skip the artificial delay for smoother entry
+    if (autoJoin) setLoading(false);
+    return () => { if (t) clearTimeout(t); };
+  }, [autoJoin]);
 
   const handleExitRoom = () => {
     if (id && user?.id) {

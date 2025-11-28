@@ -12,6 +12,7 @@ const CreateRoom = () => {
   const nav = useNavigate();
   const [name, setName] = useState("");
   const [isPrivate, setIsPrivate] = useState(false);
+  const [creating, setCreating] = useState(false);
 
   return (
     <ChatLayout title="Create Room">
@@ -26,16 +27,27 @@ const CreateRoom = () => {
             </label>
             <Button
               className="w-full"
-              onClick={() => {
-                const user = AuthService.getCurrentUser();
-                if (!user) { showError("Please login first"); return; }
-                if (!name.trim()) { showError("Room name is required"); return; }
-                const room = VoiceChatService.createRoom(name.trim(), isPrivate, user.id);
-                showSuccess("Room created");
-                nav(`/voice/rooms/${room.id}`);
+              disabled={creating}
+              onClick={async () => {
+                if (creating) return;
+                setCreating(true);
+                try {
+                  const user = AuthService.getCurrentUser();
+                  if (!user) { showError("Please login first"); return; }
+                  if (!name.trim()) { showError("Room name is required"); return; }
+                  const room = VoiceChatService.createRoom(name.trim(), isPrivate, user.id);
+                  showSuccess("Room created. Connecting...");
+                  // Navigate with autoJoin flag for automatic voice engine login
+                  nav(`/voice/rooms/${room.id}?autoJoin=1`);
+                } catch (e: any) {
+                  // Emergency handling: surface any unexpected errors
+                  showError(e?.message || "Failed to create room. Please try again.");
+                } finally {
+                  setCreating(false);
+                }
               }}
             >
-              Create
+              {creating ? "Creating..." : "Create"}
             </Button>
           </CardContent>
         </Card>
