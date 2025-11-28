@@ -8,7 +8,6 @@ import LuxBannerCarousel from "@/components/discover/LuxBannerCarousel";
 import ArabicQuickActions from "@/components/discover/ArabicQuickActions";
 import FilterTagsBar from "@/components/discover/FilterTagsBar";
 import LuxRoomsGrid from "@/components/discover/LuxRoomsGrid";
-import BottomTab from "@/components/mobile/BottomTab";
 import { useLocale } from "@/contexts";
 import { fetchActiveRooms } from "@/services/roomService";
 import { RoomData } from "@/models/RoomData";

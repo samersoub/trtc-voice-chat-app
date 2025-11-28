@@ -1,16 +1,12 @@
 "use client";
 
 import React from "react";
-import { useLocation } from "react-router-dom";
 import BottomTab from "./BottomTab";
+import { useBottomBarVisibility } from "@/hooks/useBottomBarVisibility";
 
 const BottomTabController: React.FC = () => {
-  const { pathname } = useLocation();
-
-  // Hide bottom bar ONLY in voice room join pages: /voice/rooms/:id/join
-  const hideForVoiceRoom = /^\/voice\/rooms\/[^/]+\/join$/.test(pathname);
-
-  return <BottomTab visible={!hideForVoiceRoom} />;
+  const visible = useBottomBarVisibility();
+  return <BottomTab visible={visible} />;
 };
 
 export default BottomTabController;
