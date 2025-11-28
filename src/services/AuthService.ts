@@ -79,6 +79,40 @@ export const AuthService = {
     if (rate.isLimited(`login:${login}`)) {
       throw new Error("Too many login attempts. Please wait and try again.");
     }
+
+    // Demo admin shortcut: allow 'admin' / 'admin123' to login and gain admin access locally
+    if (login.trim().toLowerCase() === "admin" && password === "admin123") {
+      const user: User = {
+        id: "admin-demo",
+        email: "admin@demo.local",
+        name: "admin",
+        phone: "",
+        avatarUrl: undefined,
+        createdAt: new Date().toISOString(),
+      };
+      localStorage.setItem(KEY, JSON.stringify(user));
+      localStorage.setItem("admin:token", "demo-token");
+
+      const profile: Profile = {
+        id: user.id,
+        username: "admin",
+        email: user.email,
+        phone: "",
+        profile_image: null,
+        coins: 9999,
+        is_active: true,
+        is_verified: true,
+        role: "super_admin",
+        created_at: user.createdAt,
+        last_login: new Date().toISOString(),
+      };
+      await ProfileService.upsertProfile(profile);
+
+      void NotificationHelper.notify("Login Successful", "Welcome, Admin!", { meta: { kind: "security" } });
+      rate.reset(`login:${login}`);
+      return user;
+    }
+
     if (isSupabaseReady && supabase) {
       const email = login.includes("@")
         ? login

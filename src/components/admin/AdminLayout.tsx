@@ -36,6 +36,11 @@ const AdminLayout: React.FC<{ children: React.ReactNode; title?: string }> = ({ 
       nav("/admin/login");
       return;
     }
+    // Bypass RBAC when using the demo token
+    if (token === "demo-token") {
+      return;
+    }
+
     // RBAC: allow admin or super_admin
     const u = AuthService.getCurrentUser();
     if (!u) return;
