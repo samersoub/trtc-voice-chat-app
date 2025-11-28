@@ -32,6 +32,7 @@ import { useTrtc } from "@/hooks/useTrtc";
 import { useMicControl } from "@/hooks/useMicControl";
 import { mapSeatsToGuests } from "@/utils/voiceSeats";
 import RoomTitlePill from "@/components/voice/RoomTitlePill";
+import { ChatRoom } from "@/models/ChatRoom";
 
 const VoiceChat = () => {
   const { id } = useParams<{ id: string }>();
@@ -61,12 +62,12 @@ const VoiceChat = () => {
   const user = AuthService.getCurrentUser();
   const roomSeats = React.useMemo(() => (id ? MicService.getSeats(id) : []), [id]);
   const [seatsState, setSeatsState] = useState(roomSeats);
-  const room = id ? VoiceChatService.getRoom(id) : undefined;
-  const roomTitle = room?.name || "Room";
-  const hostId = room?.hostId;
+  const [roomState, setRoomState] = useState<ChatRoom | undefined>(id ? VoiceChatService.getRoom(id) : undefined);
+  const roomTitle = roomState?.name || "Room";
+  const hostId = roomState?.hostId;
   const hostName = hostId === user?.id ? user?.name || "You" : "Host";
   const isHost = !!(id && user && hostId === user.id);
-  const participantsCount = room?.participants?.length ?? 0;
+  const participantsCount = roomState?.participants?.length ?? 0;
 
   // Join on mount, leave on unmount, destroy when empty
   React.useEffect(() => {
@@ -91,6 +92,38 @@ const VoiceChat = () => {
 
   // Map seats into 8 guest seats via utility
   const guestSeats = React.useMemo(() => mapSeatsToGuests(seatsState), [seatsState]);
+
+  // ADDED: reactive updates for roomState (participants, etc.)
+  React.useEffect(() => {
+    if (!id) return;
+    const update = () => setRoomState(VoiceChatService.getRoom(id));
+    update();
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === "voice:rooms") update();
+    };
+    window.addEventListener("storage", onStorage);
+    const interval = setInterval(update, 1000);
+    return () => {
+      window.removeEventListener("storage", onStorage);
+      clearInterval(interval);
+    };
+  }, [id]);
+
+  // ADDED: announce join and leave as system messages to the chat overlay
+  const joinAnnouncedRef = React.useRef(false);
+  React.useEffect(() => {
+    if (!id || !user?.id || joinAnnouncedRef.current) return;
+    LocalChatService.send(id, user.id, `${user?.name || "User"} entered the room`, "system");
+    joinAnnouncedRef.current = true;
+  }, [id, user?.id]);
+
+  React.useEffect(() => {
+    return () => {
+      if (id && user?.id) {
+        LocalChatService.send(id, user.id, `${user?.name || "User"} left the room`, "system");
+      }
+    };
+  }, [id, user?.id]);
 
   React.useEffect(() => {
     // ADDED: Subscribe to local chat messages for this room
@@ -245,12 +278,12 @@ const VoiceChat = () => {
       />
 
       {/* Center seating: Host + 8 guests inside a glass stage frame */}
-      <div className="flex items-center justify-center pt-20 pb-32 px-6">
+      <div className="flex items-center justify-center pt-16 sm:pt-20 pb-28 sm:pb-32 px-3 sm:px-6">
         <div className="w-full max-w-4xl">
-          <div className="rounded-3xl border border-white/20 bg-white/10 backdrop-blur-md shadow-xl p-6 sm:p-8">
+          <div className="rounded-3xl border border-white/20 bg-white/10 backdrop-blur-md shadow-xl p-4 sm:p-8">
             <SeatingNine
               hostName={hostName}
-              hostFlagCode={room?.name ? undefined : undefined}
+              hostFlagCode={roomState?.name ? undefined : undefined}
               guests={guestSeats}
               onClickGuest={(displayIndex, seat) => {
                 if (!id) return;
@@ -310,9 +343,6 @@ const VoiceChat = () => {
       {/* Music controls and requests */}
       {id && user?.id && (
         <div className="absolute right-4 top-24 space-y-3">
-          <MusicControlBar roomId={id} userId={user.id} />
-          <SongRequestPanel roomId={id} userId={user.id} />
-          <MusicQueue roomId={id} userId={user.id} />
           {(MusicPermissionsService.getRole(id, user.id) === "owner" ||
             MusicPermissionsService.getRole(id, user.id) === "moderator") && (
             <ModeratorTools roomId={id} userId={user.id} />
