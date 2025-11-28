@@ -16,41 +16,40 @@ const ControlBar: React.FC<ControlBarProps> = ({ micOn, onToggleMic, onOpenChat,
   return (
     <div className="fixed bottom-0 left-0 right-0 z-20">
       <div className="mx-auto max-w-4xl px-4 pb-6" style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 1rem)" }}>
-        <div className="flex items-center justify-center gap-4 bg-black/30 backdrop-blur rounded-full p-2 border border-white/10 flex-wrap">
+        <div className="flex items-center justify-center gap-4 bg-transparent rounded-full p-2 flex-wrap">
           <Button
-            variant="ghost"
-            className="text-white hover:bg-white/10"
+            variant="outline"
+            className="h-12 w-12 rounded-full bg-white/15 text-white border-white/30 hover:bg-white/25 p-0"
             onClick={onOpenChat}
             title="Chat"
           >
-            <Keyboard className="h-5 w-5" />
+            <Keyboard className="h-6 w-6" />
           </Button>
 
           <Button
             variant={micOn ? "default" : "destructive"}
-            className="bg-purple-600 hover:bg-purple-700 text-white"
+            className={`h-12 w-12 rounded-full p-0 text-white border-white/30 ${micOn ? "bg-purple-600 hover:bg-purple-700" : "bg-rose-600 hover:bg-rose-700"}`}
             onClick={onToggleMic}
             title={micOn ? "Mic On" : "Mic Off"}
           >
-            {micOn ? <Mic className="h-5 w-5" /> : <MicOff className="h-5 w-5" />}
+            {micOn ? <Mic className="h-6 w-6" /> : <MicOff className="h-6 w-6" />}
           </Button>
 
           <Button
-            className="bg-gradient-to-r from-pink-500 to-rose-600 text-white hover:from-pink-600 hover:to-rose-700 shadow-lg px-6"
+            className="h-12 w-12 rounded-full p-0 bg-gradient-to-r from-pink-500 to-rose-600 text-white hover:from-pink-600 hover:to-rose-700 shadow-lg"
             onClick={onSendGift}
             title="Send Gift"
           >
-            <Gift className="h-5 w-5 mr-2" />
-            Gift
+            <Gift className="h-6 w-6" />
           </Button>
 
           <Button
-            variant="ghost"
-            className="text-white hover:bg-white/10"
+            variant="outline"
+            className="h-12 w-12 rounded-full bg-white/15 text-white border-white/30 hover:bg-white/25 p-0"
             onClick={onEmoji}
             title="Emoji"
           >
-            <Smile className="h-5 w-5" />
+            <Smile className="h-6 w-6" />
           </Button>
         </div>
       </div>

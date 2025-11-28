@@ -18,15 +18,19 @@ const Seat: React.FC<SeatProps> = ({ name = "User", imageUrl, speaking = false, 
     <div className="relative flex items-center justify-center">
       <div
         className={cn(
-          "rounded-full p-1 transition-all",
-          speaking ? "ring-2 ring-emerald-400 animate-pulse" : muted ? "ring-2 ring-gray-400" : "ring-2 ring-transparent"
+          "rounded-full p-1 transition-all bg-white/5 backdrop-blur-sm",
+          speaking
+            ? "ring-2 ring-fuchsia-400 shadow-[0_0_0_4px_rgba(236,72,153,0.25)] animate-[pulse_1.5s_ease_in_out_infinite]"
+            : muted
+            ? "ring-2 ring-white/40"
+            : "ring-2 ring-white/20"
         )}
       >
-        <Avatar className="h-16 w-16 sm:h-20 sm:w-20 border-2 border-white/20 shadow-lg">
+        <Avatar className="h-16 w-16 sm:h-20 sm:w-20 border-2 border-white/25 shadow-lg">
           {imageUrl ? (
             <AvatarImage src={imageUrl} alt={name} />
           ) : (
-            <AvatarFallback className="bg-purple-500/30 text-white">{name.slice(0, 1).toUpperCase()}</AvatarFallback>
+            <AvatarFallback className="bg-violet-500/40 text-white">{name.slice(0, 1).toUpperCase()}</AvatarFallback>
           )}
         </Avatar>
       </div>

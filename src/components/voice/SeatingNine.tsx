@@ -60,20 +60,11 @@ const SeatingNine: React.FC<SeatingNineProps> = ({
       <div
         className={cn(
           "relative flex flex-col items-center justify-center",
-          "rounded-2xl p-3 bg-black/20 border border-yellow-500/30 shadow-lg"
+          "rounded-2xl p-4 bg-white/10 border border-yellow-500/30 shadow-lg backdrop-blur"
         )}
       >
-        <div
-          className="cursor-pointer"
-          onClick={onClickHost}
-        >
-          <Seat
-            name={hostName}
-            imageUrl={hostAvatarUrl}
-            speaking={false}
-            muted={false}
-            locked={false}
-          />
+        <div className="cursor-pointer" onClick={onClickHost}>
+          <Seat name={hostName} imageUrl={hostAvatarUrl} speaking={false} muted={false} locked={false} />
         </div>
 
         {/* Host info badges under seat */}
@@ -99,11 +90,11 @@ const SeatingNine: React.FC<SeatingNineProps> = ({
                 <button
                   type="button"
                   onClick={() => onClickGuest?.(seat.index, seat)}
-                  className="flex flex-col items-center justify-center h-24 w-24 sm:h-28 sm:w-28 rounded-xl bg-black/20 border border-white/20 hover:bg-black/30 transition-colors"
+                  className="relative flex items-center justify-center h-24 w-24 sm:h-28 sm:w-28 rounded-full bg-white/15 border border-white/30 hover:bg-white/25 transition-colors backdrop-blur"
                   aria-label={`Take seat ${seat.index}`}
                 >
-                  <Plus className="h-8 w-8 text-white/80" />
-                  <div className="mt-1 text-xs text-white/70">Seat {seat.index}</div>
+                  <Plus className="h-9 w-9 text-white/85" />
+                  <span className="absolute -bottom-5 text-xs text-white/80"> {seat.index} </span>
                 </button>
               ) : (
                 <button
@@ -112,12 +103,8 @@ const SeatingNine: React.FC<SeatingNineProps> = ({
                   className="cursor-pointer"
                   aria-label={`Seat ${seat.index} • ${seat.name ?? "Guest"}`}
                 >
-                  <Seat
-                    name={seat.name || "Guest"}
-                    speaking={!!seat.speaking}
-                    muted={!!seat.muted}
-                    locked={!!seat.locked}
-                  />
+                  <Seat name={seat.name || "Guest"} speaking={!!seat.speaking} muted={!!seat.muted} locked={!!seat.locked} />
+                  <div className="mt-1 text-[11px] text-white/75 text-center">{seat.index}</div>
                 </button>
               )}
             </div>

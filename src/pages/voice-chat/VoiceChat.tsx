@@ -153,10 +153,17 @@ const VoiceChat = () => {
       <div className="absolute inset-0 -z-10">
         {wallpaper === "royal" && (
           <>
-            <div className="absolute inset-0 bg-gradient-to-br from-[#2E0249] via-[#570A57] to-[#9333ea]" />
-            <div className="absolute -top-20 -left-20 h-64 w-64 bg-fuchsia-500/20 blur-3xl rounded-full animate-pulse" />
-            <div className="absolute bottom-0 right-0 h-80 w-80 bg-indigo-500/20 blur-3xl rounded-full animate-pulse" />
-            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(255,255,255,0.08),transparent_60%)]" />
+            {/* Background image from attachment */}
+            <img
+              src="/wallpapers/arabic-voice-room.jpeg"
+              alt="Voice room wallpaper"
+              className="absolute inset-0 h-full w-full object-cover"
+            />
+            {/* Soft purple overlay to enhance readability */}
+            <div className="absolute inset-0 bg-gradient-to-br from-violet-700/50 via-fuchsia-600/40 to-purple-700/40 mix-blend-multiply" />
+            {/* Gentle glow accents */}
+            <div className="absolute -top-20 -left-20 h-64 w-64 bg-fuchsia-400/20 blur-3xl rounded-full animate-pulse" />
+            <div className="absolute bottom-0 right-0 h-80 w-80 bg-indigo-400/20 blur-3xl rounded-full animate-pulse" />
           </>
         )}
         {wallpaper === "nebula" && (

@@ -21,12 +21,12 @@ const ChatOverlay: React.FC<Props> = ({ messages, currentUserId }) => {
     <div className="pointer-events-none">
       <div
         ref={ref}
-        className="w-[92vw] sm:w-[380px] max-h-[30vh] overflow-y-auto bg-black/30 backdrop-blur rounded-lg p-3 border border-white/10"
+        className="w-[92vw] sm:w-[380px] max-h-[30vh] overflow-y-auto bg-violet-700/30 backdrop-blur-md rounded-xl p-3 border border-violet-200/30 shadow-lg"
       >
         <ScrollArea className="h-full">
           <div className="space-y-2">
             {messages.map((m) => (
-              <div key={m.id} className="text-xs sm:text-sm text-white/90">
+              <div key={m.id} className="text-xs sm:text-sm text-white">
                 <span className="font-semibold">
                   {m.type === "system"
                     ? "System"
@@ -35,7 +35,7 @@ const ChatOverlay: React.FC<Props> = ({ messages, currentUserId }) => {
                     : "User"}
                   :{" "}
                 </span>
-                <span className="text-white/80">{m.content}</span>
+                <span className="text-white/90">{m.content}</span>
               </div>
             ))}
           </div>
