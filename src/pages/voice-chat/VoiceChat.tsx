@@ -24,6 +24,8 @@ import VoiceChatInputBar from "@/components/voice/VoiceChatInputBar";
 import { LocalChatService } from "@/services/LocalChatService";
 import { Message } from "@/models/Message";
 import VoiceHeader from "@/components/voice/VoiceHeader";
+import { useContext } from "react";
+import { ThemeContext } from "@/contexts/ThemeContext";
 import WallpaperControls from "@/components/voice/WallpaperControls";
 import TrtcDebugPlayers from "@/components/trtc/TrtcDebugPlayers";
 import { useTrtc } from "@/hooks/useTrtc";
@@ -287,19 +289,23 @@ const VoiceChat = () => {
     );
   }
 
+  const { isDarkTheme } = useContext(ThemeContext);
+
   return (
-    <div className="relative min-h-screen w-full overflow-hidden">
+    <div className={`${isDarkTheme ? "dark-theme" : "light-theme"} relative min-h-screen w-full overflow-hidden`}>
       {/* Hidden audio element for local mic preview */}
       <audio ref={audioRef} className="hidden" />
 
       {/* TRTC debug players */}
       <TrtcDebugPlayers localStream={localStream} remoteStreams={remoteStreams} />
 
-      {/* Background: solid dark color */}
-      <div className="absolute inset-0 -z-10 bg-[#1a1a1a]"></div>
+      {/* Background: subtle gradient */}
+      <div className="absolute inset-0 -z-10 vc-bg-gradient" />
 
-      {/* Centered title pill */}
-      <RoomTitlePill title={roomTitle} count={participantsCount} />
+      {/* Centered title pill (shifted slightly right) */}
+      <div className="absolute top-6 left-[60%] transform -translate-x-1/2">
+        <RoomTitlePill title={roomTitle} count={participantsCount} />
+      </div>
 
       {/* Room user list (firestore live data) */}
       <div className="absolute right-4 top-24 hidden md:block z-40">
@@ -404,9 +410,9 @@ const VoiceChat = () => {
       />
 
       {/* Center seating: Host + 8 guests inside a glass stage frame */}
-      <div className="flex items-center justify-center pt-16 sm:pt-20 pb-28 sm:pb-32 px-3 sm:px-6">
-        <div className="w-full max-w-4xl">
-          <div className="rounded-3xl border border-white/20 bg-white/10 backdrop-blur-md shadow-xl p-4 sm:p-8">
+      <div className="flex items-center justify-center relative -top-12 pt-6 sm:pt-8 pb-12 sm:pb-16 px-3 sm:px-6">
+        <div className="w-full max-w-3xl">
+          <div className="rounded-3xl border border-white/10 bg-transparent backdrop-blur-md shadow-md p-3 sm:p-6">
             <SeatingNine
               hostName={hostName}
               hostFlagCode={roomState?.name ? undefined : undefined}
@@ -438,9 +444,11 @@ const VoiceChat = () => {
         </div>
       </div>
 
-      {/* Bottom-left chat overlay */}
-      <div className="absolute left-4 vc-chat-overlay-bottom">
-        <ChatOverlay messages={messages} currentUserId={user?.id} roomId={id} />
+      {/* Chat overlay bounded between seats and input (no overlap) */}
+      <div className="vc-chat-overlay-bounds">
+        <div className="w-[92vw] sm:w-[420px]">
+          <ChatOverlay messages={messages} currentUserId={user?.id} roomId={id} />
+        </div>
       </div>
 
       {/* Bottom control bar */}

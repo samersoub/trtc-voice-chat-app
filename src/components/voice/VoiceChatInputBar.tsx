@@ -36,13 +36,9 @@ const VoiceChatInputBar: React.FC<VoiceChatInputBarProps> = ({ roomId, senderId,
   };
 
   return (
-    <div
-      className="fixed left-0 right-0 z-30"
-      style={{ bottom: "calc(env(safe-area-inset-bottom) + 76px)" }}
-      aria-live="polite"
-    >
-      <div className="mx-auto max-w-4xl px-4">
-        <div className="bg-violet-700/30 backdrop-blur-md border border-violet-200/30 rounded-full shadow-lg p-2 flex items-center gap-2">
+    <div className="fixed z-30 vc-input-bottom-safe left-1/2 transform -translate-x-[33%]" aria-live="polite">
+      <div className="mx-0 max-w-md w-2/3 px-4">
+        <div className="flex items-center gap-2">
           <Input
             ref={inputRef as any}
             value={text}

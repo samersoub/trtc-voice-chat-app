@@ -66,7 +66,15 @@ const SeatingNine: React.FC<SeatingNineProps> = ({
         )}
       >
         <div className="cursor-pointer" onClick={onClickHost}>
-          <Seat name={hostName} imageUrl={hostAvatarUrl} speaking={false} muted={false} locked={false} showFrame={showFrame} />
+          <Seat
+            name={hostName}
+            imageUrl={hostAvatarUrl}
+            speaking={false}
+            muted={false}
+            locked={false}
+            showFrame={showFrame}
+            avatarClassName={"h-10 w-10 sm:h-10 sm:w-10"}
+          />
         </div>
 
         {/* Host info badges under seat */}
@@ -92,11 +100,11 @@ const SeatingNine: React.FC<SeatingNineProps> = ({
                 <button
                   type="button"
                   onClick={() => onClickGuest?.(seat.index, seat)}
-                  className="relative flex items-center justify-center h-24 w-24 sm:h-28 sm:w-28 rounded-full bg-white/15 border border-white/30 hover:bg-white/25 transition-colors backdrop-blur"
+                  className="relative flex items-center justify-center h-12 w-12 sm:h-12 sm:w-12 rounded-full bg-white/10 border border-white/20 hover:bg-white/20 transition-colors backdrop-blur"
                   aria-label={`Take seat ${seat.index}`}
                 >
-                  <Plus className="h-9 w-9 text-white/85" />
-                  <span className="absolute -bottom-5 text-xs text-white/80"> {seat.index} </span>
+                  <Plus className="h-4 w-4 text-white/85" />
+                  <span className="absolute -bottom-4 text-[10px] text-white/80"> {seat.index} </span>
                 </button>
               ) : (
                 <button
@@ -106,7 +114,7 @@ const SeatingNine: React.FC<SeatingNineProps> = ({
                   aria-label={`Seat ${seat.index} • ${seat.name ?? "Guest"}`}
                 >
                   <Seat name={seat.name || "Guest"} speaking={!!seat.speaking} muted={!!seat.muted} locked={!!seat.locked} showFrame={showFrame} />
-                  <div className="mt-1 text-[11px] text-white/75 text-center">{seat.index}</div>
+                  <div className="mt-1 text-[10px] text-white/75 text-center">{seat.index}</div>
                 </button>
               )}
             </div>

@@ -23,13 +23,10 @@ const ChatOverlay: React.FC<Props> = ({ messages, currentUserId, roomId }) => {
   const formatted = settings?.chatFormatting === "formatted";
 
   return (
-    <div className="pointer-events-none">
-      <div
-        ref={ref}
-        className={formatted ? "w-[92vw] sm:w-[420px] max-h-[36vh] overflow-y-auto bg-gradient-to-br from-black/30 to-violet-700/30 backdrop-blur-md rounded-xl p-3 border border-violet-200/20 shadow-lg" : "w-[92vw] sm:w-[380px] max-h-[30vh] overflow-y-auto bg-violet-700/30 backdrop-blur-md rounded-xl p-3 border border-violet-200/30 shadow-lg"}
-      >
+    <div className="pointer-events-none h-full w-full relative z-50">
+      <div ref={ref} className="h-full w-full overflow-y-auto hide-scrollbar">
         <ScrollArea className="h-full">
-          <div className="space-y-2">
+          <div className="space-y-2 px-0 py-2">
             {messages.map((m) => {
               const isSystem = m.type === "system";
               const isSelf = !isSystem && m.senderId === currentUserId;
@@ -38,24 +35,16 @@ const ChatOverlay: React.FC<Props> = ({ messages, currentUserId, roomId }) => {
                   key={m.id}
                   className={`flex ${isSystem ? "justify-center" : isSelf ? "justify-end" : "justify-start"}`}
                 >
-                      {isSystem ? (
-                        <span className="italic text-white/80 text-xs sm:text-sm pointer-events-auto">System: {m.content}</span>
-                      ) : (
-                        <div
-                          className={[
-                            "max-w-[85%] px-3 py-2 rounded-2xl text-xs sm:text-sm",
-                            isSelf
-                              ? "bg-fuchsia-600/70 text-white border border-white/10"
-                              : "bg-white/15 text-white border border-white/20",
-                            "pointer-events-auto",
-                          ].join(" ")}
-                        >
-                          <>
-                            <span className="font-semibold">{isSelf ? "You" : "User"}: </span>
-                            <span className="text-white/90">{m.content}</span>
-                          </>
-                        </div>
-                      )}
+                  {isSystem ? (
+                    <span className="italic text-white/80 text-xs sm:text-sm pointer-events-auto">System: {m.content}</span>
+                  ) : (
+                    <div className={["max-w-[85%] text-xs sm:text-sm text-white/90", "pointer-events-auto"].join(" ")}>
+                      <>
+                        <span className="font-semibold">{isSelf ? "You" : "User"}: </span>
+                        <span className="text-white/90">{m.content}</span>
+                      </>
+                    </div>
+                  )}
                 </div>
               );
             })}

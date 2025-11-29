@@ -12,13 +12,15 @@ type SeatProps = {
   muted?: boolean;
   locked?: boolean;
   showFrame?: boolean;
+  avatarClassName?: string;
 };
 
-const Seat: React.FC<SeatProps> = ({ name = "User", imageUrl, speaking = false, muted = false, locked = false, showFrame = true }) => {
+const Seat: React.FC<SeatProps> = ({ name = "User", imageUrl, speaking = false, muted = false, locked = false, showFrame = true, avatarClassName }) => {
   return (
     <div className="relative flex items-center justify-center">
       <div className="rounded-full p-0 transition-all">
-        <Avatar className="h-16 w-16 sm:h-20 sm:w-20 border-0 shadow-none">
+        {/** allow overriding avatar size classes via `avatarClassName` prop */}
+        <Avatar className={cn("h-10 w-10 sm:h-10 sm:w-10 rounded-full border-0 shadow-none", avatarClassName || "")}>
           {imageUrl ? (
             <AvatarImage src={imageUrl} alt={name} />
           ) : (
@@ -36,7 +38,7 @@ const Seat: React.FC<SeatProps> = ({ name = "User", imageUrl, speaking = false, 
           Locked
         </div>
       )}
-      <div className="mt-2 text-xs text-white/80 text-center w-20 truncate">{name}</div>
+      <div className="mt-1 text-[10px] text-white/80 text-center w-12 truncate">{name}</div>
     </div>
   );
 };

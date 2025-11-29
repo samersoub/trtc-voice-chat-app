@@ -38,6 +38,7 @@ import Moments from "./pages/Moments";
 import Messages from "./pages/Messages";
 import Inbox from "./pages/notifications/Inbox";
 import { LocaleProvider } from "@/contexts";
+import ThemeProvider from "@/contexts/ThemeContext";
 import Matching from "./pages/matching/Matching";
 import PrivateCall from "./pages/matching/PrivateCall";
 import RateMatch from "./pages/matching/RateMatch";
@@ -51,7 +52,8 @@ import Home from "./pages/Home";
 const queryClient = new QueryClient();
 
 const App = () => (
-  <LocaleProvider>
+  <ThemeProvider>
+    <LocaleProvider>
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <Toaster />
@@ -122,7 +124,8 @@ const App = () => (
         </BrowserRouter>
       </TooltipProvider>
     </QueryClientProvider>
-  </LocaleProvider>
+    </LocaleProvider>
+  </ThemeProvider>
 );
 
 export default App;

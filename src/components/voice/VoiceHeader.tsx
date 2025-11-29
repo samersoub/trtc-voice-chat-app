@@ -2,7 +2,9 @@
 
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { Power, Share2, Mic, MicOff } from "lucide-react";
+import { Power, Share2, Mic, MicOff, Sun } from "lucide-react";
+import { useContext } from "react";
+import { ThemeContext } from "@/contexts/ThemeContext";
 
 type Props = {
   roomTitle: string;
@@ -20,8 +22,10 @@ const VoiceHeader: React.FC<Props> = ({ roomTitle, roomId, onExit, onTakeMic, on
     } catch {}
   };
 
+  const { toggleTheme } = useContext(ThemeContext);
+
   return (
-    <div className="absolute top-4 left-4 flex items-center gap-3">
+    <div className="absolute top-4 left-4 flex items-center gap-3 voice-controls-header">
       {/* Exit */}
       <Button
         variant="outline"
@@ -40,6 +44,16 @@ const VoiceHeader: React.FC<Props> = ({ roomTitle, roomId, onExit, onTakeMic, on
         title="Copy room link"
       >
         <Share2 className="h-5 w-5" />
+      </Button>
+
+      {/* Background toggle */}
+      <Button
+        variant="outline"
+        className="h-10 w-10 rounded-full bg-white/15 text-white border-white/30 hover:bg-white/25 p-0"
+        onClick={() => { toggleTheme(); }}
+        title="Toggle background"
+      >
+        <Sun className="h-5 w-5" />
       </Button>
 
       {/* Mic actions */}

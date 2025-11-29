@@ -181,6 +181,65 @@
 /* Voice chat specific utilities */
 @layer components {
   .vc-chat-overlay-bottom {
-    bottom: calc(env(safe-area-inset-bottom) + 120px);
+    bottom: calc(env(safe-area-inset-bottom) + 180px);
+  }
+  /* Variables controlling chat bounds (can be tuned) */
+  :root {
+    --vc-seats-bottom: 240px; /* distance from top to lowest seat row */
+    --vc-input-bottom: 90px; /* distance from bottom occupied by input/control bar */
+  }
+
+  /* Position chat overlay with strict top/bottom bounds so it never overlaps seats or input */
+  .vc-chat-overlay-bounds {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    top: calc(env(safe-area-inset-top) + var(--vc-seats-bottom));
+    bottom: calc(env(safe-area-inset-bottom) + var(--vc-input-bottom));
+    z-index: 50;
+    display: flex;
+    align-items: stretch;
+    justify-content: center;
+    pointer-events: none;
+  }
+  /* Subtle page background gradient used on voice chat page */
+  .vc-bg-gradient {
+    background: linear-gradient(180deg, #f7fafc 0%, #ffffff 100%);
+    transition: background 300ms ease, color 300ms ease;
+  }
+  /* Dark theme variant for the voice chat background */
+  .dark-theme .vc-bg-gradient {
+    /* Soft, comfortable solid dark background for better contrast/readability */
+    background: #1e1e1e;
+  }
+  /* Light-theme contrast overrides scoped to the header controls for maintainability */
+  .light-theme .voice-controls-header .text-white {
+    color: #111827 !important; /* Tailwind gray-900 */
+  }
+  .light-theme .voice-controls-header .text-white\/80 {
+    color: rgba(17,24,39,0.8) !important;
+  }
+  .light-theme .voice-controls-header .bg-white\/15 {
+    background-color: rgba(0,0,0,0.04) !important; /* subtle light button bg */
+  }
+  .light-theme .voice-controls-header .border-white\/30 {
+    border-color: rgba(0,0,0,0.06) !important;
+  }
+  .light-theme .voice-controls-header .hover\:bg-white\/25:hover {
+    background-color: rgba(0,0,0,0.06) !important;
+  }
+  /* Apply a smooth transition for theme-related properties on top-level container */
+  .light-theme, .dark-theme {
+    transition: background 300ms ease, color 300ms ease;
+  }
+  /* Utility to visually hide native scrollbars while preserving scrolling */
+  .hide-scrollbar {
+    -ms-overflow-style: none; /* IE and Edge */
+  }
+  .hide-scrollbar::-webkit-scrollbar {
+    display: none; /* Chrome, Safari, Opera */
+  }
+  .vc-input-bottom-safe {
+    bottom: calc(env(safe-area-inset-bottom) + 76px);
   }
 }
