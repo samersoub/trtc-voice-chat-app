@@ -2,7 +2,7 @@
 
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { Power, Share2, Mic, MicOff, Sun } from "lucide-react";
+import { Power, Share2, Mic, MicOff, Sun, Grid3x3, Users } from "lucide-react";
 import { useContext } from "react";
 import { ThemeContext } from "@/contexts/ThemeContext";
 
@@ -12,9 +12,11 @@ type Props = {
   onExit: () => void;
   onTakeMic: () => void;
   onLeaveMic: () => void;
+  viewMode?: "classic" | "speaker";
+  onToggleView?: () => void;
 };
 
-const VoiceHeader: React.FC<Props> = ({ roomTitle, roomId, onExit, onTakeMic, onLeaveMic }) => {
+const VoiceHeader: React.FC<Props> = ({ roomTitle, roomId, onExit, onTakeMic, onLeaveMic, viewMode = "speaker", onToggleView }) => {
   const share = async () => {
     const url = window.location.href;
     try {
@@ -45,6 +47,22 @@ const VoiceHeader: React.FC<Props> = ({ roomTitle, roomId, onExit, onTakeMic, on
       >
         <Share2 className="h-5 w-5" />
       </Button>
+
+      {/* View mode toggle */}
+      {onToggleView && (
+        <Button
+          variant="outline"
+          className="h-10 w-10 rounded-full bg-white/15 text-white border-white/30 hover:bg-white/25 p-0"
+          onClick={onToggleView}
+          title={viewMode === "speaker" ? "Switch to classic view" : "Switch to speaker view"}
+        >
+          {viewMode === "speaker" ? (
+            <Grid3x3 className="h-5 w-5" />
+          ) : (
+            <Users className="h-5 w-5" />
+          )}
+        </Button>
+      )}
 
       {/* Background toggle */}
       <Button

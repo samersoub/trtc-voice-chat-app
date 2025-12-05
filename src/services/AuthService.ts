@@ -3,6 +3,7 @@ import { supabase, isSupabaseReady, safe } from "@/services/db/supabaseClient";
 import { ProfileService, type Profile } from "@/services/ProfileService";
 import { NotificationHelper } from "@/utils/NotificationHelper";
 import { hashSync, compareSync } from "bcryptjs";
+import { UserStatusService } from "./UserStatusService";
 
 const KEY = "auth:user";
 // Simple in-memory rate limiter
@@ -92,6 +93,9 @@ export const AuthService = {
       };
       localStorage.setItem(KEY, JSON.stringify(user));
       localStorage.setItem("admin:token", "demo-token");
+      
+      // Set user status as online
+      UserStatusService.setOnline(user.id);
 
       const profile: Profile = {
         id: user.id,
@@ -143,6 +147,10 @@ export const AuthService = {
         createdAt: prof.created_at,
       };
       localStorage.setItem(KEY, JSON.stringify(user));
+      
+      // Set user status as online
+      UserStatusService.setOnline(user.id);
+      
       void NotificationHelper.notify("Login Successful", `Welcome back, ${prof.username}!`, { meta: { kind: "security" } });
       rate.reset(`login:${login}`);
       return user;
@@ -156,6 +164,10 @@ export const AuthService = {
       throw new Error("Invalid credentials");
     }
     localStorage.setItem(KEY, JSON.stringify(stored));
+    
+    // Set user status as online
+    UserStatusService.setOnline(stored.id);
+    
     void NotificationHelper.notify("Login Successful", `Welcome back, ${stored.name || "user"}!`, { meta: { kind: "security" } });
     rate.reset(`login:${login}`);
     return stored as User;

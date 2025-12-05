@@ -26,7 +26,7 @@ const ChatOverlay: React.FC<Props> = ({ messages, currentUserId, roomId }) => {
     <div className="pointer-events-none h-full w-full relative z-50">
       <div ref={ref} className="h-full w-full overflow-y-auto hide-scrollbar">
         <ScrollArea className="h-full">
-          <div className="space-y-2 px-0 py-2">
+          <div className="space-y-1.5 sm:space-y-2 px-0 py-2">
             {messages.map((m) => {
               const isSystem = m.type === "system";
               const isSelf = !isSystem && m.senderId === currentUserId;

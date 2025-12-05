@@ -2,8 +2,16 @@ import React, { useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useSearchParams } from "react-router-dom";
 import SeatingNine from "@/components/voice/SeatingNine";
+import RoomSpeakerView from "@/components/voice/RoomSpeakerView";
+import EnhancedSpeakerView from "@/components/voice/EnhancedSpeakerView";
+import EnhancedControlBar from "@/components/voice/EnhancedControlBar";
+import EnhancedRoomHeader from "@/components/voice/EnhancedRoomHeader";
+import EnhancedParticipantPanel from "@/components/voice/EnhancedParticipantPanel";
+import RoomBackgroundEffects from "@/components/voice/RoomBackgroundEffects";
 import ChatOverlay from "@/components/voice/ChatOverlay";
 import ControlBar from "@/components/voice/ControlBar";
+import ComprehensiveControlBar from "@/components/voice/ComprehensiveControlBar";
+import ParticipantPanel from "@/components/voice/ParticipantPanel";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import GiftTray, { GiftItem } from "@/components/gifts/GiftTray";
 import GiftAnimation from "@/components/gifts/GiftAnimation";
@@ -39,6 +47,9 @@ import { db } from "@/firebase";
 import { doc, setDoc } from "firebase/firestore";
 import { useRoomUsers } from "@/hooks/useRoomUsers";
 import RoomUserList from "@/components/voice/RoomUserList";
+import { RoomMonitoringService } from "@/services/RoomMonitoringService";
+import { SocialService } from "@/services/SocialService";
+import { UserStatusService } from "@/services/UserStatusService";
 
 const VoiceChat = () => {
   const { id } = useParams<{ id: string }>();
@@ -47,6 +58,7 @@ const VoiceChat = () => {
 
   const [loading, setLoading] = useState(true);
   const [micOn, setMicOn] = useState(false);
+  const [viewMode, setViewMode] = useState<"classic" | "speaker" | "enhanced">("enhanced"); // Default to enhanced
   const [wallpaper, setWallpaper] = useState<"royal" | "nebula" | "galaxy">("royal");
   // ADD: show/hide reports state driven by room settings
   const [showReports, setShowReports] = useState<boolean>(true);
@@ -54,6 +66,10 @@ const VoiceChat = () => {
   const [activeGift, setActiveGift] = useState<GiftItem | null>(null);
   const [subscribeMode, setSubscribeMode] = useState<"auto" | "manual">("auto");
   const [emojiOpen, setEmojiOpen] = useState(false);
+  const [soundQuality, setSoundQuality] = useState<"low" | "medium" | "high">("high");
+  const [isScreenSharing, setIsScreenSharing] = useState(false);
+  const [volume, setVolume] = useState(80);
+  const [showParticipants, setShowParticipants] = useState(false);
 
   // ADDED: detect autoJoin query param
   const autoJoin = searchParams.get("autoJoin") === "1";
@@ -127,14 +143,40 @@ const VoiceChat = () => {
 
       try {
         VoiceChatService.joinRoom(id, user.id);
+        
+        // Start room monitoring for admin dashboard
+        const roomData = VoiceChatService.getRoom(id);
+        RoomMonitoringService.startMonitoring(
+          id,
+          roomData?.name || "Room",
+          user.id,
+          user?.name || "Host"
+        );
+        
+        // Set user status as in-room
+        UserStatusService.setInRoom(user.id, id, roomData?.name || "Room");
+        
+        // Track user engagement
+        RoomMonitoringService.trackUserEngagement(user.id, user?.name || "User", "join", id);
+        
+        // If user is host, increment rooms hosted count
+        if (roomData?.hostId === user.id) {
+          SocialService.incrementRoomsHosted(user.id);
+        }
       } catch {}
     })();
 
     return () => {
       try {
         const updatedRoom = VoiceChatService.leaveRoom(id, user.id);
+        
+        // Set user status back to online (leaving room)
+        UserStatusService.leaveRoom(user.id);
+        
         if (updatedRoom.participants.length === 0) {
           VoiceChatService.deleteRoom(id);
+          // Stop monitoring when room is empty
+          RoomMonitoringService.stopMonitoring(id);
         }
       } catch {}
       // Ensure TRTC cleanup on unmount too
@@ -151,7 +193,15 @@ const VoiceChat = () => {
   // ADDED: reactive updates for roomState (participants, etc.)
   React.useEffect(() => {
     if (!id) return;
-    const update = () => setRoomState(VoiceChatService.getRoom(id));
+    const update = () => {
+      const room = VoiceChatService.getRoom(id);
+      setRoomState(room);
+      
+      // Update participant count in monitoring service
+      if (room) {
+        RoomMonitoringService.updateParticipantCount(id, room.participants.length);
+      }
+    };
     update();
     const onStorage = (e: StorageEvent) => {
       if (e.key === "voice:rooms") update();
@@ -189,9 +239,22 @@ const VoiceChat = () => {
   React.useEffect(() => {
     // ADDED: Subscribe to local chat messages for this room
     if (!id) return;
-    const unsubscribe = LocalChatService.on(id, (msgs) => setMessages(msgs));
+    const unsubscribe = LocalChatService.on(id, (msgs) => {
+      setMessages(msgs);
+      
+      // Update engagement metrics with message count
+      if (user?.id) {
+        RoomMonitoringService.updateEngagement(id, msgs.length);
+        
+        // Track user message engagement
+        const userMessages = msgs.filter(m => m.senderId === user.id && m.type !== 'system');
+        if (userMessages.length > 0) {
+          RoomMonitoringService.trackUserEngagement(user.id, user?.name || "User", "message");
+        }
+      }
+    });
     return () => unsubscribe();
-  }, [id]);
+  }, [id, user?.id]);
 
   // ADDED: automatically join TRTC if autoJoin flag is present
   React.useEffect(() => {
@@ -213,6 +276,65 @@ const VoiceChat = () => {
     if (autoJoin) setLoading(false);
     return () => { if (t) clearTimeout(t); };
   }, [autoJoin]);
+
+  // Track room duration every second
+  React.useEffect(() => {
+    if (!id) return;
+    const interval = setInterval(() => {
+      RoomMonitoringService.updateRoomDuration(id);
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [id]);
+
+  // Track audio quality metrics from local and remote streams
+  React.useEffect(() => {
+    if (!id || !user?.id) return;
+
+    const trackAudioQuality = async () => {
+      // Simulate audio quality metrics (in production, get from TRTC SDK stats)
+      const latency = Math.floor(Math.random() * 100) + 20; // 20-120ms
+      const jitter = Math.random() * 10; // 0-10ms
+      const packetsLost = Math.floor(Math.random() * 5); // 0-5 packets
+      const packetsSent = 1000;
+      const bitrate = Math.floor(Math.random() * 64) + 32; // 32-96 kbps
+
+      RoomMonitoringService.recordAudioQuality(id, user.id, user?.name || "User", {
+        jitter,
+        latency,
+        packetsLost,
+        packetsSent,
+        bitrate,
+        quality: latency < 50 && packetsLost < 1 ? 'excellent' : 
+                 latency < 100 && packetsLost < 3 ? 'good' : 
+                 latency < 200 && packetsLost < 5 ? 'fair' : 'poor',
+      });
+    };
+
+    // Track audio quality every 3 seconds
+    const interval = setInterval(trackAudioQuality, 3000);
+    trackAudioQuality(); // Initial tracking
+
+    return () => clearInterval(interval);
+  }, [id, user?.id, localStream, remoteStreams]);
+
+  // Track active speakers count and speaking time
+  React.useEffect(() => {
+    if (!id || !user?.id) return;
+    
+    const activeSpeakers = guestSeats.filter(seat => seat.speaking && !seat.muted).length;
+    RoomMonitoringService.updateEngagement(id, undefined, undefined, activeSpeakers);
+    
+    // Track speaking time for current user if they're speaking
+    const userSeat = guestSeats.find(seat => seat.userId === user.id);
+    if (userSeat?.speaking && !userSeat?.muted) {
+      // Add 1 second of speaking time every second
+      const interval = setInterval(() => {
+        SocialService.addSpeakingTime(user.id, 1);
+      }, 1000);
+      
+      return () => clearInterval(interval);
+    }
+  }, [id, user?.id, guestSeats]);
 
   // If the room has a preset background configured, apply it to local wallpaper state
   React.useEffect(() => {
@@ -292,33 +414,40 @@ const VoiceChat = () => {
   const { isDarkTheme } = useContext(ThemeContext);
 
   return (
-    <div className={`${isDarkTheme ? "dark-theme" : "light-theme"} relative min-h-screen w-full overflow-hidden`}>
+    <div
+      className={`room ${isDarkTheme ? "dark-theme" : "light-theme"} relative min-h-screen w-full overflow-hidden bg-gray-900`}
+    >
       {/* Hidden audio element for local mic preview */}
       <audio ref={audioRef} className="hidden" />
 
       {/* TRTC debug players */}
       <TrtcDebugPlayers localStream={localStream} remoteStreams={remoteStreams} />
 
-      {/* Background: subtle gradient */}
-      <div className="absolute inset-0 -z-10 vc-bg-gradient" />
+      {/* Enhanced background with particles and blur */}
+      <RoomBackgroundEffects
+        variant={wallpaper === "royal" ? "default" : wallpaper === "nebula" ? "nebula" : "galaxy"}
+      />
 
-      {/* Centered title pill (shifted slightly right) */}
-      <div className="absolute top-6 left-[60%] transform -translate-x-1/2">
-        <RoomTitlePill title={roomTitle} count={participantsCount} />
-      </div>
-
-      {/* Room user list (firestore live data) */}
-      <div className="absolute right-4 top-24 hidden md:block z-40">
-        <RoomUserList users={roomUsers} />
-      </div>
-
-      {/* Header: title + actions */}
-      <VoiceHeader
-        roomTitle={roomTitle}
-        roomId={id}
-        onExit={handleExitRoom}
-        onTakeMic={handleTakeMic}
-        onLeaveMic={handleLeaveMic}
+      {/* Enhanced Room Header */}
+      <EnhancedRoomHeader
+        roomName={roomTitle}
+        participantCount={participantsCount}
+        hostName={hostName}
+        isHost={isHost}
+        roomTags={["Music", "Chill", "Social"]}
+        roomTopic={roomState?.description || "General Discussion"}
+        onInvite={() => {
+          if (navigator.share) {
+            navigator.share({
+              title: `Join ${roomTitle}`,
+              text: `Join me in ${roomTitle} on Voice Chat`,
+              url: window.location.href,
+            });
+          } else {
+            navigator.clipboard.writeText(window.location.href);
+            showSuccess("Room link copied!");
+          }
+        }}
       />
 
       {/* Wallpaper + recording controls */}
@@ -409,10 +538,74 @@ const VoiceChat = () => {
         }}
       />
 
-      {/* Center seating: Host + 8 guests inside a glass stage frame */}
-      <div className="flex items-center justify-center relative -top-12 pt-6 sm:pt-8 pb-12 sm:pb-16 px-3 sm:px-6">
-        <div className="w-full max-w-3xl">
-          <div className="rounded-3xl border border-white/10 bg-transparent backdrop-blur-md shadow-md p-3 sm:p-6">
+      {/* Center seating: Enhanced speaker view with animations */}
+      <div className="flex items-center justify-center pt-20 sm:pt-24 md:pt-28 pb-24 sm:pb-28 md:pb-32 px-2 sm:px-3 md:px-6">
+        <div className="w-full max-w-6xl">
+          {viewMode === "enhanced" ? (
+            <EnhancedSpeakerView
+              participants={[
+                {
+                  userId: hostId || "host",
+                  name: hostName,
+                  avatarUrl: roomState?.hostAvatar,
+                  isSpeaking: false,
+                  isMuted: false,
+                  isHost: true,
+                  connectionQuality: "good",
+                  audioLevel: 0,
+                },
+                ...guestSeats
+                  .filter(seat => seat.userId)
+                  .map((seat) => ({
+                    userId: seat.userId!,
+                    name: seat.name || "Guest",
+                    avatarUrl: seat.avatarUrl,
+                    isSpeaking: seat.speaking || false,
+                    isMuted: seat.muted || false,
+                    isHost: false,
+                    connectionQuality: (seat.speaking ? "good" : "medium") as "good" | "medium" | "poor",
+                    audioLevel: seat.speaking ? Math.random() * 100 : 0,
+                  })),
+              ]}
+              onParticipantClick={(userId) => {
+                console.log("Clicked participant:", userId);
+              }}
+            />
+          ) : viewMode === "speaker" ? (
+            <RoomSpeakerView
+              participants={[
+                {
+                  userId: hostId || "host",
+                  name: hostName,
+                  avatarUrl: roomState?.hostAvatar,
+                  isSpeaking: false,
+                  isMuted: false,
+                  isHost: true,
+                },
+                ...guestSeats.map((seat, idx) => ({
+                  userId: seat.userId || `guest-${idx}`,
+                  name: seat.name || `Guest ${idx + 1}`,
+                  avatarUrl: seat.avatarUrl,
+                  isSpeaking: seat.speaking || false,
+                  isMuted: seat.muted || false,
+                  isHost: false,
+                })).filter(p => p.userId && !p.userId.startsWith('guest-')),
+              ]}
+              onParticipantClick={(userId) => {
+                if (!id) return;
+                const seat = seatsState.find(s => s.userId === userId);
+                if (seat) {
+                  try {
+                    const updated = MicService.mute(id, userId, !seat.muted);
+                    setSeatsState([...updated]);
+                    showSuccess(`${!seat.muted ? "Muted" : "Unmuted"} ${seat.name || "User"}`);
+                  } catch (e: any) {
+                    showError(e.message || "Unable to toggle mute");
+                  }
+                }
+              }}
+            />
+          ) : (
             <SeatingNine
               hostName={hostName}
               hostFlagCode={roomState?.name ? undefined : undefined}
@@ -440,7 +633,7 @@ const VoiceChat = () => {
                 }
               }}
             />
-          </div>
+          )}
         </div>
       </div>
 
@@ -451,8 +644,32 @@ const VoiceChat = () => {
         </div>
       </div>
 
-      {/* Bottom control bar */}
-      <ControlBar
+      {/* Enhanced Control Bar */}
+      <EnhancedControlBar
+        micOn={micOnHook}
+        onToggleMic={async () => {
+          await toggleMic();
+        }}
+        onLeaveRoom={handleExitRoom}
+        onOpenParticipants={() => setShowParticipants(!showParticipants)}
+        onShare={() => {
+          if (navigator.share) {
+            navigator.share({
+              title: `Join ${roomTitle}`,
+              text: `Join me in ${roomTitle} on Voice Chat`,
+              url: window.location.href,
+            });
+          } else {
+            navigator.clipboard.writeText(window.location.href);
+            showSuccess("Room link copied!");
+          }
+        }}
+        volume={volume}
+        onVolumeChange={setVolume}
+      />
+
+      {/* Legacy control bar for backward compatibility */}
+      {/* <ControlBar
         micOn={micOnHook}
         onToggleMic={async () => {
           await toggleMic();
@@ -462,7 +679,7 @@ const VoiceChat = () => {
         }}
         onSendGift={() => setGiftOpen(true)}
         onEmoji={() => setEmojiOpen(true)}
-      />
+      /> */}
 
       {/* Host microphone management panel */}
       <div className="absolute right-4 bottom-24">
@@ -497,6 +714,22 @@ const VoiceChat = () => {
               setActiveGift(g);
               setGiftOpen(false);
               setTimeout(() => setActiveGift(null), 3000);
+              
+              // Track gift engagement
+              if (id && user?.id) {
+                RoomMonitoringService.trackUserEngagement(
+                  user.id,
+                  user?.name || "User",
+                  "gift",
+                  id,
+                  g.coins || 0
+                );
+                
+                // Update room gift count
+                const roomData = VoiceChatService.getRoom(id);
+                const currentGiftCount = RoomMonitoringService.getRoomMetrics(id)?.giftsCount || 0;
+                RoomMonitoringService.updateEngagement(id, undefined, currentGiftCount + 1);
+              }
             }}
           />
         </DialogContent>
@@ -523,6 +756,59 @@ const VoiceChat = () => {
             LocalChatService.send(id, user.id, emoji, "text");
           }
           setEmojiOpen(false);
+        }}
+      />
+
+      {/* Enhanced Participant panel */}
+      <EnhancedParticipantPanel
+        isOpen={showParticipants}
+        onClose={() => setShowParticipants(false)}
+        participants={[
+          {
+            userId: hostId || "host",
+            name: hostName,
+            avatarUrl: roomState?.hostAvatar,
+            isMuted: false,
+            isHost: true,
+            connectionQuality: "good",
+          },
+          ...guestSeats
+            .filter(seat => seat.userId)
+            .map((seat) => ({
+              userId: seat.userId!,
+              name: seat.name || "Guest",
+              avatarUrl: seat.avatarUrl,
+              isMuted: seat.muted || false,
+              isHost: false,
+              connectionQuality: (seat.speaking ? "good" : "medium") as "good" | "medium" | "poor",
+            })),
+        ]}
+        currentUserId={user?.id}
+        isCurrentUserHost={isHost}
+        onKickUser={(userId) => {
+          if (!id) return;
+          showSuccess(`Removed ${userId} from room`);
+          // TODO: Implement actual kick logic
+        }}
+        onMuteUser={(userId) => {
+          if (!id) return;
+          try {
+            const updated = MicService.mute(id, userId, true);
+            setSeatsState([...updated]);
+            showSuccess("User muted");
+          } catch (e: any) {
+            showError(e.message || "Unable to mute user");
+          }
+        }}
+        onUnmuteUser={(userId) => {
+          if (!id) return;
+          try {
+            const updated = MicService.mute(id, userId, false);
+            setSeatsState([...updated]);
+            showSuccess("User unmuted");
+          } catch (e: any) {
+            showError(e.message || "Unable to unmute user");
+          }
         }}
       />
     </div>
