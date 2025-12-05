@@ -13,8 +13,8 @@ import ForgotPassword from "./pages/auth/ForgotPassword";
 import AdminLogin from "./pages/admin/AdminLogin";
 import RoomList from "./pages/voice-chat/RoomList";
 import CreateRoom from "./pages/voice-chat/CreateRoom";
-import VoiceChat from "./pages/voice-chat/VoiceChat";
 import RoomDetails from "./pages/voice-chat/RoomDetails";
+import VoiceChatRoomRedesign from "@/components/voice/VoiceChatRoomRedesign";
 import Contacts from "./pages/contacts/Contacts";
 import InviteFriends from "./pages/contacts/InviteFriends";
 import Profile from "./pages/profile/Profile";
@@ -85,7 +85,7 @@ const App = () => (
               <Route path="/voice/rooms" element={<RoomList />} />
               <Route path="/voice/create" element={<CreateRoom />} />
               <Route path="/voice/rooms/:id" element={<RoomDetails />} />
-              <Route path="/voice/rooms/:id/join" element={<VoiceChat />} />
+              <Route path="/voice/rooms/:id/join" element={<VoiceChatRoomRedesign />} />
               {/* Finance & Store */}
               <Route path="/wallet" element={<Wallet />} />
               <Route path="/store" element={<Store />} />
