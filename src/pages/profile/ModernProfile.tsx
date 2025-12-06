@@ -23,7 +23,10 @@ import {
   UserPlus,
   Search,
   Users,
-  Lock
+  Lock,
+  Sparkles,
+  Type,
+  Check
 } from 'lucide-react';
 import { AuthService } from '@/services/AuthService';
 import { ProfileService, type Profile } from '@/services/ProfileService';
@@ -51,10 +54,19 @@ interface Friend {
   avatar: string;
 }
 
+interface Highlight {
+  id: string;
+  text: string;
+}
+
 const ModernProfile: React.FC = () => {
   const { userId } = useParams();
   const currentUser = AuthService.getCurrentUser();
   const [profile, setProfile] = useState<Profile | null>(null);
+  
+  // userName needs to be defined before states that use it
+  const userName = profile?.username || currentUser?.name || 'أردني~يبحث عنك~!';
+  
   const [activeTab, setActiveTab] = useState<'profile' | 'relations'>('profile');
   const [moments, setMoments] = useState<string[]>([]);
   const [coverImage, setCoverImage] = useState<string>('/images/default-cover.jpeg');
@@ -69,6 +81,18 @@ const ModernProfile: React.FC = () => {
   const [showFriendSearch, setShowFriendSearch] = useState(false);
   const [searchId, setSearchId] = useState('');
   const [showPremiumDialog, setShowPremiumDialog] = useState(false);
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [editedName, setEditedName] = useState(userName);
+  const [isEditingBio, setIsEditingBio] = useState(false);
+  const [bio, setBio] = useState('مرحباً! أنا أحب التواصل مع الأصدقاء وقضاء وقت ممتع في غرف الدردشة الصوتية.');
+  const [editedBio, setEditedBio] = useState(bio);
+  const [highlights, setHighlights] = useState<Highlight[]>([
+    { id: '1', text: '🎵 محب للموسيقى' },
+    { id: '2', text: '🎮 لاعب محترف' },
+    { id: '3', text: '📚 قارئ نهم' }
+  ]);
+  const [editingHighlightId, setEditingHighlightId] = useState<string | null>(null);
+  const [editingHighlightText, setEditingHighlightText] = useState('');
   const coverFileInputRef = React.useRef<HTMLInputElement>(null);
   const profileFileInputRef = React.useRef<HTMLInputElement>(null);
   const photoFileInputRef = React.useRef<HTMLInputElement>(null);
@@ -114,7 +138,6 @@ const ModernProfile: React.FC = () => {
     }
   }, [profile]);
 
-  const userName = profile?.username || currentUser?.name || 'أردني~يبحث عنك~!';
   const userId_display = 'ID:101089646';
   const userLevel = 'LV.28';
   const userCoins = profile?.coins || 1200;
@@ -258,6 +281,62 @@ const ModernProfile: React.FC = () => {
 
   const handleRemoveFriend = (friendId: string) => {
     setCloseFriends(closeFriends.filter(f => f.id !== friendId));
+    // TODO: Update on server
+  };
+
+  const handleSaveName = () => {
+    if (editedName.trim()) {
+      // TODO: Update on server
+      setIsEditingName(false);
+    }
+  };
+
+  const handleCancelNameEdit = () => {
+    setEditedName(userName);
+    setIsEditingName(false);
+  };
+
+  const handleSaveBio = () => {
+    setBio(editedBio);
+    setIsEditingBio(false);
+    // TODO: Update on server
+  };
+
+  const handleCancelBioEdit = () => {
+    setEditedBio(bio);
+    setIsEditingBio(false);
+  };
+
+  const handleEditHighlight = (id: string, text: string) => {
+    setEditingHighlightId(id);
+    setEditingHighlightText(text);
+  };
+
+  const handleSaveHighlight = () => {
+    if (editingHighlightText.trim() && editingHighlightId) {
+      setHighlights(highlights.map(h => 
+        h.id === editingHighlightId ? { ...h, text: editingHighlightText } : h
+      ));
+      setEditingHighlightId(null);
+      setEditingHighlightText('');
+      // TODO: Update on server
+    }
+  };
+
+  const handleAddHighlight = () => {
+    const newHighlight: Highlight = {
+      id: Date.now().toString(),
+      text: 'نقطة بارزة جديدة'
+    };
+    setHighlights([...highlights, newHighlight]);
+    // Start editing immediately
+    setEditingHighlightId(newHighlight.id);
+    setEditingHighlightText(newHighlight.text);
+    // TODO: Update on server
+  };
+
+  const handleRemoveHighlight = (id: string) => {
+    setHighlights(highlights.filter(h => h.id !== id));
     // TODO: Update on server
   };
 
@@ -471,9 +550,45 @@ const ModernProfile: React.FC = () => {
 
           {/* Username and Flag */}
           <div className="flex items-center gap-2 mb-3">
-            <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-cyan-500/80 to-blue-500/80 backdrop-blur-md border border-white/30 shadow-lg">
-              <span className="text-white font-medium" dir="rtl">🇯🇴{userName}</span>
-            </div>
+            {isEditingName ? (
+              <div className="flex items-center gap-2">
+                <input
+                  type="text"
+                  value={editedName}
+                  onChange={(e) => setEditedName(e.target.value)}
+                  onKeyPress={(e) => e.key === 'Enter' && handleSaveName()}
+                  className="px-4 py-2 bg-white/20 border border-white/30 rounded-xl text-white font-medium focus:outline-none focus:border-purple-400 focus:ring-2 focus:ring-purple-400/20"
+                  dir="rtl"
+                  autoFocus
+                  placeholder="أدخل الاسم"
+                />
+                <button
+                  onClick={handleSaveName}
+                  className="w-8 h-8 rounded-full bg-green-500 hover:bg-green-600 flex items-center justify-center transition-all"
+                  aria-label="Save name"
+                >
+                  <Check className="w-4 h-4 text-white" />
+                </button>
+                <button
+                  onClick={handleCancelNameEdit}
+                  className="w-8 h-8 rounded-full bg-red-500 hover:bg-red-600 flex items-center justify-center transition-all"
+                  aria-label="Cancel"
+                >
+                  <CloseIcon className="w-4 h-4 text-white" />
+                </button>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-cyan-500/80 to-blue-500/80 backdrop-blur-md border border-white/30 shadow-lg group">
+                <span className="text-white font-medium" dir="rtl">🇯🇴{editedName}</span>
+                <button
+                  onClick={() => setIsEditingName(true)}
+                  className="w-6 h-6 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all"
+                  aria-label="Edit name"
+                >
+                  <Edit className="w-3 h-3 text-white" />
+                </button>
+              </div>
+            )}
           </div>
 
           {/* Badges Carousel */}
@@ -552,6 +667,108 @@ const ModernProfile: React.FC = () => {
                   </a>
                   <p className="text-gray-400 text-sm mt-1" dir="rtl">{userBio}</p>
                 </div>
+              </div>
+            </div>
+
+            {/* Bio Section */}
+            <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-4 border border-white/10">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <Type className="w-5 h-5 text-purple-400" />
+                  <h3 className="text-white font-semibold" dir="rtl">نبذة عني</h3>
+                </div>
+                {!isEditingBio && (
+                  <button
+                    onClick={() => setIsEditingBio(true)}
+                    className="flex items-center gap-1 px-3 py-1 rounded-lg bg-white/10 hover:bg-white/20 text-purple-400 text-sm transition-all"
+                  >
+                    <Edit className="w-3 h-3" />
+                    <span dir="rtl">تعديل</span>
+                  </button>
+                )}
+              </div>
+              {isEditingBio ? (
+                <div className="space-y-3">
+                  <textarea
+                    value={editedBio}
+                    onChange={(e) => setEditedBio(e.target.value)}
+                    className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:border-purple-400 focus:ring-2 focus:ring-purple-400/20 resize-none"
+                    rows={4}
+                    dir="rtl"
+                    placeholder="اكتب نبذة عن نفسك..."
+                  />
+                  <div className="flex gap-2 justify-end">
+                    <button
+                      onClick={handleCancelBioEdit}
+                      className="px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 text-white transition-all"
+                    >
+                      إلغاء
+                    </button>
+                    <button
+                      onClick={handleSaveBio}
+                      className="px-4 py-2 rounded-lg bg-purple-500 hover:bg-purple-600 text-white transition-all"
+                    >
+                      حفظ
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <p className="text-gray-300 leading-relaxed" dir="rtl">{bio}</p>
+              )}
+            </div>
+
+            {/* Highlights Section */}
+            <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-4 border border-white/10">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <Sparkles className="w-5 h-5 text-yellow-400" />
+                  <h3 className="text-white font-semibold" dir="rtl">النقاط البارزة</h3>
+                </div>
+                <button
+                  onClick={handleAddHighlight}
+                  className="flex items-center gap-1 px-3 py-1 rounded-lg bg-purple-500 hover:bg-purple-600 text-white text-sm transition-all"
+                >
+                  <Plus className="w-4 h-4" />
+                  <span dir="rtl">إضافة</span>
+                </button>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {highlights.map((highlight) => (
+                  <div key={highlight.id} className="relative group">
+                    {editingHighlightId === highlight.id ? (
+                      <div className="flex items-center gap-1">
+                        <input
+                          type="text"
+                          value={editingHighlightText}
+                          onChange={(e) => setEditingHighlightText(e.target.value)}
+                          onKeyPress={(e) => e.key === 'Enter' && handleSaveHighlight()}
+                          onBlur={handleSaveHighlight}
+                          className="px-3 py-1.5 bg-white/10 border border-purple-400 rounded-full text-white text-sm focus:outline-none focus:ring-2 focus:ring-purple-400/20"
+                          dir="rtl"
+                          autoFocus
+                          placeholder="اكتب النقطة البارزة"
+                        />
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-500/20 to-pink-500/20 backdrop-blur-sm rounded-full border border-purple-400/30">
+                        <span 
+                          className="text-white text-sm cursor-pointer" 
+                          dir="rtl" 
+                          onClick={() => handleEditHighlight(highlight.id, highlight.text)}
+                        >
+                          {highlight.text}
+                        </span>
+                        <button
+                          onClick={() => handleRemoveHighlight(highlight.id)}
+                          className="w-4 h-4 rounded-full bg-red-500/80 hover:bg-red-500 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all"
+                          aria-label="Remove highlight"
+                        >
+                          <CloseIcon className="w-3 h-3 text-white" />
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                ))}
               </div>
             </div>
 
