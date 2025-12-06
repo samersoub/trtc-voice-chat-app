@@ -10,20 +10,42 @@ import {
   DollarSign,
   Shield,
   Home,
-  Award
+  Award,
+  Globe
 } from "lucide-react";
 import { AuthService } from "@/services/AuthService";
 import { showSuccess } from "@/utils/toast";
+import { useLocale } from "@/contexts";
 
 const Settings = () => {
   const nav = useNavigate();
+  const { locale, setLocale, dir } = useLocale();
   const currentUser = AuthService.getCurrentUser();
   const userName = currentUser?.name || "أردني~يبحث عنك~!";
   const userId = "ID:101089646";
   const followers = 688;
   const following = 1200;
 
+  const handleLanguageToggle = () => {
+    const newLocale = locale === 'ar' ? 'en' : 'ar';
+    setLocale(newLocale);
+    showSuccess(
+      locale === 'ar' 
+        ? 'Language changed to English' 
+        : 'تم تغيير اللغة إلى العربية'
+    );
+  };
+
   const settingsOptions = [
+    {
+      id: 0,
+      title: locale === 'ar' ? "اللغة" : "Language",
+      icon: <Globe className="w-6 h-6 text-purple-500" />,
+      bgColor: "bg-purple-100",
+      badge: locale === 'ar' ? "العربية" : "English",
+      badgeColor: "bg-gradient-to-r from-purple-500 to-indigo-600",
+      action: handleLanguageToggle
+    },
     {
       id: 1,
       title: "إعادة الشحن والدخل",
@@ -104,15 +126,15 @@ const Settings = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900" dir={dir}>
       {/* Header with Profile Info */}
       <div className="relative bg-gradient-to-b from-indigo-600 to-purple-600 px-4 py-6">
         {/* Back Button */}
         <button 
           onClick={() => nav("/profile")}
-          className="absolute top-4 left-4 w-10 h-10 rounded-xl bg-black/20 backdrop-blur-sm flex items-center justify-center border border-white/10"
+          className={`absolute top-4 ${dir === 'rtl' ? 'left-4' : 'right-4'} w-10 h-10 rounded-xl bg-black/20 backdrop-blur-sm flex items-center justify-center border border-white/10`}
         >
-          <ChevronRight className="w-5 h-5 text-white" />
+          {dir === 'rtl' ? <ChevronRight className="w-5 h-5 text-white" /> : <ChevronLeft className="w-5 h-5 text-white" />}
         </button>
 
         {/* Profile Section */}
@@ -132,12 +154,12 @@ const Settings = () => {
             <div className="flex items-center gap-6">
               <div className="text-center">
                 <div className="text-white font-bold">{followers}</div>
-                <div className="text-white/70 text-xs">متابعة</div>
+                <div className="text-white/70 text-xs">{locale === 'ar' ? 'متابعة' : 'Following'}</div>
               </div>
               <div className="w-px h-8 bg-white/20"></div>
               <div className="text-center">
                 <div className="text-white font-bold">{following}</div>
-                <div className="text-white/70 text-xs">المعجبون</div>
+                <div className="text-white/70 text-xs">{locale === 'ar' ? 'المعجبون' : 'Followers'}</div>
               </div>
             </div>
           </div>
@@ -156,7 +178,13 @@ const Settings = () => {
         {settingsOptions.map((option) => (
           <div
             key={option.id}
-            onClick={() => option.route && nav(option.route)}
+            onClick={() => {
+              if (option.action) {
+                option.action();
+              } else if (option.route) {
+                nav(option.route);
+              }
+            }}
             className="flex items-center justify-between bg-white/5 backdrop-blur-sm rounded-2xl p-4 border border-white/10 hover:bg-white/10 transition-all cursor-pointer"
           >
             <div className="flex items-center gap-4 flex-1">
@@ -188,12 +216,12 @@ const Settings = () => {
         <button
           onClick={() => {
             AuthService.logout();
-            showSuccess("تم تسجيل الخروج بنجاح");
+            showSuccess(locale === 'ar' ? "تم تسجيل الخروج بنجاح" : "Logged out successfully");
             nav("/auth/login");
           }}
           className="w-full mt-6 px-6 py-4 rounded-2xl bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600 text-white font-bold shadow-lg transition-all"
         >
-          تسجيل الخروج
+          {locale === 'ar' ? 'تسجيل الخروج' : 'Logout'}
         </button>
       </div>
     </div>
