@@ -18,7 +18,12 @@ import {
   Plus,
   X as CloseIcon,
   Upload,
-  Trash2
+  Trash2,
+  Heart,
+  UserPlus,
+  Search,
+  Users,
+  Lock
 } from 'lucide-react';
 import { AuthService } from '@/services/AuthService';
 import { ProfileService, type Profile } from '@/services/ProfileService';
@@ -40,6 +45,12 @@ interface Interest {
   label: string;
 }
 
+interface Friend {
+  id: string;
+  name: string;
+  avatar: string;
+}
+
 const ModernProfile: React.FC = () => {
   const { userId } = useParams();
   const currentUser = AuthService.getCurrentUser();
@@ -52,6 +63,12 @@ const ModernProfile: React.FC = () => {
   const [userInterests, setUserInterests] = useState<Interest[]>([]);
   const [editingTagId, setEditingTagId] = useState<string | null>(null);
   const [editingTagText, setEditingTagText] = useState<string>('');
+  const [partner, setPartner] = useState<{name: string; avatar: string; id: string} | null>(null);
+  const [closeFriends, setCloseFriends] = useState<Friend[]>([]);
+  const [showPartnerSearch, setShowPartnerSearch] = useState(false);
+  const [showFriendSearch, setShowFriendSearch] = useState(false);
+  const [searchId, setSearchId] = useState('');
+  const [showPremiumDialog, setShowPremiumDialog] = useState(false);
   const coverFileInputRef = React.useRef<HTMLInputElement>(null);
   const profileFileInputRef = React.useRef<HTMLInputElement>(null);
   const photoFileInputRef = React.useRef<HTMLInputElement>(null);
@@ -193,8 +210,171 @@ const ModernProfile: React.FC = () => {
     photoFileInputRef.current?.click();
   };
 
+  const handleAddPartner = () => {
+    setShowPartnerSearch(true);
+  };
+
+  const handleSearchPartner = () => {
+    if (searchId.trim()) {
+      // TODO: Search for user by ID on server
+      setPartner({
+        id: searchId,
+        name: `مستخدم ${searchId}`,
+        avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${searchId}`
+      });
+      setShowPartnerSearch(false);
+      setSearchId('');
+      // TODO: Update on server
+    }
+  };
+
+  const handleRemovePartner = () => {
+    setPartner(null);
+    // TODO: Update on server
+  };
+
+  const handleAddFriend = () => {
+    if (closeFriends.length >= 4) {
+      setShowPremiumDialog(true);
+      return;
+    }
+    setShowFriendSearch(true);
+  };
+
+  const handleSearchFriend = () => {
+    if (searchId.trim() && closeFriends.length < 4) {
+      // TODO: Search for user by ID on server
+      const newFriend: Friend = {
+        id: searchId,
+        name: `مستخدم ${searchId}`,
+        avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${searchId}`
+      };
+      setCloseFriends([...closeFriends, newFriend]);
+      setShowFriendSearch(false);
+      setSearchId('');
+      // TODO: Update on server
+    }
+  };
+
+  const handleRemoveFriend = (friendId: string) => {
+    setCloseFriends(closeFriends.filter(f => f.id !== friendId));
+    // TODO: Update on server
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+      {/* Partner Search Dialog */}
+      {showPartnerSearch && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm">
+          <div className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl p-6 max-w-md w-full mx-4 border border-purple-500/30 shadow-2xl">
+            <h3 className="text-white font-bold text-xl mb-4 text-center" dir="rtl">بحث عن شريك</h3>
+            <div className="mb-4">
+              <div className="relative">
+                <input
+                  type="text"
+                  value={searchId}
+                  onChange={(e) => setSearchId(e.target.value)}
+                  onKeyPress={(e) => e.key === 'Enter' && handleSearchPartner()}
+                  placeholder="أدخل ID المستخدم"
+                  className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20"
+                  dir="rtl"
+                />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+              </div>
+            </div>
+            <div className="flex gap-3">
+              <button
+                onClick={() => { setShowPartnerSearch(false); setSearchId(''); }}
+                className="flex-1 px-4 py-3 rounded-xl bg-white/10 hover:bg-white/20 text-white transition-all"
+              >
+                إلغاء
+              </button>
+              <button
+                onClick={handleSearchPartner}
+                disabled={!searchId.trim()}
+                className="flex-1 px-4 py-3 rounded-xl bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                بحت
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Friend Search Dialog */}
+      {showFriendSearch && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm">
+          <div className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl p-6 max-w-md w-full mx-4 border border-purple-500/30 shadow-2xl">
+            <h3 className="text-white font-bold text-xl mb-4 text-center" dir="rtl">إضافة صديق</h3>
+            <div className="mb-4">
+              <div className="relative">
+                <input
+                  type="text"
+                  value={searchId}
+                  onChange={(e) => setSearchId(e.target.value)}
+                  onKeyPress={(e) => e.key === 'Enter' && handleSearchFriend()}
+                  placeholder="أدخل ID المستخدم"
+                  className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20"
+                  dir="rtl"
+                />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+              </div>
+            </div>
+            <div className="flex gap-3">
+              <button
+                onClick={() => { setShowFriendSearch(false); setSearchId(''); }}
+                className="flex-1 px-4 py-3 rounded-xl bg-white/10 hover:bg-white/20 text-white transition-all"
+              >
+                إلغاء
+              </button>
+              <button
+                onClick={handleSearchFriend}
+                disabled={!searchId.trim()}
+                className="flex-1 px-4 py-3 rounded-xl bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                إضافة
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Premium Upgrade Dialog */}
+      {showPremiumDialog && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm">
+          <div className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl p-6 max-w-md w-full mx-4 border border-yellow-500/30 shadow-2xl">
+            <div className="text-center">
+              <div className="w-20 h-20 rounded-full bg-gradient-to-br from-yellow-400 to-orange-500 flex items-center justify-center mx-auto mb-4">
+                <Lock className="w-10 h-10 text-white" />
+              </div>
+              <h3 className="text-white font-bold text-xl mb-3" dir="rtl">الحد الأقصى للأصدقاء</h3>
+              <p className="text-gray-300 mb-6" dir="rtl">
+                يمكنك إضافة 4 أصدقاء فقط في النسخة المجانية.<br />
+                للحصول على المزيد من الأصدقاء، يجب شراء النسخة المميزة.
+              </p>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setShowPremiumDialog(false)}
+                  className="flex-1 px-4 py-3 rounded-xl bg-white/10 hover:bg-white/20 text-white transition-all"
+                >
+                  إلغاء
+                </button>
+                <button
+                  onClick={() => {
+                    setShowPremiumDialog(false);
+                    // TODO: Navigate to premium purchase page
+                    window.location.href = '/store';
+                  }}
+                  className="flex-1 px-4 py-3 rounded-xl bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white font-medium transition-all"
+                >
+                  اشتراء الآن
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Header Cover Section with Background Image */}
       <div className="relative h-80 overflow-hidden">
         {/* Background Image with Overlay */}
@@ -500,11 +680,191 @@ const ModernProfile: React.FC = () => {
         )}
 
         {activeTab === 'relations' && (
-          <div className="flex flex-col items-center justify-center py-20">
-            <div className="w-20 h-20 rounded-full bg-white/10 flex items-center justify-center mb-4">
-              <Star className="w-10 h-10 text-gray-400" />
+          <div className="space-y-8">
+            {/* Partner Section */}
+            <div className="flex flex-col items-center justify-center py-8">
+              <h3 className="text-white font-semibold text-lg mb-6" dir="rtl">الشريك</h3>
+              {partner ? (
+                <div className="relative">
+                  {/* Partner Relationship Display */}
+                  <div className="flex items-center gap-4 mb-6">
+                    {/* Current User Avatar */}
+                    <div className="relative">
+                      <div className="w-24 h-24 rounded-full border-4 border-purple-500 overflow-hidden shadow-xl">
+                        <img 
+                          src={profileImage}
+                          alt={userName}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Heart Icon in Center */}
+                    <div className="flex flex-col items-center">
+                      <div className="w-16 h-16 rounded-full bg-gradient-to-br from-pink-500 to-red-500 flex items-center justify-center shadow-lg animate-pulse">
+                        <Heart className="w-8 h-8 text-white fill-white" />
+                      </div>
+                    </div>
+
+                    {/* Partner Avatar */}
+                    <div className="relative">
+                      <div className="w-24 h-24 rounded-full border-4 border-pink-500 overflow-hidden shadow-xl">
+                        <img 
+                          src={partner.avatar}
+                          alt={partner.name}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                      <button
+                        onClick={handleRemovePartner}
+                        className="absolute -top-2 -right-2 w-8 h-8 rounded-full bg-red-500 hover:bg-red-600 border-2 border-white flex items-center justify-center shadow-lg transition-all"
+                        aria-label="Remove partner"
+                      >
+                        <CloseIcon className="w-4 h-4 text-white" />
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Partner Info */}
+                  <div className="text-center">
+                    <p className="text-white font-semibold text-lg mb-1" dir="rtl">{partner.name}</p>
+                    <p className="text-purple-300 text-sm" dir="rtl">علاقة قوية</p>
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center">
+                  {/* Empty State with Add Partner */}
+                  <div className="flex items-center justify-center gap-4 mb-6">
+                    {/* Current User Avatar */}
+                    <div className="w-24 h-24 rounded-full border-4 border-purple-500/50 overflow-hidden shadow-xl">
+                      <img 
+                        src={profileImage}
+                        alt={userName}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+
+                    {/* Heart Icon */}
+                    <div className="w-16 h-16 rounded-full bg-white/10 flex items-center justify-center">
+                      <Heart className="w-8 h-8 text-gray-400" />
+                    </div>
+
+                    {/* Add Partner Button */}
+                    <button
+                      onClick={handleAddPartner}
+                      className="w-24 h-24 rounded-full border-4 border-dashed border-purple-400/50 bg-white/5 hover:bg-white/10 flex items-center justify-center transition-all group"
+                      aria-label="Add partner"
+                    >
+                      <UserPlus className="w-10 h-10 text-purple-400 group-hover:text-purple-300" />
+                    </button>
+                  </div>
+
+                  <p className="text-gray-400 text-center mb-4" dir="rtl">لا توجد علاقة قوية</p>
+                  <button
+                    onClick={handleAddPartner}
+                    className="flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-medium shadow-lg transition-all"
+                  >
+                    <UserPlus className="w-5 h-5" />
+                    <span dir="rtl">إضافة شريك</span>
+                  </button>
+                </div>
+              )}
             </div>
-            <p className="text-gray-400 text-center" dir="rtl">لا توجد علاقات قوية</p>
+
+            {/* Divider */}
+            <div className="border-t border-white/10"></div>
+
+            {/* Close Friends Section */}
+            <div>
+              <div className="flex items-center justify-between mb-6 px-4">
+                <h3 className="text-white font-semibold text-lg" dir="rtl">الأصدقاء المقربين</h3>
+                <div className="flex items-center gap-2">
+                  <span className="text-gray-400 text-sm" dir="rtl">{closeFriends.length}/4</span>
+                  <button
+                    onClick={handleAddFriend}
+                    className="flex items-center gap-2 px-4 py-2 rounded-lg bg-purple-500 hover:bg-purple-600 text-white text-sm transition-all"
+                  >
+                    <UserPlus className="w-4 h-4" />
+                    <span dir="rtl">إضافة</span>
+                  </button>
+                </div>
+              </div>
+
+              {closeFriends.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-12 px-4">
+                  <div className="w-16 h-16 rounded-full bg-white/10 flex items-center justify-center mb-3">
+                    <Users className="w-8 h-8 text-gray-400" />
+                  </div>
+                  <p className="text-gray-400 text-center mb-4" dir="rtl">لم تتم إضافة أصدقاء بعد</p>
+                  <button
+                    onClick={handleAddFriend}
+                    className="flex items-center gap-2 px-6 py-3 rounded-xl bg-purple-500/20 border border-purple-400 text-purple-400 hover:bg-purple-500/30 transition-all"
+                  >
+                    <UserPlus className="w-5 h-5" />
+                    <span dir="rtl">إضافة صديق</span>
+                  </button>
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 gap-4 px-4">
+                  {closeFriends.map((friend) => (
+                    <div
+                      key={friend.id}
+                      className="relative flex flex-col items-center gap-2 p-4 rounded-xl bg-white/5 backdrop-blur-sm border border-white/10 hover:bg-white/10 transition-all"
+                    >
+                      <div className="relative">
+                        <div className="w-16 h-16 rounded-full border-2 border-purple-400 overflow-hidden shadow-lg">
+                          <img 
+                            src={friend.avatar}
+                            alt={friend.name}
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                        <button
+                          onClick={() => handleRemoveFriend(friend.id)}
+                          className="absolute -top-1 -right-1 w-6 h-6 rounded-full bg-red-500 hover:bg-red-600 border-2 border-white flex items-center justify-center shadow-lg transition-all"
+                          aria-label="Remove friend"
+                        >
+                          <CloseIcon className="w-3 h-3 text-white" />
+                        </button>
+                      </div>
+                      <p className="text-white text-sm font-medium text-center" dir="rtl">{friend.name}</p>
+                      <p className="text-gray-400 text-xs" dir="rtl">ID: {friend.id}</p>
+                    </div>
+                  ))}
+                  
+                  {/* Add More Button (if under 4) */}
+                  {closeFriends.length < 4 && (
+                    <button
+                      onClick={handleAddFriend}
+                      className="flex flex-col items-center justify-center gap-2 p-4 rounded-xl bg-purple-500/10 border-2 border-dashed border-purple-400 hover:bg-purple-500/20 transition-all"
+                    >
+                      <div className="w-16 h-16 rounded-full bg-purple-500/20 flex items-center justify-center">
+                        <UserPlus className="w-8 h-8 text-purple-400" />
+                      </div>
+                      <span className="text-purple-400 text-sm font-medium" dir="rtl">إضافة</span>
+                    </button>
+                  )}
+                </div>
+              )}
+
+              {/* Premium Hint */}
+              {closeFriends.length >= 4 && (
+                <div className="mt-4 px-4">
+                  <div className="flex items-center gap-3 p-4 rounded-xl bg-gradient-to-r from-yellow-500/20 to-orange-500/20 border border-yellow-500/30">
+                    <Lock className="w-5 h-5 text-yellow-400 flex-shrink-0" />
+                    <p className="text-yellow-200 text-sm flex-1" dir="rtl">
+                      لإضافة المزيد من الأصدقاء، يجب شراء النسخة المميزة
+                    </p>
+                    <button
+                      onClick={() => setShowPremiumDialog(true)}
+                      className="px-4 py-2 rounded-lg bg-yellow-500 hover:bg-yellow-600 text-white text-sm font-medium transition-all whitespace-nowrap"
+                    >
+                      ترقية
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         )}
       </div>
