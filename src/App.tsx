@@ -52,6 +52,7 @@ import Home from "./pages/Home";
 import GamesPage from "./pages/games/GamesPage";
 import LudoGame from "./pages/games/LudoGame";
 import Recharge from "./pages/finance/Recharge";
+import SuperSupport from "./pages/support/SuperSupport";
 
 const queryClient = new QueryClient();
 
@@ -104,6 +105,8 @@ const App = () => (
               {/* Games */}
               <Route path="/games" element={<GamesPage />} />
               <Route path="/games/ludo" element={<LudoGame />} />
+              {/* Support */}
+              <Route path="/support" element={<SuperSupport />} />
               {/* Agency */}
               <Route path="/agency/host" element={<HostAgency />} />
               <Route path="/agency/recharge" element={<RechargeAgency />} />

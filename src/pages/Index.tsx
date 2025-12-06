@@ -19,6 +19,7 @@ import { showSuccess } from "@/utils/toast";
 import CreateRoomModal, { RoomCreationData } from "@/components/voice/CreateRoomModal";
 import { initializeDemoPresence } from "@/utils/demoData";
 import { MomentsService } from "@/services/MomentsService";
+import { InviteRewardsService } from "@/services/InviteRewardsService";
 
 const Index: React.FC = () => {
   const [rooms, setRooms] = React.useState<RoomData[]>([]);
@@ -48,7 +49,12 @@ const Index: React.FC = () => {
     
     // Initialize demo posts
     MomentsService.initializeDemoPosts();
-  }, [setLocale]);
+    
+    // Initialize invite rewards demo data
+    if (currentUser?.id) {
+      InviteRewardsService.initializeDemoData(currentUser.id);
+    }
+  }, [setLocale, currentUser?.id]);
 
   React.useEffect(() => {
     let mounted = true;
