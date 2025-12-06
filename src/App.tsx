@@ -49,6 +49,9 @@ import CoinPurchase from "./pages/finance/CoinPurchase";
 import MusicLibrary from "./pages/music/MusicLibrary";
 import BottomTabController from "@/components/mobile/BottomTabController";
 import Home from "./pages/Home";
+import GamesPage from "./pages/games/GamesPage";
+import LudoGame from "./pages/games/LudoGame";
+import Recharge from "./pages/finance/Recharge";
 
 const queryClient = new QueryClient();
 
@@ -90,6 +93,7 @@ const App = () => (
               {/* Finance & Store */}
               <Route path="/wallet" element={<Wallet />} />
               <Route path="/store" element={<Store />} />
+              <Route path="/recharge" element={<Recharge />} />
               {/* Earnings & Withdrawal */}
               <Route path="/earnings" element={<Earnings />} />
               <Route path="/withdrawal" element={<Withdrawal />} />
@@ -97,6 +101,9 @@ const App = () => (
               <Route path="/coins" element={<CoinPurchase />} />
               {/* Music */}
               <Route path="/music" element={<MusicLibrary />} />
+              {/* Games */}
+              <Route path="/games" element={<GamesPage />} />
+              <Route path="/games/ludo" element={<LudoGame />} />
               {/* Agency */}
               <Route path="/agency/host" element={<HostAgency />} />
               <Route path="/agency/recharge" element={<RechargeAgency />} />

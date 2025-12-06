@@ -9,7 +9,7 @@ const items = [
   { to: "/", label: "Home", icon: Home },
   { to: "/messages", label: "Messages", icon: MessageSquareText },
   { to: "/voice/create", label: "Create", icon: Camera, center: true },
-  { to: "/hosts", label: "Games", icon: Gamepad2 },
+  { to: "/games", label: "Games", icon: Gamepad2 },
   { to: "/profile", label: "Profile", icon: User2 },
   { to: "/settings", label: "Settings", icon: Settings },
 ];
