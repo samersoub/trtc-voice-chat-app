@@ -13,7 +13,10 @@ import {
   Plane,
   Crown,
   MoreHorizontal,
-  Camera
+  Camera,
+  Image,
+  Plus,
+  X as CloseIcon
 } from 'lucide-react';
 import { AuthService } from '@/services/AuthService';
 import { ProfileService, type Profile } from '@/services/ProfileService';
@@ -42,7 +45,11 @@ const ModernProfile: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'profile' | 'relations'>('profile');
   const [moments, setMoments] = useState<string[]>([]);
   const [coverImage, setCoverImage] = useState<string>('/images/default-cover.jpeg');
-  const fileInputRef = React.useRef<HTMLInputElement>(null);
+  const [profileImage, setProfileImage] = useState<string>('https://api.dicebear.com/7.x/avataaars/svg?seed=Jordan');
+  const [isEditingTags, setIsEditingTags] = useState(false);
+  const [userInterests, setUserInterests] = useState<Interest[]>([]);
+  const coverFileInputRef = React.useRef<HTMLInputElement>(null);
+  const profileFileInputRef = React.useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const loadProfile = async () => {
@@ -65,16 +72,25 @@ const ModernProfile: React.FC = () => {
     { id: '7', icon: '💚', label: '150', color: 'from-green-400 to-teal-500' },
   ];
 
-  const interests: Interest[] = [
-    { id: '1', icon: <Film className="w-4 h-4" />, label: 'أفلام' },
-    { id: '2', icon: <Music className="w-4 h-4" />, label: 'برامج تلفزيونية' },
-    { id: '3', icon: <Music className="w-4 h-4" />, label: 'غناء' },
-    { id: '4', icon: <Award className="w-4 h-4" />, label: 'لودو' },
-    { id: '5', icon: <Coffee className="w-4 h-4" />, label: 'كرة قدم' },
-    { id: '6', icon: <Coffee className="w-4 h-4" />, label: 'قهوة' },
-    { id: '7', icon: <Plane className="w-4 h-4" />, label: 'السفر إلى العديد من البلدان' },
-    { id: '8', icon: <Crown className="w-4 h-4" />, label: 'عضو ملكي' },
-  ];
+  // Initialize user interests from profile or defaults
+  React.useEffect(() => {
+    const defaultInterests: Interest[] = [
+      { id: '1', icon: <Film className="w-4 h-4" />, label: 'أفلام' },
+      { id: '2', icon: <Music className="w-4 h-4" />, label: 'برامج تلفزيونية' },
+      { id: '3', icon: <Music className="w-4 h-4" />, label: 'غناء' },
+      { id: '4', icon: <Award className="w-4 h-4" />, label: 'لودو' },
+      { id: '5', icon: <Coffee className="w-4 h-4" />, label: 'كرة قدم' },
+      { id: '6', icon: <Coffee className="w-4 h-4" />, label: 'قهوة' },
+      { id: '7', icon: <Plane className="w-4 h-4" />, label: 'السفر إلى العديد من البلدان' },
+      { id: '8', icon: <Crown className="w-4 h-4" />, label: 'عضو ملكي' },
+    ];
+    setUserInterests(defaultInterests);
+    
+    // Load profile image if exists
+    if (profile?.profile_image) {
+      setProfileImage(profile.profile_image);
+    }
+  }, [profile]);
 
   const userName = profile?.username || currentUser?.name || 'أردني~يبحث عنك~!';
   const userId_display = 'ID:101089646';
@@ -97,8 +113,40 @@ const ModernProfile: React.FC = () => {
     }
   };
 
+  const handleProfileImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setProfileImage(reader.result as string);
+        // TODO: Upload to server and update profile
+        // ProfileService.updateProfileImage(currentUser?.id, reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   const handleEditCoverClick = () => {
-    fileInputRef.current?.click();
+    coverFileInputRef.current?.click();
+  };
+
+  const handleEditProfileClick = () => {
+    profileFileInputRef.current?.click();
+  };
+
+  const handleRemoveTag = (tagId: string) => {
+    setUserInterests(userInterests.filter(tag => tag.id !== tagId));
+    // TODO: Update on server
+  };
+
+  const handleAddTag = () => {
+    const newTag: Interest = {
+      id: Date.now().toString(),
+      icon: <Star className="w-4 h-4" />,
+      label: 'علامة جديدة'
+    };
+    setUserInterests([...userInterests, newTag]);
+    // TODO: Update on server
   };
 
   return (
@@ -117,14 +165,22 @@ const ModernProfile: React.FC = () => {
           <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/50 to-black/80"></div>
         </div>
 
-        {/* Hidden File Input */}
+        {/* Hidden File Inputs */}
         <input
-          ref={fileInputRef}
+          ref={coverFileInputRef}
           type="file"
           accept="image/*"
           onChange={handleCoverImageChange}
           className="hidden"
           aria-label="Upload cover image"
+        />
+        <input
+          ref={profileFileInputRef}
+          type="file"
+          accept="image/*"
+          onChange={handleProfileImageChange}
+          className="hidden"
+          aria-label="Upload profile image"
         />
 
         {/* Top Navigation Bar */}
@@ -162,12 +218,21 @@ const ModernProfile: React.FC = () => {
                 <span className="text-white text-sm">{userId_display}</span>
               </div>
             </div>
-            <div className="w-20 h-20 rounded-full border-4 border-white/30 overflow-hidden shadow-2xl ring-4 ring-purple-500/30">
-              <img 
-                src={profile?.profile_image || 'https://api.dicebear.com/7.x/avataaars/svg?seed=Jordan'}
-                alt={userName}
-                className="w-full h-full object-cover"
-              />
+            <div className="relative">
+              <div className="w-20 h-20 rounded-full border-4 border-white/30 overflow-hidden shadow-2xl ring-4 ring-purple-500/30">
+                <img 
+                  src={profileImage}
+                  alt={userName}
+                  className="w-full h-full object-cover"
+                />
+              </div>
+              <button
+                onClick={handleEditProfileClick}
+                className="absolute bottom-0 right-0 w-7 h-7 rounded-full bg-purple-500 hover:bg-purple-600 border-2 border-white flex items-center justify-center shadow-lg transition-all"
+                aria-label="Change profile picture"
+              >
+                <Camera className="w-3.5 h-3.5 text-white" />
+              </button>
             </div>
           </div>
 
@@ -261,22 +326,47 @@ const ModernProfile: React.FC = () => {
             <div className="mt-6">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-white font-semibold text-lg" dir="rtl">العلامات الشخصية</h3>
-                <button className="text-purple-400 hover:text-purple-300" aria-label="View all tags">
-                  <ChevronLeft className="w-5 h-5" />
+                <button 
+                  onClick={() => setIsEditingTags(!isEditingTags)}
+                  className="text-purple-400 hover:text-purple-300 flex items-center gap-2" 
+                  aria-label="Edit tags"
+                >
+                  <Edit className="w-4 h-4" />
+                  <span className="text-sm">{isEditingTags ? 'حفظ' : 'تعديل'}</span>
                 </button>
               </div>
 
               {/* Interests Grid */}
               <div className="grid grid-cols-2 gap-3">
-                {interests.map((interest) => (
+                {userInterests.map((interest) => (
                   <div
                     key={interest.id}
-                    className="flex items-center gap-2 px-4 py-3 rounded-xl bg-white/5 backdrop-blur-sm border border-white/10 hover:bg-white/10 transition-all"
+                    className="relative flex items-center gap-2 px-4 py-3 rounded-xl bg-white/5 backdrop-blur-sm border border-white/10 hover:bg-white/10 transition-all"
                   >
                     <div className="text-purple-400">{interest.icon}</div>
-                    <span className="text-white text-sm" dir="rtl">{interest.label}</span>
+                    <span className="text-white text-sm flex-1" dir="rtl">{interest.label}</span>
+                    {isEditingTags && (
+                      <button
+                        onClick={() => handleRemoveTag(interest.id)}
+                        className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-red-500 hover:bg-red-600 border-2 border-white flex items-center justify-center shadow-lg transition-all"
+                        aria-label="Remove tag"
+                      >
+                        <CloseIcon className="w-3 h-3 text-white" />
+                      </button>
+                    )}
                   </div>
                 ))}
+                
+                {/* Add Tag Button */}
+                {isEditingTags && (
+                  <button
+                    onClick={handleAddTag}
+                    className="flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-purple-500/20 backdrop-blur-sm border-2 border-dashed border-purple-400 hover:bg-purple-500/30 transition-all"
+                  >
+                    <Plus className="w-5 h-5 text-purple-400" />
+                    <span className="text-purple-400 text-sm font-medium" dir="rtl">إضافة علامة</span>
+                  </button>
+                )}
               </div>
             </div>
 
