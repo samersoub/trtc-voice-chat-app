@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { AuthService } from "@/services/AuthService";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import ChatLayout from "@/components/chat/ChatLayout";
@@ -18,6 +19,7 @@ import LevelProgress from "@/components/profile/LevelProgress";
 import ShareProfileDialog from "@/components/profile/ShareProfileDialog";
 import FrameSelector from "@/components/profile/FrameSelector";
 import MomentsUploader from "@/components/profile/MomentsUploader";
+import { Smartphone } from "lucide-react";
 
 const Profile = () => {
   const user = AuthService.getCurrentUser();
@@ -39,6 +41,16 @@ const Profile = () => {
   return (
     <ChatLayout title="Profile">
       <div className="mx-auto max-w-3xl p-4 space-y-4">
+        {/* Modern View Toggle */}
+        <div className="flex justify-end">
+          <Button asChild variant="outline" size="sm" className="gap-2">
+            <Link to="/profile/modern">
+              <Smartphone className="w-4 h-4" />
+              <span>Modern View</span>
+            </Link>
+          </Button>
+        </div>
+
         {/* Top cover with header content overlay */}
         <ProfileCover>
           <ProfileHeader user={user} profile={profile} />

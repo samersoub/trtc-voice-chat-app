@@ -18,6 +18,7 @@ import VoiceChatRoomRedesign from "@/components/voice/VoiceChatRoomRedesign";
 import Contacts from "./pages/contacts/Contacts";
 import InviteFriends from "./pages/contacts/InviteFriends";
 import Profile from "./pages/profile/Profile";
+import ModernProfile from "./pages/profile/ModernProfile";
 import Settings from "./pages/profile/Settings";
 import AdminDashboard from "./pages/admin/Dashboard";
 import AdminUsers from "./pages/admin/Users";
@@ -109,7 +110,7 @@ const App = () => (
               <Route path="/contacts" element={<Contacts />} />
               <Route path="/contacts/invite" element={<InviteFriends />} />
               {/* Profile */}
-              <Route path="/profile" element={<Profile />} />
+              <Route path="/profile" element={<ModernProfile />} />
               <Route path="/settings" element={<Settings />} />
               {/* Matching */}
               <Route path="/matching" element={<Matching />} />
