@@ -20,6 +20,7 @@ import CreateRoomModal, { RoomCreationData } from "@/components/voice/CreateRoom
 import { initializeDemoPresence } from "@/utils/demoData";
 import { MomentsService } from "@/services/MomentsService";
 import { InviteRewardsService } from "@/services/InviteRewardsService";
+import { MessagesService } from "@/services/MessagesService";
 
 const Index: React.FC = () => {
   const [rooms, setRooms] = React.useState<RoomData[]>([]);
@@ -53,6 +54,11 @@ const Index: React.FC = () => {
     // Initialize invite rewards demo data
     if (currentUser?.id) {
       InviteRewardsService.initializeDemoData(currentUser.id);
+    }
+    
+    // Initialize messages demo data
+    if (currentUser?.id) {
+      MessagesService.initializeDemoMessages(currentUser.id);
     }
   }, [setLocale, currentUser?.id]);
 
