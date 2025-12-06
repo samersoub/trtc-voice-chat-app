@@ -17,6 +17,8 @@ import { AuthService } from "@/services/AuthService";
 import { UserProfileService } from "@/services/UserProfileService";
 import { showSuccess } from "@/utils/toast";
 import CreateRoomModal, { RoomCreationData } from "@/components/voice/CreateRoomModal";
+import { initializeDemoPresence } from "@/utils/demoData";
+import { MomentsService } from "@/services/MomentsService";
 
 const Index: React.FC = () => {
   const [rooms, setRooms] = React.useState<RoomData[]>([]);
@@ -36,9 +38,16 @@ const Index: React.FC = () => {
   const userStatus = UserProfileService.getUserStatus(userId);
 
   const { setLocale } = useLocale();
+  
   React.useEffect(() => {
     // Force Arabic + RTL for this design
     setLocale("ar");
+    
+    // Initialize demo data for testing user presence
+    initializeDemoPresence();
+    
+    // Initialize demo posts
+    MomentsService.initializeDemoPosts();
   }, [setLocale]);
 
   React.useEffect(() => {

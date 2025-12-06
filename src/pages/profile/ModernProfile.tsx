@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { 
   MapPin, 
   Link as LinkIcon, 
@@ -26,10 +26,17 @@ import {
   Lock,
   Sparkles,
   Type,
-  Check
+  Check,
+  Radio,
+  Volume2,
+  MessageCircle,
+  Share2
 } from 'lucide-react';
 import { AuthService } from '@/services/AuthService';
 import { ProfileService, type Profile } from '@/services/ProfileService';
+import { UserPresenceService } from '@/services/UserPresenceService';
+import { MomentsService, type MomentPost, type MomentComment } from '@/services/MomentsService';
+import { showSuccess, showError } from '@/utils/toast';
 
 // ===================================================================
 // Modern Profile Component - Matches Mobile App Design
@@ -61,14 +68,25 @@ interface Highlight {
 
 const ModernProfile: React.FC = () => {
   const { userId } = useParams();
+  const navigate = useNavigate();
   const currentUser = AuthService.getCurrentUser();
   const [profile, setProfile] = useState<Profile | null>(null);
   
   // userName needs to be defined before states that use it
   const userName = profile?.username || currentUser?.name || 'أردني~يبحث عنك~!';
   
-  const [activeTab, setActiveTab] = useState<'profile' | 'relations'>('profile');
+  const [activeTab, setActiveTab] = useState<'profile' | 'relations' | 'moments'>('profile');
+  const [isFollowing, setIsFollowing] = useState(false);
   const [moments, setMoments] = useState<string[]>([]);
+  
+  // Moments state
+  const [userPosts, setUserPosts] = useState<MomentPost[]>([]);
+  const [showCreatePost, setShowCreatePost] = useState(false);
+  const [newPostContent, setNewPostContent] = useState('');
+  const [newPostImages, setNewPostImages] = useState<string[]>([]);
+  const [showComments, setShowComments] = useState<string | null>(null);
+  const [commentInput, setCommentInput] = useState<{[key: string]: string}>({});
+  
   const [coverImage, setCoverImage] = useState<string>('/images/default-cover.jpeg');
   const [profileImage, setProfileImage] = useState<string>('https://api.dicebear.com/7.x/avataaars/svg?seed=Jordan');
   const [isEditingTags, setIsEditingTags] = useState(false);
@@ -137,6 +155,15 @@ const ModernProfile: React.FC = () => {
       setProfileImage(profile.profile_image);
     }
   }, [profile]);
+
+  // Load user posts
+  useEffect(() => {
+    const profileUserId = userId || currentUser?.id || '';
+    if (profileUserId) {
+      const posts = MomentsService.getUserPosts(profileUserId);
+      setUserPosts(posts);
+    }
+  }, [userId, currentUser?.id, activeTab]);
 
   const userId_display = 'ID:101089646';
   const userLevel = 'LV.28';
@@ -335,6 +362,103 @@ const ModernProfile: React.FC = () => {
     // TODO: Update on server
   };
 
+  const handleFollowUser = () => {
+    // Check if user is in a room
+    const profileUserId = userId || currentUser?.id || '';
+    const userRoom = UserPresenceService.getUserCurrentRoom(profileUserId);
+    
+    if (userRoom) {
+      // User is in a room, navigate to it
+      showSuccess(`جاري الانضمام إلى ${userRoom.roomTitle || 'الغرفة'}...`);
+      navigate(`/voice/rooms/${userRoom.roomId}/join`);
+    } else {
+      // User is not in a room
+      showError('المستخدم غير متواجد في أي غرفة حالياً');
+    }
+  };
+
+  const handleToggleFollow = () => {
+    setIsFollowing(!isFollowing);
+    if (!isFollowing) {
+      showSuccess('تم التتبع بنجاح');
+    } else {
+      showSuccess('تم إلغاء التتبع');
+    }
+  };
+
+  // Moments handlers
+  const handleCreatePost = () => {
+    if (!newPostContent.trim() && newPostImages.length === 0) {
+      showError('الرجاء كتابة محتوى أو إضافة صورة');
+      return;
+    }
+
+    const post = MomentsService.createPost(
+      currentUser?.id || '',
+      currentUser?.name || 'المستخدم',
+      currentUser?.avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${currentUser?.id}`,
+      newPostContent,
+      newPostImages
+    );
+
+    setUserPosts([post, ...userPosts]);
+    setNewPostContent('');
+    setNewPostImages([]);
+    setShowCreatePost(false);
+    showSuccess('تم نشر البوست بنجاح');
+  };
+
+  const handleLikePost = (postId: string) => {
+    const isLiked = MomentsService.toggleLike(postId, currentUser?.id || '');
+    setUserPosts([...MomentsService.getUserPosts(userId || currentUser?.id || '')]);
+    if (isLiked) {
+      showSuccess('تم الإعجاب');
+    }
+  };
+
+  const handleAddComment = (postId: string) => {
+    const content = commentInput[postId];
+    if (!content?.trim()) return;
+
+    MomentsService.addComment(
+      postId,
+      currentUser?.id || '',
+      currentUser?.name || 'المستخدم',
+      currentUser?.avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${currentUser?.id}`,
+      content
+    );
+
+    setUserPosts([...MomentsService.getUserPosts(userId || currentUser?.id || '')]);
+    setCommentInput({ ...commentInput, [postId]: '' });
+    showSuccess('تم إضافة التعليق');
+  };
+
+  const handleSharePost = (postId: string) => {
+    MomentsService.sharePost(postId);
+    setUserPosts([...MomentsService.getUserPosts(userId || currentUser?.id || '')]);
+    showSuccess('تم مشاركة البوست');
+  };
+
+  const handleDeletePost = (postId: string) => {
+    if (MomentsService.deletePost(postId, currentUser?.id || '')) {
+      setUserPosts(userPosts.filter(p => p.id !== postId));
+      showSuccess('تم حذف البوست');
+    }
+  };
+
+  const handlePostImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (files) {
+      Array.from(files).forEach(file => {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setNewPostImages(prev => [...prev, reader.result as string]);
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+  };
+
   const handleRemoveHighlight = (id: string) => {
     setHighlights(highlights.filter(h => h.id !== id));
     // TODO: Update on server
@@ -525,6 +649,26 @@ const ModernProfile: React.FC = () => {
                 className="w-full h-full object-cover"
               />
             </div>
+            {/* Status Indicator - Show if user is in a room */}
+            {(() => {
+              const profileUserId = userId || currentUser?.id || '';
+              const userRoom = UserPresenceService.getUserCurrentRoom(profileUserId);
+              const userStatus = UserPresenceService.getUserStatus(profileUserId);
+              
+              if (userRoom) {
+                return (
+                  <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-auto px-3 py-1 rounded-full bg-gradient-to-r from-green-500 to-emerald-500 border-2 border-white shadow-lg flex items-center gap-1.5">
+                    <Radio className="w-3 h-3 text-white animate-pulse" />
+                    <span className="text-white text-xs font-medium whitespace-nowrap">في غرفة</span>
+                  </div>
+                );
+              } else if (userStatus === 'online') {
+                return (
+                  <div className="absolute bottom-2 right-2 w-5 h-5 rounded-full bg-green-500 border-2 border-white shadow-lg"></div>
+                );
+              }
+              return null;
+            })()}
             <button
               onClick={handleEditProfileClick}
               className="absolute bottom-0 right-0 w-9 h-9 rounded-full bg-purple-500 hover:bg-purple-600 border-2 border-white flex items-center justify-center shadow-lg transition-all"
@@ -624,7 +768,7 @@ const ModernProfile: React.FC = () => {
         <div className="flex items-center justify-center gap-1 p-2">
           <button
             onClick={() => setActiveTab('profile')}
-            className={`flex-1 px-6 py-3 rounded-xl font-medium transition-all ${
+            className={`flex-1 px-4 py-3 rounded-xl font-medium transition-all ${
               activeTab === 'profile'
                 ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg'
                 : 'bg-white/5 text-gray-400 hover:bg-white/10'
@@ -633,8 +777,18 @@ const ModernProfile: React.FC = () => {
             الملف الشخصي
           </button>
           <button
+            onClick={() => setActiveTab('moments')}
+            className={`flex-1 px-4 py-3 rounded-xl font-medium transition-all ${
+              activeTab === 'moments'
+                ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg'
+                : 'bg-white/5 text-gray-400 hover:bg-white/10'
+            }`}
+          >
+            Moments
+          </button>
+          <button
             onClick={() => setActiveTab('relations')}
-            className={`flex-1 px-6 py-3 rounded-xl font-medium transition-all ${
+            className={`flex-1 px-4 py-3 rounded-xl font-medium transition-all ${
               activeTab === 'relations'
                 ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg'
                 : 'bg-white/5 text-gray-400 hover:bg-white/10'
@@ -717,6 +871,45 @@ const ModernProfile: React.FC = () => {
                 <p className="text-gray-300 leading-relaxed" dir="rtl">{bio}</p>
               )}
             </div>
+
+            {/* Follow and Track Section - Only show if viewing someone else's profile */}
+            {userId && userId !== currentUser?.id && (
+              <div className="flex gap-3">
+                <button
+                  onClick={handleToggleFollow}
+                  className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-medium transition-all ${
+                    isFollowing
+                      ? 'bg-white/10 text-white border border-white/20 hover:bg-white/20'
+                      : 'bg-gradient-to-r from-purple-500 to-pink-500 text-white hover:from-purple-600 hover:to-pink-600'
+                  }`}
+                >
+                  <Heart className={`w-5 h-5 ${isFollowing ? 'fill-current text-red-400' : ''}`} />
+                  <span dir="rtl">{isFollowing ? 'متابَع' : 'متابعة'}</span>
+                </button>
+                
+                {(() => {
+                  const profileUserId = userId || '';
+                  const userRoom = UserPresenceService.getUserCurrentRoom(profileUserId);
+                  const buttonText = userRoom ? `انضم: ${userRoom.roomTitle?.substring(0, 15) || 'الغرفة'}` : 'انضم لغرفته';
+                  const isDisabled = !userRoom;
+                  
+                  return (
+                    <button
+                      onClick={handleFollowUser}
+                      disabled={isDisabled}
+                      className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-medium transition-all ${
+                        isDisabled
+                          ? 'bg-gray-500/50 text-gray-300 cursor-not-allowed'
+                          : 'bg-gradient-to-r from-cyan-500 to-blue-500 text-white hover:from-cyan-600 hover:to-blue-600'
+                      }`}
+                    >
+                      <Radio className={`w-5 h-5 ${userRoom ? 'animate-pulse' : ''}`} />
+                      <span dir="rtl" className="truncate">{buttonText}</span>
+                    </button>
+                  );
+                })()}
+              </div>
+            )}
 
             {/* Highlights Section */}
             <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-4 border border-white/10">
@@ -1083,6 +1276,227 @@ const ModernProfile: React.FC = () => {
                 </div>
               )}
             </div>
+          </div>
+        )}
+
+        {/* Moments Tab Content */}
+        {activeTab === 'moments' && (
+          <div className="space-y-4">
+            {/* Create Post Button */}
+            {(!userId || userId === currentUser?.id) && (
+              <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-4 border border-white/10">
+                <button
+                  onClick={() => setShowCreatePost(true)}
+                  className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 transition-all"
+                >
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
+                    <Plus className="w-5 h-5 text-white" />
+                  </div>
+                  <span className="text-gray-400" dir="rtl">ماذا تريد أن تشارك؟</span>
+                </button>
+              </div>
+            )}
+
+            {/* Create Post Modal */}
+            {showCreatePost && (
+              <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm">
+                <div className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl p-6 max-w-lg w-full mx-4 border border-purple-500/30 shadow-2xl">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-white font-bold text-xl" dir="rtl">إنشاء منشور</h3>
+                    <button
+                      onClick={() => {
+                        setShowCreatePost(false);
+                        setNewPostContent('');
+                        setNewPostImages([]);
+                      }}
+                      className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-all"
+                    >
+                      <CloseIcon className="w-5 h-5 text-white" />
+                    </button>
+                  </div>
+
+                  <textarea
+                    value={newPostContent}
+                    onChange={(e) => setNewPostContent(e.target.value)}
+                    className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:border-purple-400 focus:ring-2 focus:ring-purple-400/20 resize-none mb-4"
+                    rows={4}
+                    dir="rtl"
+                    placeholder="اكتب شيئاً..."
+                  />
+
+                  {/* Image Preview */}
+                  {newPostImages.length > 0 && (
+                    <div className="grid grid-cols-2 gap-2 mb-4">
+                      {newPostImages.map((img, idx) => (
+                        <div key={idx} className="relative">
+                          <img src={img} alt="" className="w-full h-32 object-cover rounded-lg" />
+                          <button
+                            onClick={() => setNewPostImages(newPostImages.filter((_, i) => i !== idx))}
+                            className="absolute top-2 right-2 w-6 h-6 rounded-full bg-red-500 hover:bg-red-600 flex items-center justify-center"
+                          >
+                            <CloseIcon className="w-4 h-4 text-white" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  <div className="flex gap-3">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      onChange={handlePostImageUpload}
+                      className="hidden"
+                      id="post-image-upload"
+                    />
+                    <label
+                      htmlFor="post-image-upload"
+                      className="flex-1 px-4 py-3 rounded-xl bg-white/10 hover:bg-white/20 text-white font-medium transition-all cursor-pointer text-center flex items-center justify-center gap-2"
+                    >
+                      <Image className="w-5 h-5" />
+                      <span dir="rtl">إضافة صور</span>
+                    </label>
+                    <button
+                      onClick={handleCreatePost}
+                      className="flex-1 px-4 py-3 rounded-xl bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-medium transition-all"
+                    >
+                      نشر
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Posts List */}
+            {userPosts.length === 0 ? (
+              <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-12 border border-white/10 text-center">
+                <div className="w-20 h-20 rounded-full bg-purple-500/20 flex items-center justify-center mx-auto mb-4">
+                  <Image className="w-10 h-10 text-purple-400" />
+                </div>
+                <p className="text-gray-400" dir="rtl">لا توجد منشورات بعد</p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {userPosts.map((post) => (
+                  <div key={post.id} className="bg-white/5 backdrop-blur-sm rounded-2xl p-4 border border-white/10">
+                    {/* Post Header */}
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center gap-3">
+                        <img
+                          src={post.userAvatar}
+                          alt={post.userName}
+                          className="w-12 h-12 rounded-full border-2 border-purple-500/30"
+                        />
+                        <div>
+                          <h4 className="text-white font-semibold" dir="rtl">{post.userName}</h4>
+                          <p className="text-gray-400 text-xs">
+                            {new Date(post.createdAt).toLocaleDateString('ar-EG')}
+                          </p>
+                        </div>
+                      </div>
+                      {post.userId === currentUser?.id && (
+                        <button
+                          onClick={() => handleDeletePost(post.id)}
+                          className="w-8 h-8 rounded-full bg-red-500/20 hover:bg-red-500/30 flex items-center justify-center transition-all"
+                        >
+                          <Trash2 className="w-4 h-4 text-red-400" />
+                        </button>
+                      )}
+                    </div>
+
+                    {/* Post Content */}
+                    <p className="text-white mb-3 leading-relaxed" dir="rtl">{post.content}</p>
+
+                    {/* Post Images */}
+                    {post.images.length > 0 && (
+                      <div className={`grid gap-2 mb-3 ${post.images.length === 1 ? 'grid-cols-1' : 'grid-cols-2'}`}>
+                        {post.images.map((img, idx) => (
+                          <img
+                            key={idx}
+                            src={img}
+                            alt=""
+                            className="w-full h-48 object-cover rounded-xl"
+                          />
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Post Actions */}
+                    <div className="flex items-center gap-4 pt-3 border-t border-white/10">
+                      <button
+                        onClick={() => handleLikePost(post.id)}
+                        className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-all ${
+                          post.likes.includes(currentUser?.id || '')
+                            ? 'bg-red-500/20 text-red-400'
+                            : 'bg-white/5 text-gray-400 hover:bg-white/10'
+                        }`}
+                      >
+                        <Heart className={`w-5 h-5 ${post.likes.includes(currentUser?.id || '') ? 'fill-current' : ''}`} />
+                        <span>{post.likes.length}</span>
+                      </button>
+
+                      <button
+                        onClick={() => setShowComments(showComments === post.id ? null : post.id)}
+                        className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/5 hover:bg-white/10 text-gray-400 transition-all"
+                      >
+                        <MessageCircle className="w-5 h-5" />
+                        <span>{post.comments.length}</span>
+                      </button>
+
+                      <button
+                        onClick={() => handleSharePost(post.id)}
+                        className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/5 hover:bg-white/10 text-gray-400 transition-all"
+                      >
+                        <Share2 className="w-5 h-5" />
+                        <span>{post.shares}</span>
+                      </button>
+                    </div>
+
+                    {/* Comments Section */}
+                    {showComments === post.id && (
+                      <div className="mt-4 pt-4 border-t border-white/10 space-y-3">
+                        {/* Comments List */}
+                        {post.comments.map((comment) => (
+                          <div key={comment.id} className="flex gap-3">
+                            <img
+                              src={comment.userAvatar}
+                              alt={comment.userName}
+                              className="w-8 h-8 rounded-full"
+                            />
+                            <div className="flex-1 bg-white/5 rounded-xl p-3">
+                              <h5 className="text-white font-semibold text-sm mb-1" dir="rtl">
+                                {comment.userName}
+                              </h5>
+                              <p className="text-gray-300 text-sm" dir="rtl">{comment.content}</p>
+                            </div>
+                          </div>
+                        ))}
+
+                        {/* Add Comment */}
+                        <div className="flex gap-2">
+                          <input
+                            type="text"
+                            value={commentInput[post.id] || ''}
+                            onChange={(e) => setCommentInput({ ...commentInput, [post.id]: e.target.value })}
+                            onKeyPress={(e) => e.key === 'Enter' && handleAddComment(post.id)}
+                            placeholder="اكتب تعليقاً..."
+                            className="flex-1 px-4 py-2 bg-white/10 border border-white/20 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:border-purple-400 focus:ring-2 focus:ring-purple-400/20 text-sm"
+                            dir="rtl"
+                          />
+                          <button
+                            onClick={() => handleAddComment(post.id)}
+                            className="px-4 py-2 rounded-xl bg-purple-500 hover:bg-purple-600 text-white transition-all"
+                          >
+                            إرسال
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
       </div>

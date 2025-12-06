@@ -1,5 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useParams } from 'react-router-dom';
 import { Mic, MicOff, Volume2, VolumeX, Gift, MessageCircle, Users, Settings, MoreVertical, Crown, Radio, Send, Smile, X } from 'lucide-react';
+import { AuthService } from '@/services/AuthService';
+import { UserPresenceService } from '@/services/UserPresenceService';
 
 // ===================================================================
 // TypeScript Interfaces
@@ -63,6 +66,8 @@ const emojis = ['😊', '😂', '❤️', '👍', '🎉', '🔥', '✨', '💯',
 // Main Voice Chat Room Component - Professional Premium Design
 // ===================================================================
 const VoiceChatRoomRedesign: React.FC = () => {
+  const { id: roomId } = useParams();
+  const currentUser = AuthService.getCurrentUser();
   const [seats, setSeats] = useState<SeatPosition[]>(initialSeats);
   const [isMicActive, setIsMicActive] = useState(false);
   const [isSpeakerActive, setIsSpeakerActive] = useState(true);
@@ -77,6 +82,20 @@ const VoiceChatRoomRedesign: React.FC = () => {
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  // Register user presence when joining room
+  useEffect(() => {
+    if (currentUser?.id && roomId) {
+      UserPresenceService.setUserInRoom(currentUser.id, roomId, 'Jordan Room');
+    }
+    
+    // Cleanup: remove user from room when leaving
+    return () => {
+      if (currentUser?.id) {
+        UserPresenceService.removeUserFromRoom(currentUser.id);
+      }
+    };
+  }, [currentUser?.id, roomId]);
 
   useEffect(() => {
     const interval = setInterval(() => setCallDuration((prev) => prev + 1), 1000);

@@ -118,6 +118,7 @@ const App = () => (
               <Route path="/contacts/invite" element={<InviteFriends />} />
               {/* Profile */}
               <Route path="/profile" element={<ModernProfile />} />
+              <Route path="/profile/:userId" element={<ModernProfile />} />
               <Route path="/settings" element={<Settings />} />
               {/* Matching */}
               <Route path="/matching" element={<Matching />} />
