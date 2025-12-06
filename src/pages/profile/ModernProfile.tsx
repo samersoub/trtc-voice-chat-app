@@ -509,11 +509,28 @@ const ModernProfile: React.FC = () => {
               <Camera className="w-4 h-4" />
               <span>تغيير الغلاف</span>
             </button>
-            <div className="px-3 py-1.5 rounded-full bg-emerald-500 text-white text-sm font-medium">
-              1.0 غرف
-            </div>
             <button className="w-10 h-10 rounded-xl bg-black/30 backdrop-blur-sm flex items-center justify-center border border-white/10" aria-label="More options">
               <MoreHorizontal className="w-5 h-5 text-white" />
+            </button>
+          </div>
+        </div>
+
+        {/* Profile Picture - Positioned separately */}
+        <div className="absolute top-32 left-4 z-20">
+          <div className="relative">
+            <div className="w-36 h-36 rounded-full border-4 border-white/30 overflow-hidden shadow-2xl ring-4 ring-purple-500/30 bg-white">
+              <img 
+                src={profileImage}
+                alt={userName}
+                className="w-full h-full object-cover"
+              />
+            </div>
+            <button
+              onClick={handleEditProfileClick}
+              className="absolute bottom-0 right-0 w-9 h-9 rounded-full bg-purple-500 hover:bg-purple-600 border-2 border-white flex items-center justify-center shadow-lg transition-all"
+              aria-label="Change profile picture"
+            >
+              <Camera className="w-4 h-4 text-white" />
             </button>
           </div>
         </div>
@@ -521,7 +538,7 @@ const ModernProfile: React.FC = () => {
         {/* Profile Info Overlay */}
         <div className="absolute bottom-0 left-0 right-0 z-10 px-4 pb-4">
           {/* User ID and Stats */}
-          <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-3">
               <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-black/40 backdrop-blur-md border border-white/20">
                 <span className="text-white text-sm font-medium">{userCoins} مجبي</span>
@@ -529,22 +546,6 @@ const ModernProfile: React.FC = () => {
               <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-black/40 backdrop-blur-md border border-white/20">
                 <span className="text-white text-sm">{userId_display}</span>
               </div>
-            </div>
-            <div className="relative">
-              <div className="w-20 h-20 rounded-full border-4 border-white/30 overflow-hidden shadow-2xl ring-4 ring-purple-500/30">
-                <img 
-                  src={profileImage}
-                  alt={userName}
-                  className="w-full h-full object-cover"
-                />
-              </div>
-              <button
-                onClick={handleEditProfileClick}
-                className="absolute bottom-0 right-0 w-7 h-7 rounded-full bg-purple-500 hover:bg-purple-600 border-2 border-white flex items-center justify-center shadow-lg transition-all"
-                aria-label="Change profile picture"
-              >
-                <Camera className="w-3.5 h-3.5 text-white" />
-              </button>
             </div>
           </div>
 

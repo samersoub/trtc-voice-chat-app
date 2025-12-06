@@ -52,6 +52,9 @@ const TopNavigation: React.FC<TopNavigationProps> = ({
   const [searchQuery, setSearchQuery] = React.useState("");
   const [isScrolled, setIsScrolled] = React.useState(false);
   const [showProfilePopup, setShowProfilePopup] = React.useState(false);
+  const [searchMode, setSearchMode] = React.useState<"rooms" | "users">("rooms");
+  const [showUserSearchDialog, setShowUserSearchDialog] = React.useState(false);
+  const [userSearchId, setUserSearchId] = React.useState("");
 
   React.useEffect(() => {
     const handleScroll = () => {
@@ -65,7 +68,24 @@ const TopNavigation: React.FC<TopNavigationProps> = ({
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setSearchQuery(value);
+    
+    // Check if searching by ID (numbers only)
+    if (/^\d+$/.test(value.trim()) && value.trim().length > 3) {
+      setSearchMode("users");
+    } else {
+      setSearchMode("rooms");
+    }
+    
     onSearch?.(value);
+  };
+
+  const handleUserSearch = () => {
+    if (userSearchId.trim()) {
+      // TODO: Navigate to user profile or show user card
+      window.location.href = `/profile/${userSearchId}`;
+      setShowUserSearchDialog(false);
+      setUserSearchId("");
+    }
   };
 
   const filters: Array<{ key: FilterType; label: string; icon?: React.ReactNode }> = [
@@ -90,29 +110,85 @@ const TopNavigation: React.FC<TopNavigationProps> = ({
         <div className="flex items-center justify-between gap-2 sm:gap-4 mb-3 sm:mb-4">
           {/* Logo & Brand */}
           <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
-            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-blue-500 via-purple-500 to-indigo-600 flex items-center justify-center shadow-lg">
-              <span className="text-white font-bold text-xl">🎤</span>
+            <div className="w-auto h-16 sm:h-20 flex items-center justify-center">
+              <img 
+                src="/images/dandanh-logo.png.jpg" 
+                alt="Dandanh Chat Logo" 
+                className="h-full w-auto object-contain"
+              />
             </div>
             <div className="hidden sm:block">
               <h1 className="text-lg font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent">
-                غرف الصوت
+                دندنة شات
               </h1>
-              <p className="text-xs text-gray-500 dark:text-gray-400">Voice Rooms</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">دندنة شات</p>
             </div>
           </div>
 
           {/* Search Bar */}
-          <div className="flex-1 max-w-md relative">
-            <Search className="absolute right-2 sm:right-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 sm:h-4 sm:w-4 text-gray-400 pointer-events-none" />
-            <Input
-              type="text"
-              placeholder="ابحث عن غرف..."
-              value={searchQuery}
-              onChange={handleSearchChange}
-              className="w-full pr-8 sm:pr-10 pl-3 sm:pl-4 h-9 sm:h-10 text-sm rounded-full bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border border-gray-200/50 dark:border-gray-700/50 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all shadow-sm"
-              dir="rtl"
-            />
+          <div className="flex-1 max-w-md">
+            <div className="flex gap-2">
+              <div className="flex-1 relative">
+                <Search className="absolute right-2 sm:right-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 sm:h-4 sm:w-4 text-gray-400 pointer-events-none" />
+                <Input
+                  type="text"
+                  placeholder={searchMode === "rooms" ? "ابحث عن غرف..." : "ابحث بالـ ID..."}
+                  value={searchQuery}
+                  onChange={handleSearchChange}
+                  className="w-full pr-8 sm:pr-10 pl-3 sm:pl-4 h-9 sm:h-10 text-sm rounded-full bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border border-gray-200/50 dark:border-gray-700/50 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all shadow-sm"
+                  dir="rtl"
+                />
+              </div>
+              <Button
+                onClick={() => setShowUserSearchDialog(true)}
+                variant="outline"
+                size="sm"
+                className="h-9 sm:h-10 px-2 sm:px-3 rounded-full border-gray-200/50 dark:border-gray-700/50 hover:bg-blue-50 dark:hover:bg-gray-800"
+                title="البحث عن مستخدم"
+              >
+                <User className="h-4 w-4 text-blue-500" />
+              </Button>
+            </div>
           </div>
+
+          {/* User Search Dialog */}
+          {showUserSearchDialog && (
+            <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 backdrop-blur-sm" onClick={() => setShowUserSearchDialog(false)}>
+              <div className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl p-6 max-w-md w-full mx-4 border border-purple-500/30 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+                <h3 className="text-white font-bold text-xl mb-4 text-center" dir="rtl">البحث عن مستخدم</h3>
+                <div className="mb-4">
+                  <div className="relative">
+                    <input
+                      type="text"
+                      value={userSearchId}
+                      onChange={(e) => setUserSearchId(e.target.value)}
+                      onKeyPress={(e) => e.key === 'Enter' && handleUserSearch()}
+                      placeholder="أدخل ID المستخدم"
+                      className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20"
+                      dir="rtl"
+                      autoFocus
+                    />
+                    <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  </div>
+                </div>
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => { setShowUserSearchDialog(false); setUserSearchId(''); }}
+                    className="flex-1 px-4 py-3 rounded-xl bg-white/10 hover:bg-white/20 text-white transition-all"
+                  >
+                    إلغاء
+                  </button>
+                  <button
+                    onClick={handleUserSearch}
+                    disabled={!userSearchId.trim()}
+                    className="flex-1 px-4 py-3 rounded-xl bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    بحث
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* User Actions */}
           <div className="flex items-center gap-2 flex-shrink-0">
