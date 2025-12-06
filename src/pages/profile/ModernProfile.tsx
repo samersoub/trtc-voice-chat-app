@@ -16,7 +16,9 @@ import {
   Camera,
   Image,
   Plus,
-  X as CloseIcon
+  X as CloseIcon,
+  Upload,
+  Trash2
 } from 'lucide-react';
 import { AuthService } from '@/services/AuthService';
 import { ProfileService, type Profile } from '@/services/ProfileService';
@@ -48,8 +50,11 @@ const ModernProfile: React.FC = () => {
   const [profileImage, setProfileImage] = useState<string>('https://api.dicebear.com/7.x/avataaars/svg?seed=Jordan');
   const [isEditingTags, setIsEditingTags] = useState(false);
   const [userInterests, setUserInterests] = useState<Interest[]>([]);
+  const [editingTagId, setEditingTagId] = useState<string | null>(null);
+  const [editingTagText, setEditingTagText] = useState<string>('');
   const coverFileInputRef = React.useRef<HTMLInputElement>(null);
   const profileFileInputRef = React.useRef<HTMLInputElement>(null);
+  const photoFileInputRef = React.useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const loadProfile = async () => {
@@ -146,7 +151,46 @@ const ModernProfile: React.FC = () => {
       label: 'علامة جديدة'
     };
     setUserInterests([...userInterests, newTag]);
+    setEditingTagId(newTag.id);
+    setEditingTagText(newTag.label);
     // TODO: Update on server
+  };
+
+  const handleEditTag = (tagId: string, currentLabel: string) => {
+    setEditingTagId(tagId);
+    setEditingTagText(currentLabel);
+  };
+
+  const handleSaveTag = (tagId: string) => {
+    setUserInterests(userInterests.map(tag => 
+      tag.id === tagId ? { ...tag, label: editingTagText } : tag
+    ));
+    setEditingTagId(null);
+    setEditingTagText('');
+    // TODO: Update on server
+  };
+
+  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (files) {
+      Array.from(files).forEach(file => {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setMoments(prev => [reader.result as string, ...prev]);
+          // TODO: Upload to server
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+  };
+
+  const handleDeletePhoto = (index: number) => {
+    setMoments(moments.filter((_, i) => i !== index));
+    // TODO: Delete from server
+  };
+
+  const handleUploadPhotosClick = () => {
+    photoFileInputRef.current?.click();
   };
 
   return (
@@ -181,6 +225,15 @@ const ModernProfile: React.FC = () => {
           onChange={handleProfileImageChange}
           className="hidden"
           aria-label="Upload profile image"
+        />
+        <input
+          ref={photoFileInputRef}
+          type="file"
+          accept="image/*"
+          multiple
+          onChange={handlePhotoUpload}
+          className="hidden"
+          aria-label="Upload photos"
         />
 
         {/* Top Navigation Bar */}
@@ -344,7 +397,27 @@ const ModernProfile: React.FC = () => {
                     className="relative flex items-center gap-2 px-4 py-3 rounded-xl bg-white/5 backdrop-blur-sm border border-white/10 hover:bg-white/10 transition-all"
                   >
                     <div className="text-purple-400">{interest.icon}</div>
-                    <span className="text-white text-sm flex-1" dir="rtl">{interest.label}</span>
+                    {editingTagId === interest.id ? (
+                      <input
+                        type="text"
+                        value={editingTagText}
+                        onChange={(e) => setEditingTagText(e.target.value)}
+                        onBlur={() => handleSaveTag(interest.id)}
+                        onKeyPress={(e) => e.key === 'Enter' && handleSaveTag(interest.id)}
+                        className="flex-1 bg-transparent text-white text-sm outline-none border-b border-purple-400"
+                        dir="rtl"
+                        placeholder="اكتب العلامة..."
+                        autoFocus
+                      />
+                    ) : (
+                      <span 
+                        className="text-white text-sm flex-1 cursor-pointer" 
+                        dir="rtl"
+                        onClick={() => isEditingTags && handleEditTag(interest.id, interest.label)}
+                      >
+                        {interest.label}
+                      </span>
+                    )}
                     {isEditingTags && (
                       <button
                         onClick={() => handleRemoveTag(interest.id)}
@@ -374,8 +447,13 @@ const ModernProfile: React.FC = () => {
             <div className="mt-6">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-white font-semibold text-lg" dir="rtl">صور</h3>
-                <button className="text-purple-400 hover:text-purple-300" aria-label="View all photos">
-                  <ChevronLeft className="w-5 h-5" />
+                <button 
+                  onClick={handleUploadPhotosClick}
+                  className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-purple-500 hover:bg-purple-600 text-white text-sm transition-all" 
+                  aria-label="Upload photos"
+                >
+                  <Upload className="w-4 h-4" />
+                  <span>رفع صور</span>
                 </button>
               </div>
 
@@ -384,16 +462,30 @@ const ModernProfile: React.FC = () => {
                   <div className="w-16 h-16 rounded-full bg-white/10 flex items-center justify-center mb-3">
                     <Film className="w-8 h-8 text-gray-400" />
                   </div>
-                  <p className="text-gray-400 text-sm text-center" dir="rtl">ليست هناك صور بعد</p>
+                  <p className="text-gray-400 text-sm text-center mb-3" dir="rtl">ليست هناك صور بعد</p>
+                  <button
+                    onClick={handleUploadPhotosClick}
+                    className="flex items-center gap-2 px-4 py-2 rounded-lg bg-purple-500/20 border border-purple-400 text-purple-400 hover:bg-purple-500/30 transition-all"
+                  >
+                    <Upload className="w-4 h-4" />
+                    <span className="text-sm">رفع صور</span>
+                  </button>
                 </div>
               ) : (
                 <div className="grid grid-cols-3 gap-2">
                   {moments.map((moment, index) => (
                     <div
                       key={index}
-                      className="aspect-square rounded-xl overflow-hidden bg-white/5 border border-white/10"
+                      className="relative aspect-square rounded-xl overflow-hidden bg-white/5 border border-white/10 group"
                     >
                       <img src={moment} alt={`Moment ${index + 1}`} className="w-full h-full object-cover" />
+                      <button
+                        onClick={() => handleDeletePhoto(index)}
+                        className="absolute top-1 right-1 w-7 h-7 rounded-full bg-red-500 hover:bg-red-600 border-2 border-white flex items-center justify-center shadow-lg opacity-0 group-hover:opacity-100 transition-all"
+                        aria-label="Delete photo"
+                      >
+                        <Trash2 className="w-3.5 h-3.5 text-white" />
+                      </button>
                     </div>
                   ))}
                 </div>
