@@ -18,7 +18,7 @@ const Recharge = () => {
       name: "إعادة شحن وكيل الشحن",
       nameEn: "",
       icon: "👤",
-      badge: "أخص",
+      badge: "أرخص",
       badgeColor: "bg-pink-500"
     },
     {
