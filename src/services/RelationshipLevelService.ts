@@ -183,6 +183,10 @@ class RelationshipLevelServiceClass {
         break;
       }
     }
+    
+    // Save updated relationship back to Map
+    const key = this.getRelationshipKey(relationship.userId, relationship.partnerId);
+    this.relationships.set(key, relationship);
   }
 
   /**

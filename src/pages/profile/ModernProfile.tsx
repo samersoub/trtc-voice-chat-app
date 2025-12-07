@@ -509,19 +509,26 @@ const ModernProfile: React.FC = () => {
       newPartner.avatar
     );
     
-    // If using demo partner, add demo points
+    // If using demo partner, add demo points and stats
     if (partnerId === 'partner123') {
-      relationship.currentPoints = 8500;
-      relationship.giftsGiven = 45;
-      relationship.giftsReceived = 38;
-      relationship.startDate = new Date(Date.now() - 45 * 24 * 60 * 60 * 1000); // 45 days ago
-      RelationshipLevelService.updateLevel(relationship);
+      // Use addGiftPoints to properly add points (this also updates the level)
+      RelationshipLevelService.addGiftPoints(currentUser.id, newPartner.id, 8500);
+      
+      // Manually update additional demo stats
+      const key = `${currentUser.id}_${newPartner.id}`;
+      const updatedRelationship = RelationshipLevelService['relationships'].get(key);
+      if (updatedRelationship) {
+        updatedRelationship.giftsGiven = 45;
+        updatedRelationship.giftsReceived = 38;
+        updatedRelationship.startDate = new Date(Date.now() - 45 * 24 * 60 * 60 * 1000); // 45 days ago
+        RelationshipLevelService['relationships'].set(key, updatedRelationship);
+      }
     }
     
     setShowPartnerSearch(false);
     setSearchId('');
     showSuccess(partnerId === 'partner123' 
-      ? 'تم إضافة الشريك التجريبي بنجاح' 
+      ? 'تم إضافة الشريك التجريبي بنجاح ✨' 
       : 'تم إضافة الشريك بنجاح'
     );
     // TODO: Update on server
