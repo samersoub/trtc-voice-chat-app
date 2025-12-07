@@ -295,6 +295,7 @@ const ModernProfile: React.FC = () => {
   const [profileImage, setProfileImage] = useState<string>('https://api.dicebear.com/7.x/avataaars/svg?seed=Jordan');
   const [userGender, setUserGender] = useState<'male' | 'female'>('female'); // افتراضياً أنثى لعرض الإطار
   const [isSpeaking, setIsSpeaking] = useState(false); // حالة التحدث
+  const [wealthLevel, setWealthLevel] = useState<any>(null); // مستوى الثروة
   const [isEditingTags, setIsEditingTags] = useState(false);
   const [userInterests, setUserInterests] = useState<Interest[]>([]);
   const [editingTagId, setEditingTagId] = useState<string | null>(null);
@@ -382,6 +383,19 @@ const ModernProfile: React.FC = () => {
       setFeaturedBadge(featured);
     }
   }, [userId, currentUser?.id, activeTab]);
+
+  // Load wealth level
+  useEffect(() => {
+    const loadWealthLevel = async () => {
+      const profileUserId = userId || currentUser?.id || '';
+      if (profileUserId) {
+        const { WealthLevelService } = await import('@/services/WealthLevelService');
+        const level = WealthLevelService.getCurrentLevel(profileUserId);
+        setWealthLevel(level);
+      }
+    };
+    loadWealthLevel();
+  }, [userId, currentUser?.id]);
 
   // Load partner from relationship service (for demo data)
   useEffect(() => {
@@ -1016,6 +1030,17 @@ const ModernProfile: React.FC = () => {
               <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-black/40 backdrop-blur-md border border-white/20">
                 <span className="text-white text-sm">{userId_display}</span>
               </div>
+              {/* عرض مستوى الثروة */}
+              {wealthLevel && (
+                <button
+                  onClick={() => nav('/wealth')}
+                  className={`flex items-center gap-2 px-3 py-1.5 rounded-full bg-gradient-to-r ${wealthLevel.gradient} text-white border-2 border-white/30 shadow-lg hover:scale-105 transition-transform`}
+                  title={dir === 'rtl' ? wealthLevel.name : wealthLevel.nameEn}
+                >
+                  <span className="text-base">{wealthLevel.icon}</span>
+                  <span className="text-xs font-bold">{dir === 'rtl' ? wealthLevel.badge : wealthLevel.nameEn}</span>
+                </button>
+              )}
               {/* زر تغيير الجنس (للتجربة) */}
               <button
                 onClick={() => setUserGender(userGender === 'female' ? 'male' : 'female')}

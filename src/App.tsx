@@ -32,6 +32,7 @@ import AgenciesAdmin from "./pages/admin/Agencies";
 import GiftsAdmin from "./pages/admin/Gifts";
 import CoinsAdmin from "./pages/admin/Coins";
 import Wallet from "./pages/finance/Wallet";
+import Wealth from "./pages/finance/Wealth";
 import HostAgency from "./pages/agency/HostAgency";
 import RechargeAgency from "./pages/agency/RechargeAgency";
 import Store from "./pages/store/Store";
@@ -94,6 +95,7 @@ const App = () => (
               <Route path="/voice/rooms/:id/join" element={<VoiceChatRoomRedesign />} />
               {/* Finance & Store */}
               <Route path="/wallet" element={<Wallet />} />
+              <Route path="/wealth" element={<Wealth />} />
               <Route path="/store" element={<Store />} />
               <Route path="/recharge" element={<Recharge />} />
               {/* Earnings & Withdrawal */}
