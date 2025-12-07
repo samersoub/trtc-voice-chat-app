@@ -67,6 +67,15 @@ const Index: React.FC = () => {
     if (currentUser?.id) {
       RelationshipLevelService.initializeDemoRelationship(currentUser.id);
     }
+    
+    // Initialize badges demo data
+    const initBadges = async () => {
+      if (currentUser?.id) {
+        const { BadgeService } = await import('@/services/BadgeService');
+        BadgeService.initializeDemoData();
+      }
+    };
+    initBadges();
   }, [setLocale, currentUser?.id]);
 
   React.useEffect(() => {

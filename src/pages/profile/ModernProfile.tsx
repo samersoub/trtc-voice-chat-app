@@ -37,6 +37,8 @@ import { ProfileService, type Profile } from '@/services/ProfileService';
 import { UserPresenceService } from '@/services/UserPresenceService';
 import { MomentsService, type MomentPost, type MomentComment } from '@/services/MomentsService';
 import { RelationshipLevelService } from '@/services/RelationshipLevelService';
+import { BadgeService, type Badge } from '@/services/BadgeService';
+import RoomStarBadge from '@/components/profile/RoomStarBadge';
 import { showSuccess, showError } from '@/utils/toast';
 import { useLocale } from '@/contexts';
 
@@ -44,7 +46,7 @@ import { useLocale } from '@/contexts';
 // Modern Profile Component - Matches Mobile App Design
 // ===================================================================
 
-interface Badge {
+interface ProfileBadge {
   id: string;
   icon: string;
   label?: string;
@@ -273,7 +275,10 @@ const ModernProfile: React.FC = () => {
   // userName needs to be defined before states that use it
   const userName = profile?.username || currentUser?.name || 'أردني~يبحث عنك~!';
   
-  const [activeTab, setActiveTab] = useState<'profile' | 'relations' | 'moments'>('profile');
+  const [activeTab, setActiveTab] = useState<'profile' | 'relations' | 'moments' | 'badges'>('profile');
+  const [earnedBadges, setEarnedBadges] = useState<Badge[]>([]);
+  const [featuredBadge, setFeaturedBadge] = useState<Badge | null>(null);
+  const [showBadgeDetail, setShowBadgeDetail] = useState<Badge | null>(null);
   const [isFollowing, setIsFollowing] = useState(false);
   const [moments, setMoments] = useState<string[]>([]);
   
@@ -324,7 +329,7 @@ const ModernProfile: React.FC = () => {
   }, [currentUser?.id]);
 
   // Mock data based on the image
-  const userBadges: Badge[] = [
+  const profileBadges: ProfileBadge[] = [
     { id: '1', icon: '🏆', color: 'from-green-400 to-emerald-500' },
     { id: '2', icon: '🎬', label: 'LV.1', color: 'from-amber-400 to-orange-500' },
     { id: '3', icon: '💎', color: 'from-blue-400 to-cyan-500' },
@@ -360,6 +365,18 @@ const ModernProfile: React.FC = () => {
     if (profileUserId) {
       const posts = MomentsService.getUserPosts(profileUserId);
       setUserPosts(posts);
+    }
+  }, [userId, currentUser?.id, activeTab]);
+
+  // Load badges
+  useEffect(() => {
+    const profileUserId = userId || currentUser?.id || '';
+    if (profileUserId) {
+      const badges = BadgeService.getActiveBadges(profileUserId);
+      setEarnedBadges(badges);
+      
+      const featured = BadgeService.getFeaturedBadge(profileUserId);
+      setFeaturedBadge(featured);
     }
   }, [userId, currentUser?.id, activeTab]);
 
@@ -1027,7 +1044,7 @@ const ModernProfile: React.FC = () => {
             <button className="flex-shrink-0 w-8 h-8 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center border border-white/20" aria-label="Previous badges">
               <ChevronLeft className="w-4 h-4 text-white rotate-180" />
             </button>
-            {userBadges.map((badge) => (
+            {profileBadges.map((badge) => (
               <div
                 key={badge.id}
                 className={`flex-shrink-0 relative w-16 h-16 rounded-xl bg-gradient-to-br ${badge.color || 'from-purple-500 to-pink-500'} flex flex-col items-center justify-center border-2 border-white/30 shadow-lg`}
@@ -1081,6 +1098,16 @@ const ModernProfile: React.FC = () => {
             }`}
           >
             علاقة قوية
+          </button>
+          <button
+            onClick={() => setActiveTab('badges')}
+            className={`flex-1 px-4 py-3 rounded-xl font-medium transition-all ${
+              activeTab === 'badges'
+                ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg'
+                : 'bg-white/5 text-gray-400 hover:bg-white/10'
+            }`}
+          >
+            الأوسمة
           </button>
         </div>
       </div>
@@ -1786,7 +1813,224 @@ const ModernProfile: React.FC = () => {
             )}
           </div>
         )}
+
+        {/* Badges Tab */}
+        {activeTab === 'badges' && (
+          <div className="space-y-6">
+            {/* Featured Badge - Room Star */}
+            {featuredBadge && featuredBadge.type === 'room_star' && (
+              <div className="bg-gradient-to-br from-slate-800/50 to-slate-900/50 backdrop-blur-sm rounded-2xl p-6 border border-yellow-500/30 shadow-xl">
+                <h3 className="text-white font-bold text-xl mb-4 text-center" dir="rtl">
+                  🏆 الوسام المميز
+                </h3>
+                <div className="flex justify-center">
+                  <RoomStarBadge 
+                    userName={userName}
+                    description={featuredBadge.description}
+                  />
+                </div>
+                <div className="mt-6 text-center space-y-2">
+                  <p className="text-amber-200 text-sm" dir="rtl">
+                    حصلت على هذا الوسام بتاريخ: {featuredBadge.earnedDate?.toLocaleDateString('ar-EG')}
+                  </p>
+                  {featuredBadge.stats?.giftsValue && (
+                    <p className="text-yellow-300 font-semibold" dir="rtl">
+                      قيمة الهدايا المرسلة: {featuredBadge.stats.giftsValue.toLocaleString()} عملة 💰
+                    </p>
+                  )}
+                  {featuredBadge.expiryDate && (
+                    <p className="text-gray-400 text-xs" dir="rtl">
+                      ينتهي في: {featuredBadge.expiryDate.toLocaleDateString('ar-EG')}
+                    </p>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* All Badges Grid */}
+            <div className="bg-gradient-to-br from-slate-800/50 to-slate-900/50 backdrop-blur-sm rounded-2xl p-6 border border-purple-500/20">
+              <h3 className="text-white font-bold text-lg mb-4" dir="rtl">
+                جميع الأوسمة ({earnedBadges.length})
+              </h3>
+              
+              {earnedBadges.length === 0 ? (
+                <div className="text-center py-12">
+                  <Award className="w-16 h-16 text-gray-600 mx-auto mb-4" />
+                  <p className="text-gray-400" dir="rtl">
+                    لم تحصل على أي أوسمة بعد
+                  </p>
+                  <p className="text-gray-500 text-sm mt-2" dir="rtl">
+                    أرسل الهدايا وشارك في الغرف للحصول على الأوسمة!
+                  </p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 gap-4">
+                  {earnedBadges.map((badge) => (
+                    <div
+                      key={badge.id}
+                      onClick={() => setShowBadgeDetail(badge)}
+                      className={`bg-gradient-to-br ${badge.gradient} p-1 rounded-xl cursor-pointer hover:scale-105 transition-transform`}
+                    >
+                      <div className="bg-slate-900 rounded-lg p-4">
+                        <div className="flex flex-col items-center gap-2">
+                          <div className="text-4xl">{badge.icon}</div>
+                          <div className="text-center">
+                            <p className="text-white font-semibold text-sm" dir="rtl">
+                              {badge.name}
+                            </p>
+                            <p className="text-gray-400 text-xs mt-1" dir="rtl">
+                              {badge.rarity === 'legendary' && '🌟 أسطوري'}
+                              {badge.rarity === 'epic' && '💜 ملحمي'}
+                              {badge.rarity === 'rare' && '💙 نادر'}
+                              {badge.rarity === 'common' && '⚪ عادي'}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Leaderboard */}
+            <div className="bg-gradient-to-br from-slate-800/50 to-slate-900/50 backdrop-blur-sm rounded-2xl p-6 border border-amber-500/20">
+              <h3 className="text-white font-bold text-lg mb-4 flex items-center gap-2" dir="rtl">
+                <Star className="w-5 h-5 text-yellow-400 fill-yellow-400" />
+                لوحة المتصدرين
+              </h3>
+              
+              <div className="space-y-3">
+                {BadgeService.getLeaderboard(10).map((entry, index) => {
+                  const isCurrentUser = entry.userId === currentUser?.id;
+                  return (
+                    <div
+                      key={entry.userId}
+                      className={`flex items-center gap-3 p-3 rounded-xl ${
+                        isCurrentUser
+                          ? 'bg-gradient-to-r from-purple-500/20 to-pink-500/20 border border-purple-500/30'
+                          : 'bg-white/5'
+                      }`}
+                    >
+                      <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold ${
+                        index === 0 ? 'bg-gradient-to-br from-yellow-400 to-amber-500 text-white' :
+                        index === 1 ? 'bg-gradient-to-br from-gray-300 to-gray-400 text-white' :
+                        index === 2 ? 'bg-gradient-to-br from-amber-600 to-amber-700 text-white' :
+                        'bg-white/10 text-gray-400'
+                      }`}>
+                        {index + 1}
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-white font-medium" dir="rtl">
+                          {isCurrentUser ? userName : `مستخدم ${entry.userId.slice(0, 8)}`}
+                        </p>
+                        <p className="text-gray-400 text-xs" dir="rtl">
+                          {entry.totalGifts.toLocaleString()} عملة
+                        </p>
+                      </div>
+                      {index === 0 && (
+                        <div className="flex items-center gap-1">
+                          <Star className="w-4 h-4 text-yellow-400 fill-yellow-400" />
+                          <span className="text-yellow-400 text-xs font-bold">نجم الغرفة</span>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        )}
       </div>
+
+      {/* Badge Detail Dialog */}
+      {showBadgeDetail && (
+        <div 
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4"
+          onClick={() => setShowBadgeDetail(null)}
+        >
+          <div 
+            className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl p-6 max-w-md w-full border border-purple-500/30 shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex justify-between items-start mb-4">
+              <h3 className="text-white font-bold text-xl" dir="rtl">{showBadgeDetail.name}</h3>
+              <button
+                onClick={() => setShowBadgeDetail(null)}
+                className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-all"
+              >
+                <CloseIcon className="w-4 h-4 text-white" />
+              </button>
+            </div>
+
+            <div className="flex justify-center my-6">
+              {showBadgeDetail.type === 'room_star' ? (
+                <RoomStarBadge compact />
+              ) : (
+                <div className={`text-8xl p-6 rounded-full bg-gradient-to-br ${showBadgeDetail.gradient}`}>
+                  {showBadgeDetail.icon}
+                </div>
+              )}
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <p className="text-gray-400 text-sm mb-2" dir="rtl">الوصف:</p>
+                <p className="text-white" dir="rtl">{showBadgeDetail.description}</p>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <p className="text-gray-400 text-sm" dir="rtl">الندرة:</p>
+                <span className={`px-3 py-1 rounded-full text-xs font-bold ${
+                  showBadgeDetail.rarity === 'legendary' ? 'bg-gradient-to-r from-yellow-400 to-orange-500' :
+                  showBadgeDetail.rarity === 'epic' ? 'bg-gradient-to-r from-purple-500 to-pink-500' :
+                  showBadgeDetail.rarity === 'rare' ? 'bg-gradient-to-r from-blue-500 to-cyan-500' :
+                  'bg-gradient-to-r from-gray-500 to-gray-600'
+                } text-white`}>
+                  {showBadgeDetail.rarity === 'legendary' && '🌟 أسطوري'}
+                  {showBadgeDetail.rarity === 'epic' && '💜 ملحمي'}
+                  {showBadgeDetail.rarity === 'rare' && '💙 نادر'}
+                  {showBadgeDetail.rarity === 'common' && '⚪ عادي'}
+                </span>
+              </div>
+
+              {showBadgeDetail.earnedDate && (
+                <div>
+                  <p className="text-gray-400 text-sm" dir="rtl">
+                    تاريخ الحصول: {showBadgeDetail.earnedDate.toLocaleDateString('ar-EG')}
+                  </p>
+                </div>
+              )}
+
+              {showBadgeDetail.expiryDate && (
+                <div>
+                  <p className="text-amber-300 text-sm" dir="rtl">
+                    ⏰ ينتهي في: {showBadgeDetail.expiryDate.toLocaleDateString('ar-EG')}
+                  </p>
+                </div>
+              )}
+
+              {showBadgeDetail.stats && (
+                <div className="bg-white/5 rounded-xl p-4">
+                  <p className="text-gray-400 text-sm mb-2" dir="rtl">الإحصائيات:</p>
+                  <div className="space-y-1">
+                    {showBadgeDetail.stats.giftsValue && (
+                      <p className="text-white text-sm" dir="rtl">
+                        💰 قيمة الهدايا: {showBadgeDetail.stats.giftsValue.toLocaleString()} عملة
+                      </p>
+                    )}
+                    {showBadgeDetail.stats.daysActive && (
+                      <p className="text-white text-sm" dir="rtl">
+                        📅 أيام النشاط: {showBadgeDetail.stats.daysActive} يوم
+                      </p>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Bottom Floating Button */}
       <div className="fixed bottom-20 right-4 z-40">
