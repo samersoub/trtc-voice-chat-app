@@ -59,29 +59,33 @@ class GeminiServiceClass {
         parts: [{ text: userMessage }]
       };
 
-      // إضافة السياق إذا كانت أول رسالة
+      // بناء المحتوى - إضافة السياق في أول رسالة
+      let contents: GeminiMessage[] = [];
+      
       if (this.conversationHistory.length === 0) {
-        this.conversationHistory.push({
-          role: 'user',
-          parts: [{ text: this.systemContext }]
-        });
-        this.conversationHistory.push({
-          role: 'model',
-          parts: [{ text: locale === 'ar' ? 'مرحباً! أنا مساعدك الذكي في دندنة. كيف أستطيع مساعدتك اليوم؟ 😊' : 'Hello! I am your smart assistant in Dandana. How can I help you today? 😊' }]
-        });
+        // أول رسالة - إضافة السياق
+        contents = [
+          {
+            role: 'user',
+            parts: [{ text: `${this.systemContext}\n\nسؤال المستخدم: ${userMessage}` }]
+          }
+        ];
+      } else {
+        // إضافة السجل الحالي مع الرسالة الجديدة
+        contents = [...this.conversationHistory, userMsg];
       }
 
-      this.conversationHistory.push(userMsg);
-
       const requestBody: GeminiRequest = {
-        contents: this.conversationHistory,
+        contents: contents,
         generationConfig: {
-          temperature: 0.7,
+          temperature: 0.9,
           topK: 40,
           topP: 0.95,
-          maxOutputTokens: 1024,
+          maxOutputTokens: 2048,
         }
       };
+
+      console.log('Sending request to Gemini...', { userMessage });
 
       const response = await fetch(`${GEMINI_API_URL}?key=${GEMINI_API_KEY}`, {
         method: 'POST',
@@ -92,18 +96,29 @@ class GeminiServiceClass {
       });
 
       if (!response.ok) {
-        throw new Error(`Gemini API error: ${response.status}`);
+        const errorText = await response.text();
+        console.error('Gemini API error:', response.status, errorText);
+        throw new Error(`Gemini API error: ${response.status} - ${errorText}`);
       }
 
       const data: GeminiResponse = await response.json();
+      console.log('Gemini response:', data);
       
       if (!data.candidates || data.candidates.length === 0) {
+        console.error('No candidates in response');
         throw new Error('No response from Gemini');
       }
 
       const botResponse = data.candidates[0].content.parts[0].text;
 
-      // إضافة رد البوت للتاريخ
+      // تحديث السجل بعد النجاح
+      if (this.conversationHistory.length === 0) {
+        // أول رسالة - حفظ بدون السياق
+        this.conversationHistory.push(userMsg);
+      } else {
+        this.conversationHistory.push(userMsg);
+      }
+      
       this.conversationHistory.push({
         role: 'model',
         parts: [{ text: botResponse }]
