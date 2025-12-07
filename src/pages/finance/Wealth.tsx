@@ -186,7 +186,7 @@ export default function Wealth() {
       <div className="grid grid-cols-2 gap-4">
         <Button 
           className="bg-gradient-to-r from-blue-500 to-blue-600 text-white"
-          onClick={() => navigate('/store')}
+          onClick={() => navigate('/recharge')}
         >
           <CreditCard className="w-4 h-4 mr-2" />
           {isRTL ? 'شحن الآن' : 'Recharge Now'}
