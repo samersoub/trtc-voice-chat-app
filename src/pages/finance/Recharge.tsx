@@ -32,25 +32,35 @@ const Recharge = () => {
       id: "visa-master-1",
       name: "Visa/Master Card",
       nameEn: "Visa/Master Card",
-      icons: ["💳", "🔴"]
+      iconImages: [
+        "https://upload.wikimedia.org/wikipedia/commons/5/5e/Visa_Inc._logo.svg",
+        "https://upload.wikimedia.org/wikipedia/commons/2/2a/Mastercard-logo.svg"
+      ],
+      isMultiImage: true
     },
     {
       id: "visa-master-2",
       name: "Visa/Master Card",
       nameEn: "Visa/Master Card",
-      icons: ["💳", "🔴", "🟡"]
+      iconImages: [
+        "https://upload.wikimedia.org/wikipedia/commons/5/5e/Visa_Inc._logo.svg",
+        "https://upload.wikimedia.org/wikipedia/commons/2/2a/Mastercard-logo.svg"
+      ],
+      isMultiImage: true
     },
     {
       id: "paypal",
       name: "Pay Pal",
       nameEn: "PayPal",
-      icon: "💙"
+      icon: "https://upload.wikimedia.org/wikipedia/commons/b/b5/PayPal.svg",
+      isImage: true
     },
     {
       id: "google-wallet",
       name: "Google Wallet",
       nameEn: "Google Wallet",
-      icon: "🔵"
+      icon: "https://upload.wikimedia.org/wikipedia/commons/7/71/Google_Wallet_logo.svg",
+      isImage: true
     }
   ];
 
@@ -149,7 +159,15 @@ const Recharge = () => {
             >
               <div className="flex items-center gap-4">
                 {/* Icon */}
-                {method.icons ? (
+                {method.isMultiImage ? (
+                  <div className="flex items-center gap-2">
+                    {method.iconImages?.map((img, idx) => (
+                      <div key={idx} className="h-6 flex items-center">
+                        <img src={img} alt={`${method.name}-${idx}`} className="h-6 object-contain" />
+                      </div>
+                    ))}
+                  </div>
+                ) : method.icons ? (
                   <div className="flex items-center gap-1">
                     {method.icons.map((icon, idx) => (
                       <div key={idx} className="text-2xl">{icon}</div>
