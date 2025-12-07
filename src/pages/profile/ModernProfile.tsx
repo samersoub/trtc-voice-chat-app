@@ -363,6 +363,26 @@ const ModernProfile: React.FC = () => {
     }
   }, [userId, currentUser?.id, activeTab]);
 
+  // Load partner from relationship service (for demo data)
+  useEffect(() => {
+    if (currentUser?.id && !partner) {
+      // Check if there's a relationship in the service
+      const allLevels = RelationshipLevelService.getAllLevels();
+      // Try to find a relationship (demo data will be initialized from Index.tsx)
+      // For now, we'll check if demo relationship exists
+      const demoPartnerId = 'partner123';
+      const relationship = RelationshipLevelService.getRelationship(currentUser.id, demoPartnerId);
+      
+      if (relationship) {
+        setPartner({
+          id: relationship.partnerId,
+          name: relationship.partnerName,
+          avatar: relationship.partnerAvatar
+        });
+      }
+    }
+  }, [currentUser?.id, partner]);
+
   const userId_display = 'ID:101089646';
   const userLevel = 'LV.28';
   const userCoins = profile?.coins || 1200;
@@ -463,15 +483,27 @@ const ModernProfile: React.FC = () => {
   };
 
   const handleSearchPartner = () => {
-    if (searchId.trim()) {
-      // TODO: Search for user by ID on server
-      setPartner({
+    if (searchId.trim() && currentUser) {
+      // Create new partner
+      const newPartner = {
         id: searchId,
         name: `مستخدم ${searchId}`,
         avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${searchId}`
-      });
+      };
+      
+      setPartner(newPartner);
+      
+      // Initialize relationship in RelationshipLevelService
+      RelationshipLevelService.createRelationship(
+        currentUser.id,
+        newPartner.id,
+        newPartner.name,
+        newPartner.avatar
+      );
+      
       setShowPartnerSearch(false);
       setSearchId('');
+      showSuccess('تم إضافة الشريك بنجاح');
       // TODO: Update on server
     }
   };
