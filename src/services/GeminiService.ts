@@ -2,7 +2,7 @@
  * GeminiService - خدمة التواصل مع Google Gemini API
  */
 
-const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY || 'AIzaSyDpCcYPB6_oClVpNYhc0S6o9FJhJKQfKkE'; // ضع مفتاح API الخاص بك هنا
+const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY || 'AIzaSyDSMMNujc-Lh6bUrSWAZg0kqFvYXBB68Gc';
 const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent';
 
 interface GeminiMessage {
