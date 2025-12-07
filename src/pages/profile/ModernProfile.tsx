@@ -483,7 +483,11 @@ const ModernProfile: React.FC = () => {
   };
 
   const handleSearchPartner = () => {
-    if (!currentUser) return;
+    if (!currentUser) {
+      console.error('❌ No current user found');
+      showError('يرجى تسجيل الدخول أولاً');
+      return;
+    }
     
     // If no ID entered, use default demo partner
     const partnerId = searchId.trim() || 'partner123';
@@ -491,6 +495,8 @@ const ModernProfile: React.FC = () => {
       ? `مستخدم ${searchId}` 
       : 'سارة السورية';
     const partnerAvatar = `https://api.dicebear.com/7.x/avataaars/svg?seed=${partnerId}`;
+    
+    console.log('🔍 Creating partner:', { partnerId, partnerName, partnerAvatar });
     
     // Create new partner
     const newPartner = {
@@ -500,6 +506,7 @@ const ModernProfile: React.FC = () => {
     };
     
     setPartner(newPartner);
+    console.log('✅ Partner set in state:', newPartner);
     
     // Initialize relationship in RelationshipLevelService
     const relationship = RelationshipLevelService.createRelationship(
@@ -508,20 +515,35 @@ const ModernProfile: React.FC = () => {
       newPartner.name,
       newPartner.avatar
     );
+    console.log('📊 Relationship created:', relationship);
     
     // If using demo partner, add demo points and stats
     if (partnerId === 'partner123') {
+      console.log('🎁 Adding demo data for partner123...');
+      
       // Use addGiftPoints to properly add points (this also updates the level)
       RelationshipLevelService.addGiftPoints(currentUser.id, newPartner.id, 8500);
       
       // Manually update additional demo stats
       const key = `${currentUser.id}_${newPartner.id}`;
       const updatedRelationship = RelationshipLevelService['relationships'].get(key);
+      console.log('🔑 Relationship key:', key);
+      console.log('📈 Updated relationship:', updatedRelationship);
+      
       if (updatedRelationship) {
         updatedRelationship.giftsGiven = 45;
         updatedRelationship.giftsReceived = 38;
         updatedRelationship.startDate = new Date(Date.now() - 45 * 24 * 60 * 60 * 1000); // 45 days ago
         RelationshipLevelService['relationships'].set(key, updatedRelationship);
+        console.log('✨ Demo stats updated:', {
+          points: updatedRelationship.currentPoints,
+          level: updatedRelationship.currentLevel,
+          giftsGiven: updatedRelationship.giftsGiven,
+          giftsReceived: updatedRelationship.giftsReceived,
+          days: Math.floor((Date.now() - updatedRelationship.startDate.getTime()) / (1000 * 60 * 60 * 24))
+        });
+      } else {
+        console.error('❌ Could not find updated relationship');
       }
     }
     
@@ -531,6 +553,7 @@ const ModernProfile: React.FC = () => {
       ? 'تم إضافة الشريك التجريبي بنجاح ✨' 
       : 'تم إضافة الشريك بنجاح'
     );
+    console.log('✅ Partner search completed successfully');
     // TODO: Update on server
   };
 
