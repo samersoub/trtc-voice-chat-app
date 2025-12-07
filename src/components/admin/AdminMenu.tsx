@@ -24,7 +24,7 @@ const items: AdminItem[] = [
   { title: "Banners", to: "/admin/banners", description: "Configure promotional banners", icon: ImageIcon },
   { title: "Gifts", to: "/admin/gifts", description: "Administer virtual gifts and pricing", icon: Gift },
   { title: "Coins", to: "/admin/coins", description: "Set coin packs and economy rules", icon: Coins },
-  { title: "Settings", to: "/admin/settings", description: "Platform configuration and preferences", icon: Settings },
+  { title: "App Settings", to: "/admin/settings", description: "General app configuration & features", icon: Settings },
 ];
 
 const AdminMenu: React.FC = () => {

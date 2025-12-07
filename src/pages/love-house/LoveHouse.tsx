@@ -21,10 +21,27 @@ import {
 } from 'lucide-react';
 import { AuthService } from '@/services/AuthService';
 import { RelationshipLevelService } from '@/services/RelationshipLevelService';
-import { GiftService } from '@/services/GiftService';
+import { GiftService, type GiftDef } from '@/services/GiftService';
 import FemaleProfileFrame from '@/components/profile/FemaleProfileFrame';
 import { showSuccess, showError } from '@/utils/toast';
 import { useLocale } from '@/contexts';
+
+// Gift icon mapping
+const getGiftIcon = (giftId: string): string => {
+  const iconMap: Record<string, string> = {
+    rose: '🌹',
+    car: '🚗',
+    dragon: '🐉',
+    heart: '💝',
+    diamond: '💎',
+    crown: '👑'
+  };
+  return iconMap[giftId] || '🎁';
+};
+
+// Gift display helpers
+const getGiftDisplayName = (gift: GiftDef): string => gift.name;
+const getGiftCost = (gift: GiftDef): number => gift.price;
 
 interface LoveActivity {
   id: string;
@@ -153,7 +170,7 @@ const LoveHouse: React.FC = () => {
 
   const [showGiftDialog, setShowGiftDialog] = useState(false);
   const [showMemoryDialog, setShowMemoryDialog] = useState(false);
-  const [selectedGift, setSelectedGift] = useState<any>(null);
+  const [selectedGift, setSelectedGift] = useState<GiftDef | null>(null);
 
   // Get relationship level
   const relationship = currentUser?.id 
@@ -165,29 +182,33 @@ const LoveHouse: React.FC = () => {
     : null;
 
   // Handle sending gift
-  const handleSendGift = (gift: any) => {
+  const handleSendGift = (gift: GiftDef) => {
     if (!currentUser?.id) return;
     
-    RelationshipLevelService.addGiftPoints(currentUser.id, partner.id, gift.coinCost);
+    RelationshipLevelService.addGiftPoints(currentUser.id, partner.id, gift.price);
+    
+    const giftIcon = getGiftIcon(gift.id);
+    const giftName = getGiftDisplayName(gift);
+    const giftCost = getGiftCost(gift);
     
     const newActivity: LoveActivity = {
       id: Date.now().toString(),
       type: 'gift',
-      icon: gift.icon,
-      title: `أرسل هدية ${gift.nameAr}`,
-      description: `قيمة ${gift.coinCost} عملة`,
+      icon: giftIcon,
+      title: `أرسل هدية ${giftName}`,
+      description: `قيمة ${giftCost} عملة`,
       timestamp: new Date(),
-      points: gift.coinCost
+      points: giftCost
     };
     
     setRecentActivities([newActivity, ...recentActivities]);
     setLoveStats({
       ...loveStats,
-      totalPoints: loveStats.totalPoints + gift.coinCost,
+      totalPoints: loveStats.totalPoints + giftCost,
       giftsExchanged: loveStats.giftsExchanged + 1
     });
     
-    showSuccess(`تم إرسال ${gift.nameAr} بنجاح! 💝`);
+    showSuccess(`تم إرسال ${giftName} بنجاح! 💝`);
     setShowGiftDialog(false);
   };
 
@@ -202,6 +223,8 @@ const LoveHouse: React.FC = () => {
           <button
             onClick={() => navigate(-1)}
             className="w-10 h-10 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center hover:bg-white/30 transition-all"
+            title="العودة"
+            aria-label="العودة"
           >
             <ChevronLeft className="w-5 h-5" />
           </button>
@@ -217,7 +240,11 @@ const LoveHouse: React.FC = () => {
             </p>
           </div>
 
-          <button className="w-10 h-10 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center hover:bg-white/30 transition-all">
+          <button 
+            className="w-10 h-10 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center hover:bg-white/30 transition-all"
+            title="التأثيرات الخاصة"
+            aria-label="التأثيرات الخاصة"
+          >
             <Sparkles className="w-5 h-5" />
           </button>
         </div>
@@ -285,10 +312,11 @@ const LoveHouse: React.FC = () => {
                 </span>
               </div>
               <div className="h-3 bg-white rounded-full overflow-hidden">
+                {/* Dynamic width - requires inline style for calculated percentage */}
                 <div 
-                  className={`h-full bg-gradient-to-r ${currentLevel.gradient} transition-all duration-500`}
+                  className="h-full bg-gradient-to-r from-pink-500 to-purple-500 transition-all duration-500"
                   style={{ 
-                    width: `${RelationshipLevelService.getProgressToNextLevel(currentUser?.id || '', partner.id)}%` 
+                    width: `${currentLevel ? RelationshipLevelService.getProgressToNextLevel(currentUser?.id || '', partner.id) : 0}%` 
                   }}
                 />
               </div>
@@ -334,7 +362,7 @@ const LoveHouse: React.FC = () => {
             ].map((tab) => (
               <button
                 key={tab.id}
-                onClick={() => setActiveTab(tab.id as any)}
+                onClick={() => setActiveTab(tab.id as 'home' | 'memories' | 'activities' | 'challenges')}
                 className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-medium transition-all ${
                   activeTab === tab.id
                     ? 'bg-gradient-to-r from-pink-500 to-purple-500 text-white shadow-md'
@@ -527,9 +555,9 @@ const LoveHouse: React.FC = () => {
                   onClick={() => handleSendGift(gift)}
                   className="p-4 border-2 border-pink-200 rounded-2xl hover:border-pink-500 hover:shadow-lg transition-all text-center"
                 >
-                  <div className="text-5xl mb-2">{gift.icon}</div>
-                  <p className="font-bold text-gray-800 mb-1">{gift.nameAr}</p>
-                  <p className="text-purple-600 font-bold">{gift.coinCost} عملة</p>
+                  <div className="text-5xl mb-2">{getGiftIcon(gift.id)}</div>
+                  <p className="font-bold text-gray-800 mb-1">{getGiftDisplayName(gift)}</p>
+                  <p className="text-purple-600 font-bold">{getGiftCost(gift)} عملة</p>
                 </button>
               ))}
             </div>

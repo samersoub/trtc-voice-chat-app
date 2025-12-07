@@ -270,6 +270,8 @@ const RelationshipLevelDisplay: React.FC<{ userId: string; partnerId: string }> 
 const ModernProfile: React.FC = () => {
   const { userId } = useParams();
   const navigate = useNavigate();
+  const nav = navigate; // alias for consistency
+  const { locale, dir } = useLocale();
   const currentUser = AuthService.getCurrentUser();
   const [profile, setProfile] = useState<Profile | null>(null);
   

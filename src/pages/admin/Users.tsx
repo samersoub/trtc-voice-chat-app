@@ -31,6 +31,9 @@ const Users: React.FC = () => {
   const [editOpen, setEditOpen] = useState(false);
   const [roleOpen, setRoleOpen] = useState(false);
   const [logsOpen, setLogsOpen] = useState(false);
+  const [banOpen, setBanOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [banReason, setBanReason] = useState("");
   const [editForm, setEditForm] = useState<Profile | null>(null);
 
   const fetchUsers = async () => {
@@ -168,7 +171,18 @@ const Users: React.FC = () => {
             {filteredUsers.map((u) => (
               <TableRow key={u.id}>
                 <TableCell className="font-mono text-xs">{u.id}</TableCell>
-                <TableCell>{u.username}</TableCell>
+                <TableCell>
+                  <div className="flex items-center gap-2">
+                    {u.username}
+                    {u.is_verified && <span className="text-blue-500">✓</span>}
+                    {!u.is_active && <span className="text-red-500 text-xs">(محظور)</span>}
+                  </div>
+                  {!u.is_active && u.ban_reason && (
+                    <div className="text-xs text-muted-foreground mt-1">
+                      السبب: {u.ban_reason}
+                    </div>
+                  )}
+                </TableCell>
                 <TableCell>{u.email}</TableCell>
                 <TableCell>{u.phone}</TableCell>
                 <TableCell>{u.coins ?? 0}</TableCell>
@@ -176,20 +190,28 @@ const Users: React.FC = () => {
                 <TableCell>{u.last_login ? new Date(u.last_login).toLocaleDateString() : "-"}</TableCell>
                 <TableCell>{u.is_active ? "active" : "banned"}</TableCell>
                 <TableCell className="text-right">
-                  <div className="flex justify-end gap-2">
+                  <div className="flex justify-end gap-2 flex-wrap">
                     <Button
-                      variant={u.is_active ? "destructive" : "outline"}
+                      variant={u.is_active ? "destructive" : "default"}
                       size="sm"
-                      onClick={async () => {
-                        const updated = await ProfileService.toggleActive(u.id);
-                        if (updated) {
-                          setUsers((prev) => prev.map((x) => (x.id === updated.id ? updated : x)));
-                          showSuccess(`${updated.is_active ? "Activated" : "Banned"} ${updated.username}`);
-                          ActivityLogService.log("admin", updated.is_active ? "user_activate" : "user_ban", u.id);
+                      onClick={() => {
+                        setTargetUser(u);
+                        if (u.is_active) {
+                          setBanReason("");
+                          setBanOpen(true);
+                        } else {
+                          // Unban directly
+                          ProfileService.unbanUser(u.id).then((updated) => {
+                            if (updated) {
+                              setUsers((prev) => prev.map((x) => (x.id === updated.id ? updated : x)));
+                              showSuccess(`تم إلغاء حظر ${updated.username}`);
+                              ActivityLogService.log("admin", "user_unban", u.id);
+                            }
+                          });
                         }
                       }}
                     >
-                      {u.is_active ? "Ban" : "Unban"}
+                      {u.is_active ? "🚫 حظر" : "✅ إلغاء الحظر"}
                     </Button>
                     <Button
                       size="sm"
@@ -199,17 +221,7 @@ const Users: React.FC = () => {
                         setBalanceOpen(true);
                       }}
                     >
-                      Adjust Coins
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => {
-                        setEditForm(u);
-                        setEditOpen(true);
-                      }}
-                    >
-                      Edit Profile
+                      💰 عملات
                     </Button>
                     <Button
                       size="sm"
@@ -219,17 +231,40 @@ const Users: React.FC = () => {
                         setRoleOpen(true);
                       }}
                     >
-                      Change Role
+                      👤 الدور
                     </Button>
                     <Button
                       size="sm"
                       variant="outline"
                       onClick={() => {
-                        ActivityLogService.log("admin", "password_reset", u.id);
-                        showSuccess("Password reset requested (email flow)");
+                        setEditForm(u);
+                        setEditOpen(true);
                       }}
                     >
-                      Reset Password
+                      ✏️ تعديل
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={async () => {
+                        const updated = await ProfileService.verifyUser(u.id, !u.is_verified);
+                        if (updated) {
+                          setUsers((prev) => prev.map((x) => (x.id === updated.id ? updated : x)));
+                          showSuccess(`${updated.is_verified ? "تم التوثيق" : "تم إلغاء التوثيق"} ${updated.username}`);
+                        }
+                      }}
+                    >
+                      {u.is_verified ? "☑️ موثق" : "☐ توثيق"}
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="destructive"
+                      onClick={() => {
+                        setTargetUser(u);
+                        setDeleteOpen(true);
+                      }}
+                    >
+                      🗑️ حذف
                     </Button>
                     <Button
                       size="sm"
@@ -239,7 +274,7 @@ const Users: React.FC = () => {
                         setLogsOpen(true);
                       }}
                     >
-                      View Logs
+                      📊 السجل
                     </Button>
                   </div>
                 </TableCell>
@@ -329,6 +364,7 @@ const Users: React.FC = () => {
             <SelectContent>
               <SelectItem value="user">User</SelectItem>
               <SelectItem value="host">Host</SelectItem>
+              <SelectItem value="moderator">Moderator</SelectItem>
               <SelectItem value="admin">Admin</SelectItem>
               <SelectItem value="super_admin">Super Admin</SelectItem>
             </SelectContent>
@@ -336,11 +372,13 @@ const Users: React.FC = () => {
           <DialogFooter className="mt-3">
             <Button onClick={async () => {
               if (!targetUser) return;
-              const updated = await ProfileService.upsertProfile(targetUser);
-              setUsers((prev) => prev.map((x) => (x.id === updated.id ? updated : x)));
-              ActivityLogService.log("admin", "role_change", updated.id, { role: updated.role });
-              showSuccess("Role updated");
-              setRoleOpen(false);
+              const updated = await ProfileService.updateRole(targetUser.id, targetUser.role);
+              if (updated) {
+                setUsers((prev) => prev.map((x) => (x.id === updated.id ? updated : x)));
+                ActivityLogService.log("admin", "role_change", updated.id, { role: updated.role });
+                showSuccess(`تم تحديث الدور إلى ${updated.role}`);
+                setRoleOpen(false);
+              }
             }}>Save</Button>
           </DialogFooter>
         </DialogContent>
@@ -370,6 +408,97 @@ const Users: React.FC = () => {
               )}
             </TableBody>
           </Table>
+        </DialogContent>
+      </Dialog>
+
+      {/* Ban User Dialog */}
+      <Dialog open={banOpen} onOpenChange={setBanOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>حظر المستخدم {targetUser ? `• ${targetUser.username}` : ""}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium mb-2">سبب الحظر</label>
+              <textarea
+                className="w-full min-h-[100px] p-3 border rounded-md"
+                placeholder="اكتب سبب حظر هذا المستخدم..."
+                value={banReason}
+                onChange={(e) => setBanReason(e.target.value)}
+              />
+            </div>
+            <p className="text-sm text-muted-foreground">
+              ⚠️ سيتم منع المستخدم من تسجيل الدخول إلى التطبيق
+            </p>
+          </div>
+          <DialogFooter className="mt-4">
+            <Button variant="outline" onClick={() => setBanOpen(false)}>
+              إلغاء
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={async () => {
+                if (!targetUser) return;
+                if (!banReason.trim()) {
+                  showError("يرجى إدخال سبب الحظر");
+                  return;
+                }
+                const updated = await ProfileService.banUser(targetUser.id, banReason);
+                if (updated) {
+                  setUsers((prev) => prev.map((x) => (x.id === updated.id ? updated : x)));
+                  showSuccess(`تم حظر ${updated.username}`);
+                  ActivityLogService.log("admin", "user_ban", updated.id, { reason: banReason });
+                  setBanOpen(false);
+                  setBanReason("");
+                }
+              }}
+            >
+              تأكيد الحظر
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete User Dialog */}
+      <Dialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="text-destructive">⚠️ حذف المستخدم نهائيًا</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <p className="text-sm">
+              هل أنت متأكد من حذف المستخدم <strong>{targetUser?.username}</strong>؟
+            </p>
+            <div className="bg-destructive/10 p-4 rounded-md border border-destructive/20">
+              <p className="text-sm font-medium text-destructive">تحذير:</p>
+              <ul className="text-sm text-destructive/90 list-disc list-inside mt-2 space-y-1">
+                <li>لا يمكن التراجع عن هذا الإجراء</li>
+                <li>سيتم حذف جميع بيانات المستخدم</li>
+                <li>سيتم حذف سجل المعاملات والهدايا</li>
+                <li>سيتم إزالة المستخدم من جميع الغرف</li>
+              </ul>
+            </div>
+          </div>
+          <DialogFooter className="mt-4">
+            <Button variant="outline" onClick={() => setDeleteOpen(false)}>
+              إلغاء
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={async () => {
+                if (!targetUser) return;
+                const success = await ProfileService.deleteUser(targetUser.id);
+                if (success) {
+                  setUsers((prev) => prev.filter((x) => x.id !== targetUser.id));
+                  showSuccess(`تم حذف ${targetUser.username} نهائيًا`);
+                  ActivityLogService.log("admin", "user_delete", targetUser.id);
+                  setDeleteOpen(false);
+                }
+              }}
+            >
+              حذف نهائي
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </AdminLayout>

@@ -15,6 +15,7 @@ export type Profile = {
   role: string;
   created_at: string;
   last_login?: string | null;
+  ban_reason?: string | null;
 };
 
 const LOCAL_KEY = "profiles";
@@ -96,6 +97,153 @@ export const ProfileService = {
     const current = await this.getByUserId(id);
     if (!current) return null;
     const updated = { ...current, coins: Math.max(0, (current.coins || 0) + delta) };
+    return await this.upsertProfile(updated);
+  },
+
+  /**
+   * Ban user - sets is_active to false and stores ban reason
+   */
+  async banUser(id: string, reason: string): Promise<Profile | null> {
+    if (isSupabaseReady && supabase) {
+      const { data, error } = await supabase
+        .from("users")
+        .update({ 
+          is_active: false, 
+          is_banned: true,
+          ban_reason: reason,
+          updated_at: new Date().toISOString()
+        })
+        .eq("id", id)
+        .select()
+        .single();
+      
+      if (error) throw new Error(error.message);
+      return data as Profile;
+    }
+
+    // Local fallback
+    const current = await this.getByUserId(id);
+    if (!current) return null;
+    const updated = { 
+      ...current, 
+      is_active: false,
+      role: current.role === 'admin' ? 'admin' : 'banned' // Don't ban admins
+    };
+    return await this.upsertProfile(updated);
+  },
+
+  /**
+   * Unban user - reactivates account
+   */
+  async unbanUser(id: string): Promise<Profile | null> {
+    if (isSupabaseReady && supabase) {
+      const { data, error } = await supabase
+        .from("users")
+        .update({ 
+          is_active: true, 
+          is_banned: false,
+          ban_reason: null,
+          updated_at: new Date().toISOString()
+        })
+        .eq("id", id)
+        .select()
+        .single();
+      
+      if (error) throw new Error(error.message);
+      return data as Profile;
+    }
+
+    // Local fallback
+    const current = await this.getByUserId(id);
+    if (!current) return null;
+    const updated = { 
+      ...current, 
+      is_active: true,
+      role: current.role === 'banned' ? 'user' : current.role
+    };
+    return await this.upsertProfile(updated);
+  },
+
+  /**
+   * Update user role (admin, user, host, moderator)
+   */
+  async updateRole(id: string, role: 'admin' | 'user' | 'host' | 'moderator'): Promise<Profile | null> {
+    if (isSupabaseReady && supabase) {
+      const { data, error } = await supabase
+        .from("users")
+        .update({ 
+          role: role,
+          updated_at: new Date().toISOString()
+        })
+        .eq("id", id)
+        .select()
+        .single();
+      
+      if (error) throw new Error(error.message);
+      return data as Profile;
+    }
+
+    // Local fallback
+    const current = await this.getByUserId(id);
+    if (!current) return null;
+    const updated = { ...current, role };
+    return await this.upsertProfile(updated);
+  },
+
+  /**
+   * Delete user account permanently
+   */
+  async deleteUser(id: string): Promise<boolean> {
+    if (isSupabaseReady && supabase) {
+      const { error } = await supabase
+        .from("users")
+        .delete()
+        .eq("id", id);
+      
+      if (error) throw new Error(error.message);
+      return true;
+    }
+
+    // Local fallback
+    const all = readLocal();
+    const filtered = all.filter(p => p.id !== id);
+    writeLocal(filtered);
+    return true;
+  },
+
+  /**
+   * Update user verification status
+   */
+  async verifyUser(id: string, verified: boolean): Promise<Profile | null> {
+    if (isSupabaseReady && supabase) {
+      const { data, error } = await supabase
+        .from("users")
+        .update({ 
+          is_verified: verified,
+          updated_at: new Date().toISOString()
+        })
+        .eq("id", id)
+        .select()
+        .single();
+      
+      if (error) throw new Error(error.message);
+      return data as Profile;
+    }
+
+    // Local fallback
+    const current = await this.getByUserId(id);
+    if (!current) return null;
+    const updated = { ...current, is_verified: verified };
+    return await this.upsertProfile(updated);
+  },
+
+  /**
+   * Update user profile (full update)
+   */
+  async updateProfile(id: string, updates: Partial<Profile>): Promise<Profile | null> {
+    const current = await this.getByUserId(id);
+    if (!current) return null;
+    const updated = { ...current, ...updates };
     return await this.upsertProfile(updated);
   },
 
