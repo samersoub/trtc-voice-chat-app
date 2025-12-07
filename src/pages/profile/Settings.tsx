@@ -118,7 +118,7 @@ const Settings = () => {
     },
     {
       id: 10,
-      title: "ست الحب",
+      title: "بيت الحب",
       icon: <Home className="w-6 h-6 text-purple-500" />,
       bgColor: "bg-purple-100",
       route: "/love-house"
