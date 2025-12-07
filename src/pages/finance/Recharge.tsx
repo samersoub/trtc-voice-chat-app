@@ -25,7 +25,8 @@ const Recharge = () => {
       id: "google-pay",
       name: "Google Pay",
       nameEn: "Google Pay",
-      icon: "🔵"
+      icon: "https://upload.wikimedia.org/wikipedia/commons/f/f2/Google_Pay_Logo.svg",
+      isImage: true
     },
     {
       id: "visa-master-1",
@@ -153,6 +154,10 @@ const Recharge = () => {
                     {method.icons.map((icon, idx) => (
                       <div key={idx} className="text-2xl">{icon}</div>
                     ))}
+                  </div>
+                ) : method.isImage ? (
+                  <div className="w-16 h-10 flex items-center justify-center">
+                    <img src={method.icon} alt={method.name} className="h-8 object-contain" />
                   </div>
                 ) : (
                   <div className="text-3xl">{method.icon}</div>
