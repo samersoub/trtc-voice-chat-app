@@ -39,6 +39,7 @@ import { MomentsService, type MomentPost, type MomentComment } from '@/services/
 import { RelationshipLevelService } from '@/services/RelationshipLevelService';
 import { BadgeService, type Badge } from '@/services/BadgeService';
 import RoomStarBadge from '@/components/profile/RoomStarBadge';
+import FemaleProfileFrame from '@/components/profile/FemaleProfileFrame';
 import { showSuccess, showError } from '@/utils/toast';
 import { useLocale } from '@/contexts';
 
@@ -292,6 +293,8 @@ const ModernProfile: React.FC = () => {
   
   const [coverImage, setCoverImage] = useState<string>('/images/default-cover.jpeg');
   const [profileImage, setProfileImage] = useState<string>('https://api.dicebear.com/7.x/avataaars/svg?seed=Jordan');
+  const [userGender, setUserGender] = useState<'male' | 'female'>('female'); // افتراضياً أنثى لعرض الإطار
+  const [isSpeaking, setIsSpeaking] = useState(false); // حالة التحدث
   const [isEditingTags, setIsEditingTags] = useState(false);
   const [userInterests, setUserInterests] = useState<Interest[]>([]);
   const [editingTagId, setEditingTagId] = useState<string | null>(null);
@@ -945,13 +948,21 @@ const ModernProfile: React.FC = () => {
         {/* Profile Picture - Positioned separately */}
         <div className="absolute top-32 left-4 z-20">
           <div className="relative">
-            <div className="w-36 h-36 rounded-full border-4 border-white/30 overflow-hidden shadow-2xl ring-4 ring-purple-500/30 bg-white">
-              <img 
-                src={profileImage}
-                alt={userName}
-                className="w-full h-full object-cover"
+            {userGender === 'female' ? (
+              <FemaleProfileFrame 
+                imageUrl={profileImage}
+                isSpeaking={isSpeaking}
+                size="large"
               />
-            </div>
+            ) : (
+              <div className="w-36 h-36 rounded-full border-4 border-white/30 overflow-hidden shadow-2xl ring-4 ring-purple-500/30 bg-white">
+                <img 
+                  src={profileImage}
+                  alt={userName}
+                  className="w-full h-full object-cover"
+                />
+              </div>
+            )}
             {/* Status Indicator - Show if user is in a room */}
             {(() => {
               const profileUserId = userId || currentUser?.id || '';
@@ -979,6 +990,18 @@ const ModernProfile: React.FC = () => {
             >
               <Camera className="w-4 h-4 text-white" />
             </button>
+            
+            {/* زر تبديل حالة التحدث (للتجربة) */}
+            {userGender === 'female' && (
+              <button
+                onClick={() => setIsSpeaking(!isSpeaking)}
+                className={`absolute bottom-0 left-0 w-9 h-9 rounded-full ${isSpeaking ? 'bg-pink-500' : 'bg-gray-500'} hover:bg-pink-600 border-2 border-white flex items-center justify-center shadow-lg transition-all`}
+                aria-label="Toggle speaking"
+                title={isSpeaking ? 'إيقاف التحدث' : 'تفعيل التحدث'}
+              >
+                <Volume2 className="w-4 h-4 text-white" />
+              </button>
+            )}
           </div>
         </div>
 
@@ -993,6 +1016,14 @@ const ModernProfile: React.FC = () => {
               <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-black/40 backdrop-blur-md border border-white/20">
                 <span className="text-white text-sm">{userId_display}</span>
               </div>
+              {/* زر تغيير الجنس (للتجربة) */}
+              <button
+                onClick={() => setUserGender(userGender === 'female' ? 'male' : 'female')}
+                className="px-3 py-1.5 rounded-full bg-black/40 backdrop-blur-md border border-white/20 hover:bg-black/50 transition-all"
+                title="تبديل الجنس"
+              >
+                <span className="text-white text-sm">{userGender === 'female' ? '👩 أنثى' : '👨 ذكر'}</span>
+              </button>
             </div>
           </div>
 
