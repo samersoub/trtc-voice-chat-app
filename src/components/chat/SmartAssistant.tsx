@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useLocale } from '@/contexts';
 import { X, Send, MessageCircle, Sparkles } from 'lucide-react';
+import { GeminiService } from '@/services/GeminiService';
 
 interface Message {
   id: string;
@@ -64,7 +65,7 @@ const SmartAssistant = () => {
     loadLottie();
   }, []);
 
-  const handleSendMessage = () => {
+  const handleSendMessage = async () => {
     if (!inputText.trim()) return;
 
     // Add user message
@@ -75,12 +76,16 @@ const SmartAssistant = () => {
       timestamp: new Date(),
     };
     setMessages(prev => [...prev, userMessage]);
+    const currentInput = inputText;
     setInputText('');
 
-    // Simulate bot typing
+    // Show typing indicator
     setIsTyping(true);
-    setTimeout(() => {
-      const botResponse = getBotResponse(inputText);
+    
+    try {
+      // Get response from Gemini
+      const botResponse = await GeminiService.sendMessage(currentInput, locale);
+      
       const botMessage: Message = {
         id: (Date.now() + 1).toString(),
         text: botResponse,
@@ -88,8 +93,20 @@ const SmartAssistant = () => {
         timestamp: new Date(),
       };
       setMessages(prev => [...prev, botMessage]);
+    } catch (error) {
+      console.error('Error getting bot response:', error);
+      const errorMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        text: locale === 'ar' 
+          ? 'عذراً، حدث خطأ. يرجى المحاولة مرة أخرى 😔'
+          : 'Sorry, an error occurred. Please try again 😔',
+        sender: 'bot',
+        timestamp: new Date(),
+      };
+      setMessages(prev => [...prev, errorMessage]);
+    } finally {
       setIsTyping(false);
-    }, 1000);
+    }
   };
 
   const getBotResponse = (userInput: string): string => {
@@ -181,12 +198,24 @@ const SmartAssistant = () => {
                 </p>
               </div>
             </div>
-            <button
-              onClick={() => setIsOpen(false)}
-              className="w-8 h-8 rounded-lg bg-white/10 hover:bg-white/20 flex items-center justify-center transition-all"
-            >
-              <X className="w-5 h-5 text-white" />
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => {
+                  GeminiService.resetConversation();
+                  setMessages([]);
+                }}
+                className="px-3 py-1 rounded-lg bg-white/10 hover:bg-white/20 text-white text-xs transition-all"
+                title={locale === 'ar' ? 'مسح المحادثة' : 'Clear chat'}
+              >
+                {locale === 'ar' ? 'مسح' : 'Clear'}
+              </button>
+              <button
+                onClick={() => setIsOpen(false)}
+                className="w-8 h-8 rounded-lg bg-white/10 hover:bg-white/20 flex items-center justify-center transition-all"
+              >
+                <X className="w-5 h-5 text-white" />
+              </button>
+            </div>
           </div>
 
           {/* Messages */}
