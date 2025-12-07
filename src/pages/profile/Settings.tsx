@@ -107,6 +107,7 @@ const Settings = () => {
       bgColor: "bg-yellow-100",
       badge: "new",
       badgeColor: "bg-red-500",
+      subBadge: "💰",
       route: "/wealth"
     },
     {
