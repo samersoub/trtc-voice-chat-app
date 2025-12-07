@@ -36,7 +36,9 @@ import { AuthService } from '@/services/AuthService';
 import { ProfileService, type Profile } from '@/services/ProfileService';
 import { UserPresenceService } from '@/services/UserPresenceService';
 import { MomentsService, type MomentPost, type MomentComment } from '@/services/MomentsService';
+import { RelationshipLevelService } from '@/services/RelationshipLevelService';
 import { showSuccess, showError } from '@/utils/toast';
+import { useLocale } from '@/contexts';
 
 // ===================================================================
 // Modern Profile Component - Matches Mobile App Design
@@ -110,6 +112,154 @@ const LoveAnimation: React.FC = () => {
           </div>
         </div>
       )}
+    </div>
+  );
+};
+
+// Relationship Level Display Component
+const RelationshipLevelDisplay: React.FC<{ userId: string; partnerId: string }> = ({ userId, partnerId }) => {
+  const { locale } = useLocale();
+  const relationship = RelationshipLevelService.getRelationship(userId, partnerId);
+  const currentLevel = RelationshipLevelService.getCurrentLevel(userId, partnerId);
+  const nextLevel = RelationshipLevelService.getNextLevel(userId, partnerId);
+  const progress = RelationshipLevelService.getProgressToNextLevel(userId, partnerId);
+  const daysTogether = RelationshipLevelService.getDaysTogether(userId, partnerId);
+
+  if (!relationship || !currentLevel) return null;
+
+  return (
+    <div className="w-full max-w-md mx-auto space-y-4">
+      {/* Current Level Card */}
+      <div className={`bg-gradient-to-r ${currentLevel.gradient} p-4 rounded-2xl shadow-xl`}>
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-2">
+            <span className="text-3xl">{currentLevel.icon}</span>
+            <div>
+              <p className="text-white font-bold text-lg" dir="rtl">
+                {locale === 'ar' ? currentLevel.name : currentLevel.nameEn}
+              </p>
+              <p className="text-white/80 text-sm">
+                {locale === 'ar' ? `المستوى ${currentLevel.level}` : `Level ${currentLevel.level}`}
+              </p>
+            </div>
+          </div>
+          <div className="text-right">
+            <p className="text-white font-bold text-2xl">{relationship.currentPoints.toLocaleString()}</p>
+            <p className="text-white/80 text-xs">{locale === 'ar' ? 'نقطة' : 'Points'}</p>
+          </div>
+        </div>
+
+        {/* Progress Bar */}
+        {nextLevel && (
+          <div>
+            <div className="flex justify-between text-white/90 text-xs mb-1">
+              <span>{locale === 'ar' ? 'التقدم للمستوى التالي' : 'Progress to next level'}</span>
+              <span>{Math.round(progress)}%</span>
+            </div>
+            <div className="w-full h-3 bg-white/20 rounded-full overflow-hidden backdrop-blur-sm">
+              <div 
+                className="h-full bg-white rounded-full transition-all duration-500 shadow-lg"
+                style={{ width: `${progress}%` }}
+              />
+            </div>
+            <div className="flex justify-between text-white/70 text-xs mt-1">
+              <span>{relationship.currentPoints.toLocaleString()}</span>
+              <span>{nextLevel.minPoints.toLocaleString()}</span>
+            </div>
+          </div>
+        )}
+
+        {nextLevel && (
+          <div className="mt-3 flex items-center gap-2 text-white/90 text-sm">
+            <span>{nextLevel.icon}</span>
+            <span dir="rtl">
+              {locale === 'ar' ? `المستوى التالي: ${nextLevel.name}` : `Next: ${nextLevel.nameEn}`}
+            </span>
+          </div>
+        )}
+
+        {!nextLevel && (
+          <div className="mt-3 text-center text-white font-bold">
+            {locale === 'ar' ? '🎉 المستوى الأقصى!' : '🎉 Max Level!'}
+          </div>
+        )}
+      </div>
+
+      {/* Stats Cards */}
+      <div className="grid grid-cols-3 gap-3">
+        <div className="bg-white/10 backdrop-blur-sm rounded-xl p-3 border border-white/20 text-center">
+          <p className="text-2xl font-bold text-white">{relationship.giftsGiven}</p>
+          <p className="text-xs text-gray-300" dir="rtl">{locale === 'ar' ? 'هدية مُرسلة' : 'Gifts Sent'}</p>
+        </div>
+        <div className="bg-white/10 backdrop-blur-sm rounded-xl p-3 border border-white/20 text-center">
+          <p className="text-2xl font-bold text-white">{relationship.giftsReceived}</p>
+          <p className="text-xs text-gray-300" dir="rtl">{locale === 'ar' ? 'هدية مُستلمة' : 'Gifts Received'}</p>
+        </div>
+        <div className="bg-white/10 backdrop-blur-sm rounded-xl p-3 border border-white/20 text-center">
+          <p className="text-2xl font-bold text-white">{daysTogether}</p>
+          <p className="text-xs text-gray-300" dir="rtl">{locale === 'ar' ? 'يوم معاً' : 'Days Together'}</p>
+        </div>
+      </div>
+
+      {/* Benefits List */}
+      <div className="bg-white/5 backdrop-blur-sm rounded-xl p-4 border border-white/10">
+        <h4 className="text-white font-semibold mb-3 flex items-center gap-2" dir="rtl">
+          <Sparkles className="w-5 h-5 text-yellow-400" />
+          {locale === 'ar' ? 'مزايا المستوى الحالي' : 'Current Level Benefits'}
+        </h4>
+        <ul className="space-y-2">
+          {(locale === 'ar' ? currentLevel.benefits : currentLevel.benefitsEn).map((benefit, index) => (
+            <li key={index} className="flex items-start gap-2 text-sm text-gray-300" dir="rtl">
+              <Check className="w-4 h-4 text-green-400 mt-0.5 flex-shrink-0" />
+              <span>{benefit}</span>
+            </li>
+          ))}
+        </ul>
+      </div>
+
+      {/* All Levels Preview */}
+      <details className="bg-white/5 backdrop-blur-sm rounded-xl border border-white/10 overflow-hidden">
+        <summary className="p-4 text-white font-semibold cursor-pointer hover:bg-white/5 transition-all" dir="rtl">
+          {locale === 'ar' ? 'عرض جميع المستويات' : 'View All Levels'}
+        </summary>
+        <div className="p-4 pt-0 space-y-3">
+          {RelationshipLevelService.getAllLevels().map((level) => (
+            <div 
+              key={level.level}
+              className={`p-3 rounded-xl border-2 transition-all ${
+                level.level === currentLevel.level
+                  ? `border-${level.color} bg-gradient-to-r ${level.gradient} bg-opacity-20`
+                  : 'border-white/10 bg-white/5'
+              }`}
+            >
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2">
+                  <span className="text-2xl">{level.icon}</span>
+                  <div>
+                    <p className={`font-bold ${level.level === currentLevel.level ? 'text-white' : 'text-gray-300'}`} dir="rtl">
+                      {locale === 'ar' ? level.name : level.nameEn}
+                    </p>
+                    <p className="text-xs text-gray-400">
+                      {level.minPoints.toLocaleString()} - {level.maxPoints === Infinity ? '∞' : level.maxPoints.toLocaleString()} {locale === 'ar' ? 'نقطة' : 'pts'}
+                    </p>
+                  </div>
+                </div>
+                {level.level === currentLevel.level && (
+                  <span className="px-2 py-1 bg-white/20 rounded-full text-xs text-white font-medium">
+                    {locale === 'ar' ? 'الحالي' : 'Current'}
+                  </span>
+                )}
+                {level.level < currentLevel.level && (
+                  <Check className="w-5 h-5 text-green-400" />
+                )}
+                {level.level > currentLevel.level && (
+                  <Lock className="w-5 h-5 text-gray-500" />
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      </details>
     </div>
   );
 };
@@ -1183,10 +1333,13 @@ const ModernProfile: React.FC = () => {
                   </div>
 
                   {/* Partner Info */}
-                  <div className="text-center">
+                  <div className="text-center mb-6">
                     <p className="text-white font-semibold text-lg mb-1" dir="rtl">{partner.name}</p>
                     <p className="text-purple-300 text-sm" dir="rtl">علاقة قوية</p>
                   </div>
+
+                  {/* Relationship Level Progress */}
+                  {currentUser && <RelationshipLevelDisplay userId={currentUser.id} partnerId={partner.id} />}
                 </div>
               ) : (
                 <div className="text-center">

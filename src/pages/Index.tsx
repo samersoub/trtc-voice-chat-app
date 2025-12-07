@@ -22,6 +22,7 @@ import { initializeDemoPresence } from "@/utils/demoData";
 import { MomentsService } from "@/services/MomentsService";
 import { InviteRewardsService } from "@/services/InviteRewardsService";
 import { MessagesService } from "@/services/MessagesService";
+import { RelationshipLevelService } from "@/services/RelationshipLevelService";
 
 const Index: React.FC = () => {
   const [rooms, setRooms] = React.useState<RoomData[]>([]);
@@ -60,6 +61,11 @@ const Index: React.FC = () => {
     // Initialize messages demo data
     if (currentUser?.id) {
       MessagesService.initializeDemoMessages(currentUser.id);
+    }
+    
+    // Initialize relationship level demo data
+    if (currentUser?.id) {
+      RelationshipLevelService.initializeDemoRelationship(currentUser.id);
     }
   }, [setLocale, currentUser?.id]);
 
