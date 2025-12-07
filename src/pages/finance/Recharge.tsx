@@ -59,7 +59,7 @@ const Recharge = () => {
       id: "google-wallet",
       name: "Google Wallet",
       nameEn: "Google Wallet",
-      icon: "https://upload.wikimedia.org/wikipedia/commons/7/71/Google_Wallet_logo.svg",
+      icon: "https://www.gstatic.com/instantbuy/svg/dark_gpay.svg",
       isImage: true
     }
   ];
