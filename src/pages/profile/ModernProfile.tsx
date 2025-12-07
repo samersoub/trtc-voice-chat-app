@@ -1128,7 +1128,7 @@ const ModernProfile: React.FC = () => {
                 : 'bg-white/5 text-gray-400 hover:bg-white/10'
             }`}
           >
-            علاقة قوية
+            بيت الحب
           </button>
           <button
             onClick={() => setActiveTab('badges')}
@@ -1438,7 +1438,11 @@ const ModernProfile: React.FC = () => {
           <div className="space-y-8">
             {/* Partner Section */}
             <div className="flex flex-col items-center justify-center py-8">
-              <h3 className="text-white font-semibold text-lg mb-6" dir="rtl">الشريك</h3>
+              <div className="flex items-center gap-3 mb-6">
+                <Heart className="w-6 h-6 text-pink-500 fill-pink-500" />
+                <h3 className="text-white font-semibold text-lg">بيت الحب</h3>
+                <Heart className="w-6 h-6 text-pink-500 fill-pink-500" />
+              </div>
               {partner ? (
                 <div className="relative">
                   {/* Partner Relationship Display */}
@@ -1481,7 +1485,19 @@ const ModernProfile: React.FC = () => {
                   {/* Partner Info */}
                   <div className="text-center mb-6">
                     <p className="text-white font-semibold text-lg mb-1" dir="rtl">{partner.name}</p>
-                    <p className="text-purple-300 text-sm" dir="rtl">علاقة قوية</p>
+                    <p className="text-purple-300 text-sm" dir="rtl">شريك حياة</p>
+                  </div>
+
+                  {/* Button to Love House */}
+                  <div className="flex justify-center mb-6">
+                    <button
+                      onClick={() => navigate('/love-house')}
+                      className="bg-gradient-to-r from-pink-500 via-purple-500 to-pink-600 text-white font-bold px-8 py-3 rounded-full shadow-lg hover:shadow-xl hover:scale-105 transition-all flex items-center gap-2"
+                    >
+                      <Heart className="w-5 h-5 fill-white" />
+                      دخول بيت الحب
+                      <Sparkles className="w-5 h-5" />
+                    </button>
                   </div>
 
                   {/* Relationship Level Progress */}

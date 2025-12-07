@@ -20,6 +20,7 @@ import InviteFriends from "./pages/contacts/InviteFriends";
 import Profile from "./pages/profile/Profile";
 import ModernProfile from "./pages/profile/ModernProfile";
 import Settings from "./pages/profile/Settings";
+import LoveHouse from "./pages/love-house/LoveHouse";
 import AdminDashboard from "./pages/admin/Dashboard";
 import AdminUsers from "./pages/admin/Users";
 import AdminRooms from "./pages/admin/Rooms";
@@ -123,6 +124,8 @@ const App = () => (
               <Route path="/profile" element={<ModernProfile />} />
               <Route path="/profile/:userId" element={<ModernProfile />} />
               <Route path="/settings" element={<Settings />} />
+              {/* Love House */}
+              <Route path="/love-house" element={<LoveHouse />} />
               {/* Matching */}
               <Route path="/matching" element={<Matching />} />
               <Route path="/matching/call/:id" element={<PrivateCall />} />
