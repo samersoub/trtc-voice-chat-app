@@ -8,6 +8,7 @@ import ArabicQuickActions from "@/components/discover/ArabicQuickActions";
 import FilterTagsBar from "@/components/discover/FilterTagsBar";
 import LuxRoomsGrid from "@/components/discover/LuxRoomsGrid";
 import ActiveRoomsScroll from "@/components/discover/ActiveRoomsScroll";
+import SmartAssistant from "@/components/chat/SmartAssistant";
 import { useLocale } from "@/contexts";
 import { fetchActiveRooms } from "@/services/roomService";
 import { RoomData } from "@/models/RoomData";
@@ -192,6 +193,9 @@ const Index: React.FC = () => {
         onClose={() => setShowCreateRoom(false)}
         onCreate={handleCreateRoom}
       />
+
+      {/* Smart Assistant */}
+      <SmartAssistant />
     </ChatLayout>
   );
 };
