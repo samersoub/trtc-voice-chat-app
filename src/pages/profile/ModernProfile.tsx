@@ -483,29 +483,48 @@ const ModernProfile: React.FC = () => {
   };
 
   const handleSearchPartner = () => {
-    if (searchId.trim() && currentUser) {
-      // Create new partner
-      const newPartner = {
-        id: searchId,
-        name: `مستخدم ${searchId}`,
-        avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${searchId}`
-      };
-      
-      setPartner(newPartner);
-      
-      // Initialize relationship in RelationshipLevelService
-      RelationshipLevelService.createRelationship(
-        currentUser.id,
-        newPartner.id,
-        newPartner.name,
-        newPartner.avatar
-      );
-      
-      setShowPartnerSearch(false);
-      setSearchId('');
-      showSuccess('تم إضافة الشريك بنجاح');
-      // TODO: Update on server
+    if (!currentUser) return;
+    
+    // If no ID entered, use default demo partner
+    const partnerId = searchId.trim() || 'partner123';
+    const partnerName = searchId.trim() 
+      ? `مستخدم ${searchId}` 
+      : 'سارة السورية';
+    const partnerAvatar = `https://api.dicebear.com/7.x/avataaars/svg?seed=${partnerId}`;
+    
+    // Create new partner
+    const newPartner = {
+      id: partnerId,
+      name: partnerName,
+      avatar: partnerAvatar
+    };
+    
+    setPartner(newPartner);
+    
+    // Initialize relationship in RelationshipLevelService
+    const relationship = RelationshipLevelService.createRelationship(
+      currentUser.id,
+      newPartner.id,
+      newPartner.name,
+      newPartner.avatar
+    );
+    
+    // If using demo partner, add demo points
+    if (partnerId === 'partner123') {
+      relationship.currentPoints = 8500;
+      relationship.giftsGiven = 45;
+      relationship.giftsReceived = 38;
+      relationship.startDate = new Date(Date.now() - 45 * 24 * 60 * 60 * 1000); // 45 days ago
+      RelationshipLevelService.updateLevel(relationship);
     }
+    
+    setShowPartnerSearch(false);
+    setSearchId('');
+    showSuccess(partnerId === 'partner123' 
+      ? 'تم إضافة الشريك التجريبي بنجاح' 
+      : 'تم إضافة الشريك بنجاح'
+    );
+    // TODO: Update on server
   };
 
   const handleRemovePartner = () => {
@@ -701,6 +720,14 @@ const ModernProfile: React.FC = () => {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm">
           <div className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl p-6 max-w-md w-full mx-4 border border-purple-500/30 shadow-2xl">
             <h3 className="text-white font-bold text-xl mb-4 text-center" dir="rtl">بحث عن شريك</h3>
+            
+            {/* Helper text */}
+            <div className="mb-4 p-3 bg-purple-500/10 border border-purple-500/20 rounded-xl">
+              <p className="text-purple-300 text-sm text-center" dir="rtl">
+                💡 اتركه فارغاً للحصول على شريك تجريبي مع مستويات جاهزة
+              </p>
+            </div>
+            
             <div className="mb-4">
               <div className="relative">
                 <input
@@ -708,7 +735,7 @@ const ModernProfile: React.FC = () => {
                   value={searchId}
                   onChange={(e) => setSearchId(e.target.value)}
                   onKeyPress={(e) => e.key === 'Enter' && handleSearchPartner()}
-                  placeholder="أدخل ID المستخدم"
+                  placeholder="أدخل ID المستخدم (اختياري)"
                   className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20"
                   dir="rtl"
                 />
@@ -724,10 +751,9 @@ const ModernProfile: React.FC = () => {
               </button>
               <button
                 onClick={handleSearchPartner}
-                disabled={!searchId.trim()}
-                className="flex-1 px-4 py-3 rounded-xl bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex-1 px-4 py-3 rounded-xl bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-medium transition-all"
               >
-                بحت
+                {searchId.trim() ? 'بحث' : 'شريك تجريبي'}
               </button>
             </div>
           </div>

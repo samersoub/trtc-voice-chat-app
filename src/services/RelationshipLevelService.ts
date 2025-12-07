@@ -175,7 +175,7 @@ class RelationshipLevelServiceClass {
   /**
    * Update relationship level based on points
    */
-  private updateLevel(relationship: UserRelationship): void {
+  updateLevel(relationship: UserRelationship): void {
     for (let i = this.levels.length - 1; i >= 0; i--) {
       const level = this.levels[i];
       if (relationship.currentPoints >= level.minPoints) {
