@@ -1107,7 +1107,7 @@ const ModernProfile: React.FC = () => {
                 : 'bg-white/5 text-gray-400 hover:bg-white/10'
             }`}
           >
-            الأوسمة
+            المداليات
           </button>
         </div>
       </div>
@@ -1821,7 +1821,7 @@ const ModernProfile: React.FC = () => {
             {featuredBadge && featuredBadge.type === 'room_star' && (
               <div className="bg-gradient-to-br from-slate-800/50 to-slate-900/50 backdrop-blur-sm rounded-2xl p-6 border border-yellow-500/30 shadow-xl">
                 <h3 className="text-white font-bold text-xl mb-4 text-center" dir="rtl">
-                  🏆 الوسام المميز
+                  🏆 الميدالية المميزة
                 </h3>
                 <div className="flex justify-center">
                   <RoomStarBadge 
@@ -1831,7 +1831,7 @@ const ModernProfile: React.FC = () => {
                 </div>
                 <div className="mt-6 text-center space-y-2">
                   <p className="text-amber-200 text-sm" dir="rtl">
-                    حصلت على هذا الوسام بتاريخ: {featuredBadge.earnedDate?.toLocaleDateString('ar-EG')}
+                    حصلت على هذه الميدالية بتاريخ: {featuredBadge.earnedDate?.toLocaleDateString('ar-EG')}
                   </p>
                   {featuredBadge.stats?.giftsValue && (
                     <p className="text-yellow-300 font-semibold" dir="rtl">
@@ -1850,17 +1850,17 @@ const ModernProfile: React.FC = () => {
             {/* All Badges Grid */}
             <div className="bg-gradient-to-br from-slate-800/50 to-slate-900/50 backdrop-blur-sm rounded-2xl p-6 border border-purple-500/20">
               <h3 className="text-white font-bold text-lg mb-4" dir="rtl">
-                جميع الأوسمة ({earnedBadges.length})
+                جميع المداليات ({earnedBadges.length})
               </h3>
               
               {earnedBadges.length === 0 ? (
                 <div className="text-center py-12">
                   <Award className="w-16 h-16 text-gray-600 mx-auto mb-4" />
                   <p className="text-gray-400" dir="rtl">
-                    لم تحصل على أي أوسمة بعد
+                    لم تحصل على أي مداليات بعد
                   </p>
                   <p className="text-gray-500 text-sm mt-2" dir="rtl">
-                    أرسل الهدايا وشارك في الغرف للحصول على الأوسمة!
+                    أرسل الهدايا وشارك في الغرف للحصول على المداليات!
                   </p>
                 </div>
               ) : (
