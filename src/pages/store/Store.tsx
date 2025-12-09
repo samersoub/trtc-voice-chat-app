@@ -74,6 +74,7 @@ const Store: React.FC = () => {
           <button 
             onClick={() => nav(-1)}
             className="w-10 h-10 rounded-xl bg-black/20 backdrop-blur-sm flex items-center justify-center border border-white/10"
+            aria-label="Back"
           >
             <ChevronRight className="w-5 h-5 text-white" />
           </button>

@@ -109,7 +109,7 @@ class AdminAnalyticsService {
           averageSessionTime: duration / Math.max(participantCount, 1),
           peakParticipants,
           messagesCount,
-          giftsReceived: 0, // TODO: Implement gift tracking
+          giftsReceived: this.getRoomGiftCount(roomId),
           timestamp: Date.now(),
         });
       } catch (e) {
@@ -119,6 +119,20 @@ class AdminAnalyticsService {
     
     // Sort by participant count (most active first)
     return metrics.sort((a, b) => b.participantCount - a.participantCount);
+  }
+
+  /**
+   * Get gift count for a specific room
+   */
+  private getRoomGiftCount(roomId: string): number {
+    try {
+      const giftHistoryKey = "gift:history";
+      const history = JSON.parse(localStorage.getItem(giftHistoryKey) || "[]");
+      
+      return history.filter((gift: any) => gift.roomId === roomId).length;
+    } catch {
+      return 0;
+    }
   }
 
   /**

@@ -79,6 +79,7 @@ const Recharge = () => {
           <button 
             onClick={() => nav(-1)}
             className="w-10 h-10 rounded-xl bg-black/20 backdrop-blur-sm flex items-center justify-center border border-white/10"
+            aria-label="Back"
           >
             <ChevronRight className="w-5 h-5 text-white" />
           </button>
@@ -95,7 +96,7 @@ const Recharge = () => {
             </button>
           </div>
 
-          <button className="w-10 h-10 rounded-xl bg-black/20 backdrop-blur-sm flex items-center justify-center border border-white/10">
+          <button className="w-10 h-10 rounded-xl bg-black/20 backdrop-blur-sm flex items-center justify-center border border-white/10" aria-label="Menu">
             <div className="w-6 h-1 bg-white rounded-full"></div>
           </button>
         </div>

@@ -97,11 +97,7 @@ const VoiceRoom: React.FC = () => {
             
             {/* TOP HEADER - Strictly Horizontal Layout */}
             <header 
-              className="flex items-center justify-between px-3 py-2.5 bg-black/20 shrink-0"
-              style={{
-                backdropFilter: 'blur(10px)',
-                WebkitBackdropFilter: 'blur(10px)'
-              } as CSSProperties}
+              className="flex items-center justify-between px-3 py-2.5 bg-black/20 shrink-0 backdrop-blur-md"
             >
               {/* Left Side - Host Info */}
               <div className="flex items-center gap-2 min-w-0 flex-1">
@@ -120,7 +116,7 @@ const VoiceRoom: React.FC = () => {
                   <div className="w-6 h-6 rounded-full bg-gradient-to-br from-orange-400 to-red-600 border-2 border-[#1a1a2e] shadow-md"></div>
                 </div>
                 <span className="text-white text-xs font-medium">320 &gt;</span>
-                <button className="p-1 hover:bg-white/10 rounded-full transition-colors">
+                <button className="p-1 hover:bg-white/10 rounded-full transition-colors" aria-label="Close">
                   <X className="w-5 h-5 text-white" strokeWidth={2.5} />
                 </button>
               </div>
@@ -155,11 +151,7 @@ const VoiceRoom: React.FC = () => {
             <div className="relative h-full">
               <div className="absolute top-0 left-0 right-0 h-8 bg-gradient-to-b from-transparent via-black/30 to-transparent z-10 pointer-events-none"></div>
               <div 
-                className="h-full bg-black/40 rounded-xl border border-white/5 overflow-hidden"
-                style={{
-                  backdropFilter: 'blur(15px)',
-                  WebkitBackdropFilter: 'blur(15px)'
-                } as CSSProperties}
+                className="h-full bg-black/40 rounded-xl border border-white/5 overflow-hidden backdrop-blur-md"
               >
                 <div className="h-full overflow-y-auto px-2.5 py-2.5 space-y-1.5 scrollbar-hide">
                   {chatMessages.map((msg) => (
@@ -172,11 +164,7 @@ const VoiceRoom: React.FC = () => {
 
           {/* BOTTOM ACTION BAR - Fixed Footer */}
           <footer 
-            className="absolute bottom-0 left-0 right-0 z-30 bg-[#1a1a2e]/95 border-t border-white/10"
-            style={{
-              backdropFilter: 'blur(15px)',
-              WebkitBackdropFilter: 'blur(15px)'
-            } as CSSProperties}
+            className="absolute bottom-0 left-0 right-0 z-30 bg-[#1a1a2e]/95 border-t border-white/10 backdrop-blur-md"
           >
             <div className="flex items-center gap-1.5 px-2.5 py-2.5">
               {/* Text Input Field */}
@@ -186,7 +174,7 @@ const VoiceRoom: React.FC = () => {
                   placeholder="Let's talk"
                   className="flex-1 bg-transparent text-xs text-white placeholder-gray-400 outline-none min-w-0"
                 />
-                <button className="hover:opacity-80 transition-opacity shrink-0">
+                <button className="hover:opacity-80 transition-opacity shrink-0" aria-label="Add emoji">
                   <Smile className="w-3.5 h-3.5 text-gray-400" />
                 </button>
               </div>
@@ -202,11 +190,11 @@ const VoiceRoom: React.FC = () => {
                   {isMuted ? <MicOff className="w-3.5 h-3.5 text-white" /> : <Mic className="w-3.5 h-3.5 text-white" />}
                 </button>
 
-                <button className="p-2 hover:bg-white/10 rounded-full transition-colors">
+                <button className="p-2 hover:bg-white/10 rounded-full transition-colors" aria-label="Settings">
                   <Settings className="w-3.5 h-3.5 text-white" />
                 </button>
 
-                <button className="p-2 hover:bg-orange-600/20 rounded-full transition-colors">
+                <button className="p-2 hover:bg-orange-600/20 rounded-full transition-colors" aria-label="Send gift">
                   <Gift className="w-3.5 h-3.5 text-orange-500" />
                 </button>
 
@@ -259,11 +247,7 @@ const EmptySeat: React.FC<{ seatNumber: number }> = ({ seatNumber }) => {
   return (
     <div className="flex flex-col items-center gap-1.5">
       <div 
-        className="w-full aspect-square rounded-full bg-white/10 border border-white/10 flex flex-col items-center justify-center gap-0.5 shadow-lg"
-        style={{
-          backdropFilter: 'blur(8px)',
-          WebkitBackdropFilter: 'blur(8px)'
-        } as CSSProperties}
+        className="w-full aspect-square rounded-full bg-white/10 border border-white/10 flex flex-col items-center justify-center gap-0.5 shadow-lg backdrop-blur-sm"
       >
         <Armchair className="w-5 h-5 text-gray-500" strokeWidth={1.5} />
         <span className="text-[10px] text-gray-400 font-medium">{seatNumber}</span>

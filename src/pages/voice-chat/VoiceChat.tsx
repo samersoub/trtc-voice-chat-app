@@ -787,8 +787,13 @@ const VoiceChat = () => {
         isCurrentUserHost={isHost}
         onKickUser={(userId) => {
           if (!id) return;
-          showSuccess(`Removed ${userId} from room`);
-          // TODO: Implement actual kick logic
+          try {
+            const updated = MicService.removeUser(id, userId);
+            setSeatsState([...updated]);
+            showSuccess(`Removed user from room`);
+          } catch (e: any) {
+            showError(e.message || "Unable to remove user");
+          }
         }}
         onMuteUser={(userId) => {
           if (!id) return;

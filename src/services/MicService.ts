@@ -69,6 +69,35 @@ export const MicService = {
   getSeats(roomId: string): SeatInfo[] {
     return read(roomId);
   },
+  
+  /**
+   * Remove user from mic seat (kick)
+   */
+  removeUser(roomId: string, userId: string): SeatInfo[] {
+    const seats = read(roomId);
+    const seat = findByUser(seats, userId);
+    if (!seat) throw new Error("User not found on mic");
+    
+    seat.userId = undefined;
+    seat.name = undefined;
+    seat.speaking = false;
+    seat.muted = false;
+    
+    write(roomId, seats);
+    
+    // Log the kick action
+    const logKey = `activity:kicks:${roomId}`;
+    const kicks = JSON.parse(localStorage.getItem(logKey) || "[]");
+    kicks.push({
+      userId,
+      timestamp: new Date().toISOString(),
+      roomId
+    });
+    localStorage.setItem(logKey, JSON.stringify(kicks.slice(-100))); // Keep last 100
+    
+    return seats;
+  },
+  
   putOnMic(roomId: string, userId: string, name?: string, targetIndex?: number): SeatInfo[] {
     const seats = read(roomId);
     // If already on mic, just update name or move if targetIndex given

@@ -15,6 +15,10 @@ import RoomList from "./pages/voice-chat/RoomList";
 import CreateRoom from "./pages/voice-chat/CreateRoom";
 import RoomDetails from "./pages/voice-chat/RoomDetails";
 import VoiceChatRoomRedesign from "@/components/voice/VoiceChatRoomRedesign";
+import PremiumVoiceRoom from "@/components/voice/PremiumVoiceRoom";
+import LamaStyleVoiceRoom from "@/components/voice/LamaStyleVoiceRoom";
+import RealLamaVoiceRoom from "@/components/voice/RealLamaVoiceRoom";
+import AuthenticLamaVoiceRoom from "@/components/voice/AuthenticLamaVoiceRoom";
 import Contacts from "./pages/contacts/Contacts";
 import InviteFriends from "./pages/contacts/InviteFriends";
 import Profile from "./pages/profile/Profile";
@@ -56,6 +60,7 @@ import GamesPage from "./pages/games/GamesPage";
 import LudoGame from "./pages/games/LudoGame";
 import Recharge from "./pages/finance/Recharge";
 import SuperSupport from "./pages/support/SuperSupport";
+import Rankings from "./pages/Rankings";
 
 const queryClient = new QueryClient();
 
@@ -94,7 +99,11 @@ const App = () => (
               <Route path="/voice/rooms" element={<RoomList />} />
               <Route path="/voice/create" element={<CreateRoom />} />
               <Route path="/voice/rooms/:id" element={<RoomDetails />} />
-              <Route path="/voice/rooms/:id/join" element={<VoiceChatRoomRedesign />} />
+              <Route path="/voice/rooms/:id/join" element={<AuthenticLamaVoiceRoom />} />
+              <Route path="/voice/rooms/:id/real" element={<RealLamaVoiceRoom />} />
+              <Route path="/voice/rooms/:id/lama" element={<LamaStyleVoiceRoom />} />
+              <Route path="/voice/rooms/:id/premium" element={<PremiumVoiceRoom />} />
+              <Route path="/voice/rooms/:id/classic" element={<VoiceChatRoomRedesign />} />
               {/* Finance & Store */}
               <Route path="/wallet" element={<Wallet />} />
               <Route path="/wealth" element={<Wealth />} />
@@ -134,6 +143,8 @@ const App = () => (
               <Route path="/matching" element={<Matching />} />
               <Route path="/matching/call/:id" element={<PrivateCall />} />
               <Route path="/matching/rate/:id" element={<RateMatch />} />
+              {/* Rankings */}
+              <Route path="/rankings" element={<Rankings />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>

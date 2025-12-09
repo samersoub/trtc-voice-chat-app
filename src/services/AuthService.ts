@@ -81,8 +81,11 @@ export const AuthService = {
       throw new Error("Too many login attempts. Please wait and try again.");
     }
 
-    // Demo admin shortcut: allow 'admin' / 'admin123' to login and gain admin access locally
-    if (login.trim().toLowerCase() === "admin" && password === "admin123") {
+    // Demo admin login (credentials from env or defaults for development)
+    const adminUsername = (import.meta as any).env.VITE_ADMIN_USERNAME || "admin";
+    const adminPassword = (import.meta as any).env.VITE_ADMIN_PASSWORD || "admin123";
+    
+    if (login.trim().toLowerCase() === adminUsername.toLowerCase() && password === adminPassword) {
       const user: User = {
         id: "admin-demo",
         email: "admin@demo.local",

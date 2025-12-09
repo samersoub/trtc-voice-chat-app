@@ -60,10 +60,7 @@ const VoiceCallRoom: React.FC = () => {
 
   return (
     <div 
-      className="min-h-screen w-full relative overflow-hidden font-sans"
-      style={{
-        background: 'linear-gradient(to bottom, #1E1E2E 0%, #161622 100%)',
-      }}
+      className="min-h-screen w-full relative overflow-hidden font-sans bg-gradient-to-b from-[#1E1E2E] to-[#161622]"
     >
       {/* Main Content Container */}
       <div className="relative z-10 h-screen flex flex-col items-center justify-center px-4 py-8">
@@ -97,28 +94,15 @@ const VoiceCallRoom: React.FC = () => {
 
         {/* Bottom Control Bar */}
         <footer 
-          className="fixed bottom-0 left-0 right-0 z-30 py-6 px-4"
-          style={{
-            background: 'rgba(30, 30, 46, 0.9)',
-            ...blurStyle,
-            boxShadow: '0 -4px 20px rgba(0, 0, 0, 0.3)',
-          }}
+          className="fixed bottom-0 left-0 right-0 z-30 py-6 px-4 bg-[#1E1E2E]/90 backdrop-blur-md shadow-[0_-4px_20px_rgba(0,0,0,0.3)]"
         >
           <div className="max-w-md mx-auto flex items-center justify-center gap-6">
             {/* Mic Toggle Button */}
             <button
               onClick={() => setIsMuted(!isMuted)}
-              className="w-14 h-14 rounded-full flex items-center justify-center transition-all duration-300 ease-in-out"
-              style={{
-                background: isMuted ? '#ED4245' : '#43B581',
-                boxShadow: '0 4px 20px rgba(0, 0, 0, 0.3)',
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.transform = 'scale(1.1)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.transform = 'scale(1)';
-              }}
+              className={`w-14 h-14 rounded-full flex items-center justify-center transition-all duration-300 ease-in-out shadow-[0_4px_20px_rgba(0,0,0,0.3)] hover:scale-110 ${
+                isMuted ? 'bg-[#ED4245]' : 'bg-[#43B581]'
+              }`}
               aria-label={isMuted ? 'Unmute' : 'Mute'}
             >
               {isMuted ? (
@@ -136,19 +120,7 @@ const VoiceCallRoom: React.FC = () => {
                   console.log('Call ended');
                 }
               }}
-              className="w-16 h-16 rounded-full flex items-center justify-center transition-all duration-300 ease-in-out"
-              style={{
-                background: '#ED4245',
-                boxShadow: '0 4px 20px rgba(237, 66, 69, 0.5)',
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.transform = 'scale(1.1)';
-                e.currentTarget.style.boxShadow = '0 6px 25px rgba(237, 66, 69, 0.7)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.transform = 'scale(1)';
-                e.currentTarget.style.boxShadow = '0 4px 20px rgba(237, 66, 69, 0.5)';
-              }}
+              className="w-16 h-16 rounded-full flex items-center justify-center transition-all duration-300 ease-in-out bg-[#ED4245] shadow-[0_4px_20px_rgba(237,66,69,0.5)] hover:scale-110 hover:shadow-[0_6px_25px_rgba(237,66,69,0.7)]"
               aria-label="End Call"
             >
               <PhoneOff className="w-7 h-7 text-white" />
@@ -167,21 +139,13 @@ const VoiceCallRoom: React.FC = () => {
               }}
               onMouseLeave={(e) => {
                 e.currentTarget.style.transform = 'scale(1)';
-              }}
+            <button
+              onClick={() => setIsSpeakerOn(!isSpeakerOn)}
+              className={`w-14 h-14 rounded-full flex items-center justify-center transition-all duration-300 ease-in-out shadow-[0_4px_20px_rgba(0,0,0,0.3)] hover:scale-110 ${
+                isSpeakerOn ? 'bg-[#43B581]' : 'bg-[#747F8D]'
+              }`}
               aria-label={isSpeakerOn ? 'Speaker On' : 'Speaker Off'}
             >
-              {isSpeakerOn ? (
-                <Volume2 className="w-6 h-6 text-white" />
-              ) : (
-                <VolumeX className="w-6 h-6 text-white" />
-              )}
-            </button>
-          </div>
-        </footer>
-      </div>
-    </div>
-  );
-};
 
 // ===================================================================
 // User Circle Component
@@ -199,28 +163,19 @@ const UserCircle: React.FC<UserCircleProps> = ({ user, blurStyle }) => {
         {/* Speaking Animation Ring */}
         {user.isSpeaking && (
           <div 
-            className="absolute -inset-2 rounded-full animate-pulse"
-            style={{
-              border: '3px solid #43B581',
-              boxShadow: '0 0 20px rgba(67, 181, 129, 0.6)',
-            }}
+            className="absolute -inset-2 rounded-full animate-pulse border-[3px] border-[#43B581] shadow-[0_0_20px_rgba(67,181,129,0.6)]"
           ></div>
         )}
 
         {/* Avatar Container */}
         <div
-          className="relative w-[120px] h-[120px] rounded-full overflow-hidden transition-all duration-300"
-          style={{
-            border: `4px solid ${user.isSpeaking ? '#43B581' : '#7289DA'}`,
-            boxShadow: '0 4px 20px rgba(0, 0, 0, 0.3)',
-          }}
+          className={`relative w-[120px] h-[120px] rounded-full overflow-hidden transition-all duration-300 border-4 shadow-[0_4px_20px_rgba(0,0,0,0.3)] ${
+            user.isSpeaking ? 'border-[#43B581]' : 'border-[#7289DA]'
+          }`}
         >
           {/* Placeholder Avatar - Gradient Background */}
           <div 
-            className="w-full h-full flex items-center justify-center text-white text-3xl font-bold"
-            style={{
-              background: `linear-gradient(135deg, #7289DA 0%, #5B6EAE 100%)`,
-            }}
+            className="w-full h-full flex items-center justify-center text-white text-3xl font-bold bg-gradient-to-br from-[#7289DA] to-[#5B6EAE]"
           >
             {user.name.charAt(0)}
           </div>
@@ -228,12 +183,7 @@ const UserCircle: React.FC<UserCircleProps> = ({ user, blurStyle }) => {
           {/* Muted Overlay */}
           {user.isMuted && (
             <div 
-              className="absolute inset-0 flex items-center justify-center"
-              style={{
-                background: 'rgba(0, 0, 0, 0.6)',
-                WebkitBackdropFilter: 'blur(5px)',
-                backdropFilter: 'blur(5px)',
-              }}
+              className="absolute inset-0 flex items-center justify-center bg-black/60 backdrop-blur-sm"
             >
               <MicOff className="w-8 h-8 text-red-500" />
             </div>
@@ -243,17 +193,10 @@ const UserCircle: React.FC<UserCircleProps> = ({ user, blurStyle }) => {
 
       {/* Username Label */}
       <div 
-        className="px-4 py-2 rounded-full"
-        style={{
-          background: 'rgba(255, 255, 255, 0.1)',
-          ...blurStyle,
-        }}
+        className="px-4 py-2 rounded-full bg-white/10 backdrop-blur-sm"
       >
         <span 
-          className="text-white text-sm font-medium"
-          style={{
-            textShadow: '0 2px 4px rgba(0, 0, 0, 0.5)',
-          }}
+          className="text-white text-sm font-medium drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]"
         >
           {user.name}
         </span>
@@ -272,14 +215,7 @@ interface TimerCircleProps {
 const TimerCircle: React.FC<TimerCircleProps> = ({ time }) => {
   return (
     <div 
-      className="w-24 h-24 rounded-full flex flex-col items-center justify-center relative"
-      style={{
-        border: '2px dashed #7289DA',
-        background: 'rgba(30, 30, 46, 0.8)',
-        WebkitBackdropFilter: 'blur(10px)',
-        backdropFilter: 'blur(10px)',
-        boxShadow: '0 4px 20px rgba(0, 0, 0, 0.3)',
-      }}
+      className="w-24 h-24 rounded-full flex flex-col items-center justify-center relative border-2 border-dashed border-[#7289DA] bg-[#1E1E2E]/80 backdrop-blur-md shadow-[0_4px_20px_rgba(0,0,0,0.3)]"
     >
       {/* Animated Pulse Ring */}
       <div 

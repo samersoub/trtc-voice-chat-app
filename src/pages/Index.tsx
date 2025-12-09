@@ -192,7 +192,10 @@ const Index: React.FC = () => {
         <LuxRoomsGrid
           rooms={filteredRooms.length > 0 || searchQuery || activeFilter !== "all" ? filteredRooms : rooms}
           filter={selectedTag}
-          onEnter={(roomId) => navigate(`/voice/rooms/${roomId}/join?autoJoin=1`)}
+          onEnter={(roomId) => {
+            console.log('🚀 Navigating to room:', roomId, 'Path:', `/voice/rooms/${roomId}/join?autoJoin=1`);
+            navigate(`/voice/rooms/${roomId}/join?autoJoin=1`);
+          }}
         />
       </div>
 

@@ -137,27 +137,27 @@ const RoomStarBadge: React.FC<RoomStarBadgeProps> = ({
             </div>
 
             {/* Award icon */}
-            <div className="animate-fade-in-up" style={{ animationDelay: '0.6s' }}>
+            <div className="animate-fade-in-up animate-delay-600">
               <Award className="w-8 h-8 text-amber-400" />
             </div>
 
             {/* User name */}
             {userName && (
-              <div className="text-center animate-fade-in-up" style={{ animationDelay: '0.8s' }}>
+              <div className="text-center animate-fade-in-up animate-delay-800">
                 <h2 className="text-white text-xl font-bold">{userName}</h2>
               </div>
             )}
 
             {/* Description */}
             {description && (
-              <div className="text-center flex items-center gap-2 animate-fade-in-up" style={{ animationDelay: '1s' }}>
+              <div className="text-center flex items-center gap-2 animate-fade-in-up animate-delay-1000">
                 <Mic className="w-4 h-4 text-amber-400" />
                 <p className="text-amber-200 text-sm">{description}</p>
               </div>
             )}
 
             {/* Decorative bottom stars */}
-            <div className="flex gap-2 mt-2 animate-fade-in" style={{ animationDelay: '1.2s' }}>
+            <div className="flex gap-2 mt-2 animate-fade-in animate-delay-1200">
               {[1, 2, 3, 4, 5].map((star) => (
                 <div
                   key={star}

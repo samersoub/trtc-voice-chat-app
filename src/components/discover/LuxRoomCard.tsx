@@ -61,9 +61,18 @@ const LuxRoomCard: React.FC<Props> = ({ room, onEnter }) => {
     }
   };
 
+  const handleCardClick = () => {
+    console.log('🎯 Room card clicked:', room.id, 'onEnter:', typeof onEnter);
+    if (onEnter) {
+      onEnter(room.id);
+    } else {
+      console.error('❌ onEnter is not defined!');
+    }
+  };
+
   return (
     <div
-      onClick={() => onEnter?.(room.id)}
+      onClick={handleCardClick}
       className={cn(
         "relative rounded-2xl overflow-hidden group aspect-[4/5] sm:aspect-[3/4] cursor-pointer",
         "transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl",

@@ -153,8 +153,7 @@ const SmartAssistant = () => {
       {!isOpen && (
         <button
           onClick={() => setIsOpen(true)}
-          className="fixed bottom-24 right-6 z-50 group"
-          style={{ animation: 'bounce 2s infinite' }}
+          className="fixed bottom-24 right-6 z-50 group animate-bounce"
         >
           <div className="relative">
             {/* Animation Container */}
@@ -212,6 +211,7 @@ const SmartAssistant = () => {
               <button
                 onClick={() => setIsOpen(false)}
                 className="w-8 h-8 rounded-lg bg-white/10 hover:bg-white/20 flex items-center justify-center transition-all"
+                aria-label="Close"
               >
                 <X className="w-5 h-5 text-white" />
               </button>
@@ -248,9 +248,9 @@ const SmartAssistant = () => {
               <div className="flex justify-start">
                 <div className="bg-white/10 text-white border border-white/10 rounded-2xl p-3">
                   <div className="flex gap-1">
-                    <div className="w-2 h-2 bg-white/60 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
-                    <div className="w-2 h-2 bg-white/60 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
-                    <div className="w-2 h-2 bg-white/60 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+                    <div className="w-2 h-2 bg-white/60 rounded-full animate-bounce animate-delay-0"></div>
+                    <div className="w-2 h-2 bg-white/60 rounded-full animate-bounce animate-delay-150"></div>
+                    <div className="w-2 h-2 bg-white/60 rounded-full animate-bounce animate-delay-300"></div>
                   </div>
                 </div>
               </div>
@@ -275,6 +275,7 @@ const SmartAssistant = () => {
                 onClick={handleSendMessage}
                 disabled={!inputText.trim()}
                 className="px-4 py-3 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-xl transition-all"
+                aria-label="Send"
               >
                 <Send className="w-5 h-5" />
               </button>

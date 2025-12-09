@@ -104,8 +104,7 @@ const LoveAnimation: React.FC = () => {
     <div className="relative flex items-center justify-center">
       <div 
         ref={lottieContainer}
-        className="w-32 h-32"
-        style={{ transform: 'scale(1.2)' }}
+        className="w-32 h-32 scale-125"
       />
       {/* Fallback if Lottie fails to load */}
       {!lottieContainer.current && (
@@ -430,10 +429,19 @@ const ModernProfile: React.FC = () => {
     const file = e.target.files?.[0];
     if (file) {
       const reader = new FileReader();
-      reader.onloadend = () => {
-        setCoverImage(reader.result as string);
-        // TODO: Upload to server and update profile
-        // ProfileService.updateCoverImage(currentUser?.id, reader.result as string);
+      reader.onloadend = async () => {
+        const imageData = reader.result as string;
+        setCoverImage(imageData);
+        
+        // Upload to server
+        if (currentUser?.id) {
+          try {
+            await ProfileService.updateCoverImage(currentUser.id, imageData);
+            showSuccess('تم تحديث صورة الغلاف');
+          } catch (error) {
+            showError('فشل تحديث صورة الغلاف');
+          }
+        }
       };
       reader.readAsDataURL(file);
     }
@@ -443,10 +451,19 @@ const ModernProfile: React.FC = () => {
     const file = e.target.files?.[0];
     if (file) {
       const reader = new FileReader();
-      reader.onloadend = () => {
-        setProfileImage(reader.result as string);
-        // TODO: Upload to server and update profile
-        // ProfileService.updateProfileImage(currentUser?.id, reader.result as string);
+      reader.onloadend = async () => {
+        const imageData = reader.result as string;
+        setProfileImage(imageData);
+        
+        // Upload to server
+        if (currentUser?.id) {
+          try {
+            await ProfileService.updateProfileImage(currentUser.id, imageData);
+            showSuccess('تم تحديث الصورة الشخصية');
+          } catch (error) {
+            showError('فشل تحديث الصورة الشخصية');
+          }
+        }
       };
       reader.readAsDataURL(file);
     }
@@ -461,8 +478,14 @@ const ModernProfile: React.FC = () => {
   };
 
   const handleRemoveTag = (tagId: string) => {
-    setUserInterests(userInterests.filter(tag => tag.id !== tagId));
-    // TODO: Update on server
+    const updated = userInterests.filter(tag => tag.id !== tagId);
+    setUserInterests(updated);
+    
+    // Save to localStorage
+    if (currentUser?.id) {
+      const key = `profile:interests:${currentUser.id}`;
+      localStorage.setItem(key, JSON.stringify(updated));
+    }
   };
 
   const handleAddTag = () => {
@@ -471,10 +494,16 @@ const ModernProfile: React.FC = () => {
       icon: <Star className="w-4 h-4" />,
       label: 'علامة جديدة'
     };
-    setUserInterests([...userInterests, newTag]);
+    const updated = [...userInterests, newTag];
+    setUserInterests(updated);
     setEditingTagId(newTag.id);
     setEditingTagText(newTag.label);
-    // TODO: Update on server
+    
+    // Save to localStorage
+    if (currentUser?.id) {
+      const key = `profile:interests:${currentUser.id}`;
+      localStorage.setItem(key, JSON.stringify(updated));
+    }
   };
 
   const handleEditTag = (tagId: string, currentLabel: string) => {
@@ -483,12 +512,18 @@ const ModernProfile: React.FC = () => {
   };
 
   const handleSaveTag = (tagId: string) => {
-    setUserInterests(userInterests.map(tag => 
+    const updated = userInterests.map(tag => 
       tag.id === tagId ? { ...tag, label: editingTagText } : tag
-    ));
+    );
+    setUserInterests(updated);
     setEditingTagId(null);
     setEditingTagText('');
-    // TODO: Update on server
+    
+    // Save to localStorage
+    if (currentUser?.id) {
+      const key = `profile:interests:${currentUser.id}`;
+      localStorage.setItem(key, JSON.stringify(updated));
+    }
   };
 
   const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -497,8 +532,15 @@ const ModernProfile: React.FC = () => {
       Array.from(files).forEach(file => {
         const reader = new FileReader();
         reader.onloadend = () => {
-          setMoments(prev => [reader.result as string, ...prev]);
-          // TODO: Upload to server
+          const imageData = reader.result as string;
+          setMoments(prev => [imageData, ...prev]);
+          
+          // Save to localStorage
+          if (currentUser?.id) {
+            const key = `profile:moments:${currentUser.id}`;
+            const existing = JSON.parse(localStorage.getItem(key) || '[]');
+            localStorage.setItem(key, JSON.stringify([imageData, ...existing]));
+          }
         };
         reader.readAsDataURL(file);
       });
@@ -506,8 +548,14 @@ const ModernProfile: React.FC = () => {
   };
 
   const handleDeletePhoto = (index: number) => {
-    setMoments(moments.filter((_, i) => i !== index));
-    // TODO: Delete from server
+    const updated = moments.filter((_, i) => i !== index);
+    setMoments(updated);
+    
+    // Delete from localStorage
+    if (currentUser?.id) {
+      const key = `profile:moments:${currentUser.id}`;
+      localStorage.setItem(key, JSON.stringify(updated));
+    }
   };
 
   const handleUploadPhotosClick = () => {
@@ -590,12 +638,22 @@ const ModernProfile: React.FC = () => {
       : 'تم إضافة الشريك بنجاح'
     );
     console.log('✅ Partner search completed successfully');
-    // TODO: Update on server
+    
+    // Save to localStorage
+    if (currentUser?.id) {
+      const key = `profile:partner:${currentUser.id}`;
+      localStorage.setItem(key, JSON.stringify(partner));
+    }
   };
 
   const handleRemovePartner = () => {
     setPartner(null);
-    // TODO: Update on server
+    
+    // Remove from localStorage
+    if (currentUser?.id) {
+      const key = `profile:partner:${currentUser.id}`;
+      localStorage.removeItem(key);
+    }
   };
 
   const handleAddFriend = () => {
@@ -606,29 +664,53 @@ const ModernProfile: React.FC = () => {
     setShowFriendSearch(true);
   };
 
-  const handleSearchFriend = () => {
+  const handleSearchFriend = async () => {
     if (searchId.trim() && closeFriends.length < 4) {
-      // TODO: Search for user by ID on server
+      // Search for user by ID
+      const profile = await ProfileService.getByUserId(searchId);
+      
       const newFriend: Friend = {
         id: searchId,
-        name: `مستخدم ${searchId}`,
-        avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${searchId}`
+        name: profile?.username || `مستخدم ${searchId}`,
+        avatar: profile?.profile_image || `https://api.dicebear.com/7.x/avataaars/svg?seed=${searchId}`
       };
-      setCloseFriends([...closeFriends, newFriend]);
+      
+      const updated = [...closeFriends, newFriend];
+      setCloseFriends(updated);
       setShowFriendSearch(false);
       setSearchId('');
-      // TODO: Update on server
+      
+      // Save to localStorage
+      if (currentUser?.id) {
+        const key = `profile:friends:${currentUser.id}`;
+        localStorage.setItem(key, JSON.stringify(updated));
+      }
     }
   };
 
   const handleRemoveFriend = (friendId: string) => {
-    setCloseFriends(closeFriends.filter(f => f.id !== friendId));
-    // TODO: Update on server
+    const updated = closeFriends.filter(f => f.id !== friendId);
+    setCloseFriends(updated);
+    
+    // Save to localStorage
+    if (currentUser?.id) {
+      const key = `profile:friends:${currentUser.id}`;
+      localStorage.setItem(key, JSON.stringify(updated));
+    }
   };
 
-  const handleSaveName = () => {
-    if (editedName.trim()) {
-      // TODO: Update on server
+  const handleSaveName = async () => {
+    if (editedName.trim() && currentUser?.id) {
+      try {
+        const profile = await ProfileService.getByUserId(currentUser.id);
+        if (profile) {
+          await ProfileService.updateCoins(currentUser.id, { username: editedName.trim() } as any);
+          setUserName(editedName.trim());
+          showSuccess('تم تحديث الاسم');
+        }
+      } catch (error) {
+        showError('فشل تحديث الاسم');
+      }
       setIsEditingName(false);
     }
   };
@@ -641,7 +723,12 @@ const ModernProfile: React.FC = () => {
   const handleSaveBio = () => {
     setBio(editedBio);
     setIsEditingBio(false);
-    // TODO: Update on server
+    
+    // Save to localStorage
+    if (currentUser?.id) {
+      const key = `profile:bio:${currentUser.id}`;
+      localStorage.setItem(key, editedBio);
+    }
   };
 
   const handleCancelBioEdit = () => {
@@ -656,12 +743,18 @@ const ModernProfile: React.FC = () => {
 
   const handleSaveHighlight = () => {
     if (editingHighlightText.trim() && editingHighlightId) {
-      setHighlights(highlights.map(h => 
+      const updated = highlights.map(h => 
         h.id === editingHighlightId ? { ...h, text: editingHighlightText } : h
-      ));
+      );
+      setHighlights(updated);
       setEditingHighlightId(null);
       setEditingHighlightText('');
-      // TODO: Update on server
+      
+      // Save to localStorage
+      if (currentUser?.id) {
+        const key = `profile:highlights:${currentUser.id}`;
+        localStorage.setItem(key, JSON.stringify(updated));
+      }
     }
   };
 
@@ -670,11 +763,17 @@ const ModernProfile: React.FC = () => {
       id: Date.now().toString(),
       text: 'نقطة بارزة جديدة'
     };
-    setHighlights([...highlights, newHighlight]);
+    const updated = [...highlights, newHighlight];
+    setHighlights(updated);
     // Start editing immediately
     setEditingHighlightId(newHighlight.id);
     setEditingHighlightText(newHighlight.text);
-    // TODO: Update on server
+    
+    // Save to localStorage
+    if (currentUser?.id) {
+      const key = `profile:highlights:${currentUser.id}`;
+      localStorage.setItem(key, JSON.stringify(updated));
+    }
   };
 
   const handleFollowUser = () => {
@@ -775,8 +874,14 @@ const ModernProfile: React.FC = () => {
   };
 
   const handleRemoveHighlight = (id: string) => {
-    setHighlights(highlights.filter(h => h.id !== id));
-    // TODO: Update on server
+    const updated = highlights.filter(h => h.id !== id);
+    setHighlights(updated);
+    
+    // Delete from localStorage
+    if (currentUser?.id) {
+      const key = `profile:highlights:${currentUser.id}`;
+      localStorage.setItem(key, JSON.stringify(updated));
+    }
   };
 
   return (
@@ -1698,6 +1803,7 @@ const ModernProfile: React.FC = () => {
                         setNewPostImages([]);
                       }}
                       className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-all"
+                      aria-label="Close"
                     >
                       <CloseIcon className="w-5 h-5 text-white" />
                     </button>
@@ -1721,6 +1827,7 @@ const ModernProfile: React.FC = () => {
                           <button
                             onClick={() => setNewPostImages(newPostImages.filter((_, i) => i !== idx))}
                             className="absolute top-2 right-2 w-6 h-6 rounded-full bg-red-500 hover:bg-red-600 flex items-center justify-center"
+                            aria-label="Remove image"
                           >
                             <CloseIcon className="w-4 h-4 text-white" />
                           </button>
@@ -1787,6 +1894,7 @@ const ModernProfile: React.FC = () => {
                         <button
                           onClick={() => handleDeletePost(post.id)}
                           className="w-8 h-8 rounded-full bg-red-500/20 hover:bg-red-500/30 flex items-center justify-center transition-all"
+                          aria-label="Delete post"
                         >
                           <Trash2 className="w-4 h-4 text-red-400" />
                         </button>
@@ -2032,6 +2140,7 @@ const ModernProfile: React.FC = () => {
               <button
                 onClick={() => setShowBadgeDetail(null)}
                 className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-all"
+                aria-label="Close"
               >
                 <CloseIcon className="w-4 h-4 text-white" />
               </button>

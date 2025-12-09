@@ -20,11 +20,10 @@ const BottomTab: React.FC<{ visible?: boolean }> = ({ visible = true }) => {
   return (
     <div
       className={cn(
-        "fixed bottom-0 left-0 right-0 z-30 transition-all duration-200 ease-out",
+        "fixed bottom-0 left-0 right-0 z-30 transition-all duration-200 ease-out pb-safe",
         visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-full pointer-events-none"
       )}
-      style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
-      aria-hidden={!visible}
+      {...(!visible && { 'aria-hidden': true })}
     >
       <div className="mx-auto w-full max-w-4xl bg-white/80 backdrop-blur border-t">
         <div className={cn("grid min-w-0", colsClass)}>

@@ -204,6 +204,7 @@ const LudoGame = () => {
         <button 
           onClick={() => nav("/games")}
           className="absolute top-4 left-4 w-10 h-10 rounded-xl bg-black/20 backdrop-blur-sm flex items-center justify-center border border-white/10"
+          aria-label="Back to games"
         >
           <ChevronRight className="w-5 h-5 text-white" />
         </button>

@@ -135,6 +135,56 @@ export const ProfileService = {
   /**
    * Unban user - reactivates account
    */
+  /**
+   * Update user's cover image
+   */
+  async updateCoverImage(userId: string, coverImageData: string): Promise<Profile | null> {
+    const profile = await this.getByUserId(userId);
+    if (!profile) return null;
+
+    // Store in localStorage (for demo mode)
+    const coverKey = `profile:cover:${userId}`;
+    localStorage.setItem(coverKey, coverImageData);
+
+    // TODO: Upload to Supabase Storage in production
+    // if (isSupabaseReady && supabase) {
+    //   const { data, error } = await supabase.storage
+    //     .from('covers')
+    //     .upload(`${userId}/cover.jpg`, coverImageData);
+    // }
+
+    return profile;
+  },
+
+  /**
+   * Update user's profile image
+   */
+  async updateProfileImage(userId: string, imageData: string): Promise<Profile | null> {
+    const profile = await this.getByUserId(userId);
+    if (!profile) return null;
+
+    // Resize image for optimal performance
+    const resized = await resizeImage(imageData, 400, 400);
+    
+    const updated = { ...profile, profile_image: resized };
+    return await this.upsertProfile(updated);
+
+    // TODO: Upload to Supabase Storage in production
+    // if (isSupabaseReady && supabase) {
+    //   const { data, error } = await supabase.storage
+    //     .from('avatars')
+    //     .upload(`${userId}/avatar.jpg`, resized);
+    // }
+  },
+
+  /**
+   * Get user's cover image
+   */
+  getCoverImage(userId: string): string | null {
+    const coverKey = `profile:cover:${userId}`;
+    return localStorage.getItem(coverKey);
+  },
+
   async unbanUser(id: string): Promise<Profile | null> {
     if (isSupabaseReady && supabase) {
       const { data, error } = await supabase

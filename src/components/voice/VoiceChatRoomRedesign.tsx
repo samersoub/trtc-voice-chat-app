@@ -158,8 +158,8 @@ const VoiceChatRoomRedesign: React.FC = () => {
 
       {/* Floating Gradient Orbs */}
       <div className="absolute top-20 left-20 w-72 h-72 bg-purple-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-pulse"></div>
-      <div className="absolute top-40 right-20 w-72 h-72 bg-pink-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-pulse" style={{ animationDelay: '2s' }}></div>
-      <div className="absolute -bottom-32 left-40 w-72 h-72 bg-blue-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-pulse" style={{ animationDelay: '4s' }}></div>
+      <div className="absolute top-40 right-20 w-72 h-72 bg-pink-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-pulse [animation-delay:2s]"></div>
+      <div className="absolute -bottom-32 left-40 w-72 h-72 bg-blue-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-pulse [animation-delay:4s]"></div>
 
       {/* Top Navigation Bar */}
       <header className="fixed top-0 left-0 right-0 z-50 backdrop-blur-xl bg-black/30 border-b border-white/10">
@@ -258,6 +258,7 @@ const VoiceChatRoomRedesign: React.FC = () => {
                 <button 
                   onClick={() => setShowGiftPanel(false)}
                   className="w-8 h-8 rounded-lg bg-white/5 hover:bg-white/10 flex items-center justify-center transition-all"
+                  aria-label="Close gift panel"
                 >
                   <X className="w-4 h-4 text-gray-400" />
                 </button>
@@ -288,6 +289,7 @@ const VoiceChatRoomRedesign: React.FC = () => {
                 <button 
                   onClick={() => setShowEmojiPicker(false)}
                   className="w-7 h-7 rounded-lg bg-white/5 hover:bg-white/10 flex items-center justify-center transition-all"
+                  aria-label="Close emoji picker"
                 >
                   <X className="w-3.5 h-3.5 text-gray-400" />
                 </button>
@@ -354,6 +356,7 @@ const VoiceChatRoomRedesign: React.FC = () => {
               onClick={handleSendMessage}
               disabled={!messageInput.trim()}
               className="w-11 h-11 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center transition-all hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+              aria-label="Send message"
             >
               <Send className="w-5 h-5 text-white" />
             </button>
@@ -363,6 +366,7 @@ const VoiceChatRoomRedesign: React.FC = () => {
           <div className="flex items-center justify-center gap-3">
             <button 
               className="w-12 h-12 rounded-full bg-white/5 hover:bg-white/10 backdrop-blur-sm border border-white/10 flex items-center justify-center transition-all hover:scale-105 active:scale-95"
+              aria-label="Messages"
             >
               <MessageCircle className="w-5 h-5 text-white" />
             </button>
@@ -399,6 +403,7 @@ const VoiceChatRoomRedesign: React.FC = () => {
 
             <button 
               className="w-12 h-12 rounded-full bg-white/5 hover:bg-white/10 backdrop-blur-sm border border-white/10 flex items-center justify-center transition-all hover:scale-105 active:scale-95"
+              aria-label="More options"
             >
               <MoreVertical className="w-5 h-5 text-white" />
             </button>

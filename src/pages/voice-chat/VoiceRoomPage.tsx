@@ -81,7 +81,7 @@ const VoiceRoomPage: React.FC = () => {
             <div className="w-7 h-7 rounded-full bg-gradient-to-br from-orange-400 to-orange-600 border-2 border-[#1a1a2e]"></div>
           </div>
           <span className="text-white text-sm font-medium">320 &gt;</span>
-          <button className="p-1 hover:bg-white/10 rounded-full transition-colors">
+          <button className="p-1 hover:bg-white/10 rounded-full transition-colors" aria-label="Close">
             <X className="w-5 h-5 text-white" />
           </button>
         </div>
@@ -117,7 +117,7 @@ const VoiceRoomPage: React.FC = () => {
               placeholder="Let's talk"
               className="flex-1 bg-transparent text-sm text-white placeholder-gray-400 outline-none"
             />
-            <button className="hover:opacity-80 transition-opacity">
+            <button className="hover:opacity-80 transition-opacity" aria-label="Add emoji">
               <Smile className="w-5 h-5 text-gray-400" />
             </button>
           </div>
@@ -138,10 +138,10 @@ const VoiceRoomPage: React.FC = () => {
 
           {/* Action Icons */}
           <div className="flex items-center gap-3">
-            <button className="p-2 hover:bg-white/10 rounded-full transition-colors">
+            <button className="p-2 hover:bg-white/10 rounded-full transition-colors" aria-label="Settings">
               <Settings className="w-5 h-5 text-white" />
             </button>
-            <button className="p-2 hover:bg-white/10 rounded-full transition-colors">
+            <button className="p-2 hover:bg-white/10 rounded-full transition-colors" aria-label="Send gift">
               <Gift className="w-5 h-5 text-orange-500" />
             </button>
             <button className="relative p-2 hover:bg-white/10 rounded-full transition-colors">

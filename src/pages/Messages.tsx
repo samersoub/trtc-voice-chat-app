@@ -146,6 +146,7 @@ const Messages = () => {
             handleDeleteMessage(msg.id);
           }}
           className="flex-shrink-0 p-2 rounded-lg bg-red-500/10 hover:bg-red-500/20 transition-colors"
+          aria-label="Delete message"
         >
           <Trash2 className="w-4 h-4 text-red-400" />
         </button>
@@ -197,6 +198,7 @@ const Messages = () => {
               handleDeleteMessage(notification.id);
             }}
             className="p-2 rounded-lg bg-red-500/10 hover:bg-red-500/20 transition-colors"
+            aria-label="Delete notification"
           >
             <Trash2 className="w-4 h-4 text-red-400" />
           </button>
@@ -268,6 +270,7 @@ const Messages = () => {
                 handleDeleteMessage(notification.id);
               }}
               className="p-2 rounded-lg bg-red-500/10 hover:bg-red-500/20 transition-colors"
+              aria-label="Delete admin notification"
             >
               <Trash2 className="w-4 h-4 text-red-400" />
             </button>
