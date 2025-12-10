@@ -32,12 +32,14 @@ CREATE TABLE IF NOT EXISTS public.voice_room_messages (
   message TEXT NOT NULL,
   message_type TEXT DEFAULT 'text', -- 'text', 'gift', 'system'
   gift_icon TEXT,
-  created_at TIMESTAMPTZ DEFAULT NOW(),
-  
-  -- Index for faster queries
-  INDEX idx_room_messages_room_id (room_id),
-  INDEX idx_room_messages_created_at (created_at)
+  created_at TIMESTAMPTZ DEFAULT NOW()
 );
+
+-- Create Indexes separately
+CREATE INDEX IF NOT EXISTS idx_room_messages_room_id 
+  ON public.voice_room_messages(room_id);
+CREATE INDEX IF NOT EXISTS idx_room_messages_created_at 
+  ON public.voice_room_messages(created_at);
 
 -- Enable Row Level Security
 ALTER TABLE public.voice_room_seats ENABLE ROW LEVEL SECURITY;
@@ -95,10 +97,6 @@ CREATE TRIGGER update_voice_room_seats_updated_at
   BEFORE UPDATE ON public.voice_room_seats
   FOR EACH ROW
   EXECUTE FUNCTION update_updated_at_column();
-
--- Enable Realtime for both tables
-ALTER PUBLICATION supabase_realtime ADD TABLE public.voice_room_seats;
-ALTER PUBLICATION supabase_realtime ADD TABLE public.voice_room_messages;
 
 -- Grant permissions to anon and authenticated roles
 GRANT ALL ON public.voice_room_seats TO anon, authenticated;
