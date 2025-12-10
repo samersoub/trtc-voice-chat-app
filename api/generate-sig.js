@@ -5,6 +5,16 @@ const SDK_APP_ID = process.env.TRTC_SDK_APP_ID;
 const SECRET_KEY = process.env.TRTC_SECRET_KEY; 
 
 module.exports = (req, res) => {
+    // CORS headers - allow requests from any origin
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+    
+    // Handle preflight OPTIONS request
+    if (req.method === 'OPTIONS') {
+        return res.status(200).end();
+    }
+    
     // Prevent caching by browsers/CDNs
     res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
     res.setHeader('Pragma', 'no-cache');
