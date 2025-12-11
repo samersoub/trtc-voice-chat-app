@@ -51,29 +51,3 @@ module.exports = (req, res) => {
         res.status(500).send({ error: "Failed to generate UserSig.", details: e.message });
     }
 };
-        return res.status(500).send({ 
-            error: "Server configuration error: TRTC keys are missing from Environment Variables." 
-        });
-    }
-    
-    const userId = req.query.userId || req.body?.userId;
-
-    if (!userId) {
-        return res.status(400).send({ error: "Missing userId parameter." });
-    }
-
-    try {
-        const { genTestUserSig } = require('trtc-js-sdk/plugins/GenerateTestUserSig');
-        const userSig = genTestUserSig({
-            sdkAppId: Number(SDK_APP_ID),
-            secretKey: SECRET_KEY,
-            userId: userId,
-        }).userSig;
-
-        res.status(200).json({ userSig: userSig, userId: userId });
-
-    } catch (e) {
-        console.error("Error generating UserSig:", e);
-        res.status(500).send({ error: "Failed to generate UserSig.", details: e.message });
-    }
-};
