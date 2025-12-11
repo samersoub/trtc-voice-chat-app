@@ -289,11 +289,21 @@ const AuthenticLamaVoiceRoom: React.FC = () => {
 
   // Supabase Real-time Subscriptions
   useEffect(() => {
-    if (!isSupabaseReady || !roomId) return;
+    if (!isSupabaseReady || !roomId) {
+      console.warn('Supabase not ready or roomId missing');
+      return;
+    }
+
+    console.log('Setting up Realtime subscriptions for room:', roomId);
 
     // Subscribe to messages
     const messagesChannel = supabase!
-      .channel(`room_${roomId}_messages`)
+      .channel(`room_${roomId}_messages`, {
+        config: {
+          broadcast: { self: true },
+          presence: { key: '' }
+        }
+      })
       .on(
         'postgres_changes',
         {
@@ -303,6 +313,7 @@ const AuthenticLamaVoiceRoom: React.FC = () => {
           filter: `room_id=eq.${roomId}`
         },
         (payload: { new: Record<string, unknown> }) => {
+          console.log('New message received:', payload);
           const newMessage: ChatMessage = {
             id: String(payload.new.id),
             userId: String(payload.new.user_id),
@@ -316,11 +327,18 @@ const AuthenticLamaVoiceRoom: React.FC = () => {
           setMessages(prev => [...prev, newMessage]);
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log('Messages channel status:', status);
+      });
 
     // Subscribe to seat changes
     const seatsChannel = supabase!
-      .channel(`room_${roomId}_seats`)
+      .channel(`room_${roomId}_seats`, {
+        config: {
+          broadcast: { self: true },
+          presence: { key: '' }
+        }
+      })
       .on(
         'postgres_changes',
         {
@@ -330,6 +348,7 @@ const AuthenticLamaVoiceRoom: React.FC = () => {
           filter: `room_id=eq.${roomId}`
         },
         (payload: { eventType: string; new?: Record<string, unknown>; old?: Record<string, unknown> }) => {
+          console.log('Seat change received:', payload);
           if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
             const seatData = payload.new!;
             setSeats(prev => prev.map(seat => 
