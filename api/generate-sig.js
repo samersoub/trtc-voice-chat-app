@@ -1,8 +1,8 @@
 const { genTestUserSig } = require('trtc-js-sdk/plugins/GenerateTestUserSig'); 
 
 // Read keys securely from Vercel Environment Variables
-const SDK_APP_ID = process.env.TRTC_SDK_APP_ID;
-const SECRET_KEY = process.env.TRTC_SECRET_KEY; 
+const SDK_APP_ID = process.env.TRTC_SDK_APP_ID || '20029772';
+const SECRET_KEY = process.env.TRTC_SECRET_KEY || '327e12f1341af38c683505739a2426dae2248b875decf8b41124e75b142360'; 
 
 module.exports = (req, res) => {
     // CORS headers - allow requests from any origin
@@ -23,6 +23,35 @@ module.exports = (req, res) => {
 
     // Essential security and validation checks
     if (!SDK_APP_ID || !SECRET_KEY) {
+        console.error('Missing TRTC credentials');
+        return res.status(500).send({ 
+            error: "Server configuration error: TRTC keys are missing from Environment Variables." 
+        });
+    }
+    
+    const userId = req.query.userId || req.body?.userId;
+
+    if (!userId) {
+        return res.status(400).send({ error: "Missing userId parameter." });
+    }
+
+    try {
+        console.log('Generating UserSig for userId:', userId);
+        const { genTestUserSig } = require('trtc-js-sdk/plugins/GenerateTestUserSig');
+        const result = genTestUserSig({
+            sdkAppId: Number(SDK_APP_ID),
+            secretKey: SECRET_KEY,
+            userId: userId,
+        });
+        
+        console.log('UserSig generated successfully');
+        res.status(200).json({ userSig: result.userSig, userId: userId });
+
+    } catch (e) {
+        console.error("Error generating UserSig:", e);
+        res.status(500).send({ error: "Failed to generate UserSig.", details: e.message });
+    }
+};
         return res.status(500).send({ 
             error: "Server configuration error: TRTC keys are missing from Environment Variables." 
         });
