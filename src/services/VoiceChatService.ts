@@ -14,21 +14,21 @@ function writeRooms(rooms: ChatRoom[]) {
 
 async function hydrateRoomsFromDB() {
   if (!isSupabaseReady || !supabase) return;
-  const { data, error } = await supabase.from("chat_rooms").select("*").order("createdAt", { ascending: false });
+  const { data, error } = await supabase.from("voice_rooms").select("*").order("created_at", { ascending: false });
   if (error || !data) return;
   try {
     const rooms = (data as any[]).map((r) => ({
       id: r.id,
       name: r.name,
-      isPrivate: !!r.isPrivate,
-      hostId: r.hostId,
-      participants: Array.isArray(r.participants) ? r.participants : [],
-      createdAt: r.createdAt,
-      updatedAt: r.updatedAt,
+      isPrivate: r.room_type === 'private',
+      hostId: r.owner_id,
+      participants: [],
+      createdAt: r.created_at,
+      updatedAt: r.updated_at,
       description: r.description || undefined,
-      country: r.country || undefined,
-      background: r.background || undefined,
-      moderators: Array.isArray(r.moderators) ? r.moderators : [r.hostId],
+      country: undefined,
+      background: r.cover_image || undefined,
+      moderators: [r.owner_id],
     })) as ChatRoom[];
     writeRooms(rooms);
   } catch {
@@ -39,25 +39,23 @@ async function hydrateRoomsFromDB() {
 function syncUpsertRoom(room: ChatRoom) {
   if (!isSupabaseReady || !supabase) return;
   void safe(
-    supabase.from("chat_rooms").upsert({
+    supabase.from("voice_rooms").upsert({
       id: room.id,
       name: room.name,
-      isPrivate: room.isPrivate,
-      hostId: room.hostId,
-      participants: room.participants,
-      createdAt: room.createdAt,
-      updatedAt: room.updatedAt,
+      room_type: room.isPrivate ? 'private' : 'public',
+      owner_id: room.hostId,
       description: room.description ?? null,
-      country: room.country ?? null,
-      background: room.background ?? null,
-      moderators: room.moderators ?? [],
+      cover_image: room.background ?? null,
+      is_active: true,
+      created_at: room.createdAt,
+      updated_at: room.updatedAt,
     })
   );
 }
 
 function syncDeleteRoom(id: string) {
   if (!isSupabaseReady || !supabase) return;
-  void safe(supabase.from("chat_rooms").delete().eq("id", id));
+  void safe(supabase.from("voice_rooms").delete().eq("id", id));
 }
 
 export const VoiceChatService = {
