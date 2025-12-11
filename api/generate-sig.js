@@ -37,7 +37,6 @@ module.exports = (req, res) => {
 
     try {
         console.log('Generating UserSig for userId:', userId);
-        const { genTestUserSig } = require('trtc-js-sdk/plugins/GenerateTestUserSig');
         const result = genTestUserSig({
             sdkAppId: Number(SDK_APP_ID),
             secretKey: SECRET_KEY,
