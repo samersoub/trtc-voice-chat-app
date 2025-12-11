@@ -72,32 +72,19 @@ interface Highlight {
 }
 
 // Love Animation Component
+import Lottie from 'lottie-react';
+import loveAnimation from '/lottie/love.json';
+
 const LoveAnimation: React.FC = () => {
-  const lottieContainer = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!lottieContainer.current) return;
-
-    const loadLottie = async () => {
-      try {
-        // @ts-ignore
-        const lottie = (await import('lottie-web')).default;
-        
-        const animation = lottie.loadAnimation({
-          container: lottieContainer.current!,
-          renderer: 'svg',
-          loop: true,
-          autoplay: true,
-          path: '/lottie/love.json'
-        });
-
-        return () => animation.destroy();
-      } catch (error) {
-        console.log('Lottie animation not loaded, using fallback');
-      }
-    };
-
-    loadLottie();
+  return (
+    <div className="w-full h-full">
+      <Lottie 
+        animationData={loveAnimation}
+        loop={true}
+        autoplay={true}
+      />
+    </div>
+  );
   }, []);
 
   return (
@@ -106,14 +93,6 @@ const LoveAnimation: React.FC = () => {
         ref={lottieContainer}
         className="w-32 h-32 scale-125"
       />
-      {/* Fallback if Lottie fails to load */}
-      {!lottieContainer.current && (
-        <div className="absolute inset-0 flex items-center justify-center">
-          <div className="w-16 h-16 rounded-full bg-gradient-to-br from-pink-500 to-red-500 flex items-center justify-center shadow-lg animate-pulse">
-            <Heart className="w-8 h-8 text-white fill-white" />
-          </div>
-        </div>
-      )}
     </div>
   );
 };

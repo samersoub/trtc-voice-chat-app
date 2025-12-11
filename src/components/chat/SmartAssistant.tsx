@@ -2,6 +2,8 @@ import { useState, useEffect, useRef } from 'react';
 import { useLocale } from '@/contexts';
 import { X, Send, MessageCircle, Sparkles } from 'lucide-react';
 import { GeminiService } from '@/services/GeminiService';
+import Lottie from 'lottie-react';
+import chatbotAnimation from '/lottie/chatbot.json';
 
 interface Message {
   id: string;
@@ -17,7 +19,6 @@ const SmartAssistant = () => {
   const [inputText, setInputText] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const lottieContainer = useRef<HTMLDivElement>(null);
 
   // Welcome message
   useEffect(() => {
@@ -39,31 +40,7 @@ const SmartAssistant = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  // Load Lottie animation
-  useEffect(() => {
-    if (!lottieContainer.current) return;
-
-    const loadLottie = async () => {
-      try {
-        // @ts-ignore
-        const lottie = (await import('lottie-web')).default;
-        
-        const animation = lottie.loadAnimation({
-          container: lottieContainer.current!,
-          renderer: 'svg',
-          loop: true,
-          autoplay: true,
-          path: '/lottie/chatbot.json'
-        });
-
-        return () => animation.destroy();
-      } catch (error) {
-        console.log('Lottie animation not loaded, using fallback');
-      }
-    };
-
-    loadLottie();
-  }, []);
+  // Lottie animation using lottie-react (no dynamic import needed)
 
   const handleSendMessage = async () => {
     if (!inputText.trim()) return;
@@ -156,21 +133,14 @@ const SmartAssistant = () => {
           className="fixed bottom-24 right-6 z-50 group animate-bounce"
         >
           <div className="relative">
-            {/* Animation Container */}
-            <div 
-              ref={lottieContainer}
-              className="w-20 h-20"
+            {/* Animation Containe w-20 h-20">
+            {/* Lottie Animation */}
+            <Lottie 
+              animationData={chatbotAnimation}
+              loop={true}
+              autoplay={true}
+              className="w-full h-full"
             />
-            
-            {/* Fallback Icon */}
-            {!lottieContainer.current && (
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="w-16 h-16 bg-gradient-to-br from-purple-600 to-pink-600 rounded-full flex items-center justify-center shadow-2xl shadow-purple-500/50">
-                  <Sparkles className="w-8 h-8 text-white" />
-                </div>
-              </div>
-            )}
-
             {/* Notification Badge */}
             <div className="absolute -top-1 -right-1 w-6 h-6 bg-red-500 rounded-full flex items-center justify-center animate-pulse">
               <MessageCircle className="w-3 h-3 text-white" />
