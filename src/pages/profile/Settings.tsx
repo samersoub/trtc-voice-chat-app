@@ -11,7 +11,8 @@ import {
   Shield,
   Home,
   Award,
-  Globe
+  Globe,
+  Settings as SettingsIcon
 } from "lucide-react";
 import { AuthService } from "@/services/AuthService";
 import { showSuccess } from "@/utils/toast";
@@ -39,6 +40,16 @@ const Settings = () => {
   const settingsOptions = [
     {
       id: 0,
+      title: locale === 'ar' ? "الإعدادات الشخصية" : "Personal Settings",
+      subtitle: locale === 'ar' ? "الحساب، الرسائل، القائمة السوداء والمزيد" : "Account, Messages, Blocklist and more",
+      icon: <SettingsIcon className="w-6 h-6 text-indigo-500" />,
+      bgColor: "bg-indigo-100",
+      badge: "6",
+      badgeColor: "bg-indigo-500",
+      route: "/settings/personal"
+    },
+    {
+      id: 1,
       title: locale === 'ar' ? "اللغة" : "Language",
       icon: <Globe className="w-6 h-6 text-purple-500" />,
       bgColor: "bg-purple-100",
@@ -47,14 +58,14 @@ const Settings = () => {
       action: handleLanguageToggle
     },
     {
-      id: 1,
+      id: 2,
       title: "إعادة الشحن والدخل",
       icon: <Battery className="w-6 h-6 text-orange-500" />,
       bgColor: "bg-orange-100",
       route: "/recharge"
     },
     {
-      id: 2,
+      id: 3,
       title: "دعم دندنة الخارق",
       icon: <Zap className="w-6 h-6 text-yellow-500" />,
       bgColor: "bg-yellow-100",
@@ -63,28 +74,28 @@ const Settings = () => {
       route: "/support"
     },
     {
-      id: 3,
+      id: 4,
       title: "المتجر",
       icon: <Store className="w-6 h-6 text-blue-500" />,
       bgColor: "bg-blue-100",
       route: "/store"
     },
     {
-      id: 4,
+      id: 5,
       title: "حقيبة الظهر",
       icon: <Shield className="w-6 h-6 text-green-500" />,
       bgColor: "bg-green-100",
       route: "/backpack"
     },
     {
-      id: 5,
+      id: 6,
       title: "الميداليات",
       icon: <Award className="w-6 h-6 text-yellow-600" />,
       bgColor: "bg-yellow-100",
       route: "/medals"
     },
     {
-      id: 6,
+      id: 7,
       title: "مستوى",
       icon: <Crown className="w-6 h-6 text-pink-500" />,
       bgColor: "bg-pink-100",
@@ -94,14 +105,14 @@ const Settings = () => {
       route: "/level"
     },
     {
-      id: 7,
+      id: 8,
       title: "SVIP",
       icon: <Crown className="w-6 h-6 text-yellow-500" />,
       bgColor: "bg-yellow-100",
       route: "/svip"
     },
     {
-      id: 8,
+      id: 9,
       title: "مستوى الثروة",
       icon: <DollarSign className="w-6 h-6 text-yellow-600" />,
       bgColor: "bg-yellow-100",
@@ -111,14 +122,14 @@ const Settings = () => {
       route: "/wealth"
     },
     {
-      id: 9,
+      id: 10,
       title: "الأرستقراطية",
       icon: <Crown className="w-6 h-6 text-orange-600" />,
       bgColor: "bg-orange-100",
       route: "/aristocracy"
     },
     {
-      id: 10,
+      id: 11,
       title: "بيت الحب",
       icon: <Home className="w-6 h-6 text-purple-500" />,
       bgColor: "bg-purple-100",
@@ -189,11 +200,14 @@ const Settings = () => {
             className="flex items-center justify-between bg-white/5 backdrop-blur-sm rounded-2xl p-4 border border-white/10 hover:bg-white/10 transition-all cursor-pointer"
           >
             <div className="flex items-center gap-4 flex-1">
-              <div className={`w-12 h-12 ${option.bgColor} rounded-xl flex items-center justify-center`}>
+              <div className={`w-12 h-12 ${option.bgColor} rounded-xl flex items-center justify-center flex-shrink-0`}>
                 {option.icon}
               </div>
-              <div className="flex-1">
+              <div className="flex-1 min-w-0">
                 <h3 className="text-white font-medium" dir="rtl">{option.title}</h3>
+                {option.subtitle && (
+                  <p className="text-white/60 text-xs mt-0.5" dir="rtl">{option.subtitle}</p>
+                )}
               </div>
             </div>
             

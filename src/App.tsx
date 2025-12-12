@@ -24,6 +24,11 @@ import InviteFriends from "./pages/contacts/InviteFriends";
 import Profile from "./pages/profile/Profile";
 import ModernProfile from "./pages/profile/ModernProfile";
 import Settings from "./pages/profile/Settings";
+import PersonalSettings from "./pages/profile/PersonalSettings";
+import AccountSettings from "./pages/profile/AccountSettings";
+import Blocklist from "./pages/profile/Blocklist";
+import Backpack from "./pages/profile/Backpack";
+import SVIP from "./pages/profile/SVIP";
 import LoveHouse from "./pages/love-house/LoveHouse";
 import AdminDashboard from "./pages/admin/Dashboard";
 import AdminUsers from "./pages/admin/Users";
@@ -137,6 +142,11 @@ const App = () => (
               <Route path="/profile" element={<ModernProfile />} />
               <Route path="/profile/:userId" element={<ModernProfile />} />
               <Route path="/settings" element={<Settings />} />
+              <Route path="/settings/personal" element={<PersonalSettings />} />
+              <Route path="/settings/account" element={<AccountSettings />} />
+              <Route path="/settings/blocklist" element={<Blocklist />} />
+              <Route path="/backpack" element={<Backpack />} />
+              <Route path="/svip" element={<SVIP />} />
               {/* Love House */}
               <Route path="/love-house" element={<LoveHouse />} />
               {/* Matching */}
