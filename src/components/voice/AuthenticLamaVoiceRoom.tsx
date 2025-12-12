@@ -294,7 +294,7 @@ const AuthenticLamaVoiceRoom: React.FC = () => {
     console.log('roomId:', roomId);
     console.log('supabase client:', supabase);
     
-    if (!isSupabaseReady || !roomId) {
+    if (!isSupabaseReady || !roomId || !supabase) {
       console.warn('⚠️ Supabase not ready or roomId missing');
       console.warn('isSupabaseReady:', isSupabaseReady);
       console.warn('roomId:', roomId);
@@ -302,6 +302,19 @@ const AuthenticLamaVoiceRoom: React.FC = () => {
     }
 
     console.log('✅ Setting up Realtime subscriptions for room:', roomId);
+    
+    // Clean up old seats (optional - removes seats older than 1 hour)
+    const cleanupOldSeats = async () => {
+      const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+      await supabase
+        .from('voice_room_seats')
+        .delete()
+        .eq('room_id', roomId)
+        .lt('joined_at', oneHourAgo);
+      console.log('🧹 Cleaned up old seats');
+    };
+    
+    cleanupOldSeats().catch(err => console.error('Failed to cleanup:', err));
 
     // Subscribe to messages
     const messagesChannel = supabase!
@@ -461,7 +474,7 @@ const AuthenticLamaVoiceRoom: React.FC = () => {
       showSuccess(`تم الانضمام للمقعد ${seatNumber}`);
       
       // Update seat in Supabase (background - don't block on failure)
-      if (isSupabaseReady) {
+      if (isSupabaseReady && supabase) {
         const seatData = {
           room_id: roomId,
           seat_number: seatNumber,
@@ -470,16 +483,25 @@ const AuthenticLamaVoiceRoom: React.FC = () => {
           user_avatar: currentUser.avatarUrl || '',
           user_level: 1,
           is_speaking: false,
-          is_muted: true,
-          joined_at: new Date().toISOString()
+          is_muted: true
         };
         
         console.log('📤 Sending seat data to Supabase:', seatData);
         
-        supabase!.from('voice_room_seats').upsert(seatData)
+        // First, try to delete any existing entry for this seat
+        supabase
+          .from('voice_room_seats')
+          .delete()
+          .match({ room_id: roomId, seat_number: seatNumber })
+          .then(() => {
+            // Then insert the new seat data
+            return supabase
+              .from('voice_room_seats')
+              .insert(seatData);
+          })
           .then(({ data, error }) => {
             if (error) {
-              console.error('❌ Supabase upsert error:', error);
+              console.error('❌ Supabase insert error:', error);
             } else {
               console.log('✅ Seat updated in Supabase:', data);
             }
