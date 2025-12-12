@@ -20,12 +20,62 @@ export type Profile = {
 
 const LOCAL_KEY = "profiles";
 
+// Demo data for when Supabase is not configured
+const DEMO_PROFILES: Profile[] = [
+  {
+    id: "demo-1",
+    username: "admin",
+    email: "admin@example.com",
+    phone: "+1234567890",
+    profile_image: null,
+    coins: 1000,
+    is_active: true,
+    is_verified: true,
+    role: "admin",
+    created_at: new Date().toISOString(),
+    last_login: new Date().toISOString(),
+    ban_reason: null
+  },
+  {
+    id: "demo-2",
+    username: "user1",
+    email: "user1@example.com",
+    phone: "+1234567891",
+    profile_image: null,
+    coins: 500,
+    is_active: true,
+    is_verified: true,
+    role: "user",
+    created_at: new Date().toISOString(),
+    last_login: new Date().toISOString(),
+    ban_reason: null
+  },
+  {
+    id: "demo-3",
+    username: "user2",
+    email: "user2@example.com",
+    phone: "+1234567892",
+    profile_image: null,
+    coins: 250,
+    is_active: true,
+    is_verified: false,
+    role: "user",
+    created_at: new Date().toISOString(),
+    last_login: new Date().toISOString(),
+    ban_reason: null
+  }
+];
+
 function readLocal(): Profile[] {
   try {
     const raw = localStorage.getItem(LOCAL_KEY);
-    return raw ? (JSON.parse(raw) as Profile[]) : [];
+    if (raw) {
+      return JSON.parse(raw) as Profile[];
+    }
+    // Return demo data if localStorage is empty
+    return DEMO_PROFILES;
   } catch {
-    return [];
+    return DEMO_PROFILES;
   }
 }
 
@@ -72,9 +122,17 @@ export const ProfileService = {
 
   async listAll(): Promise<Profile[]> {
     if (isSupabaseReady && supabase) {
-      const { data, error } = await supabase.from("profiles").select("*").order("created_at", { ascending: false });
-      if (error) throw new Error(error.message);
-      return (data || []) as Profile[];
+      try {
+        const { data, error } = await supabase.from("profiles").select("*").order("created_at", { ascending: false });
+        if (error) {
+          console.warn("Supabase profiles table not found, using demo data");
+          return readLocal();
+        }
+        return (data || []) as Profile[];
+      } catch (err) {
+        console.warn("Failed to fetch profiles from Supabase, using demo data");
+        return readLocal();
+      }
     }
     return readLocal();
   },

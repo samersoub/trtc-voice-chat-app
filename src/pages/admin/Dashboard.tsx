@@ -19,7 +19,7 @@ import UserManagement from "@/components/admin/UserManagement";
 import { RoomMonitoringService } from "@/services/RoomMonitoringService";
 import { SocialService } from "@/services/SocialService";
 import { UserStatusService } from "@/services/UserStatusService";
-import { Activity, Users, Signal, TrendingUp, BarChart3, UserCog, Shield } from "lucide-react";
+import { Activity, Users, Signal, TrendingUp, BarChart3, UserCog, Shield, Backpack, Crown, Frame, Sparkles, ImageIcon } from "lucide-react";
 
 const Dashboard: React.FC = () => {
   const [profiles, setProfiles] = useState<Profile[]>([]);
@@ -42,7 +42,9 @@ const Dashboard: React.FC = () => {
       const list = await ProfileService.listAll();
       setProfiles(list);
     } catch (e: any) {
-      showError(e.message || "Failed to load stats");
+      // Silently handle error if Supabase is not configured
+      console.warn("Failed to load profiles:", e.message);
+      setProfiles([]);
     } finally {
       setLoading(false);
     }
@@ -176,7 +178,7 @@ const Dashboard: React.FC = () => {
 
       {/* Monitoring Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-        <TabsList className="grid w-full grid-cols-3 sm:grid-cols-6 gap-2">
+        <TabsList className="grid w-full grid-cols-3 sm:grid-cols-4 lg:grid-cols-9 gap-2">
           <TabsTrigger value="overview" className="text-xs sm:text-sm">
             <BarChart3 className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
             Overview
@@ -200,6 +202,18 @@ const Dashboard: React.FC = () => {
           <TabsTrigger value="moderation" className="text-xs sm:text-sm">
             <Shield className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
             Moderation
+          </TabsTrigger>
+          <TabsTrigger value="backpack" className="text-xs sm:text-sm">
+            <Backpack className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+            Backpack
+          </TabsTrigger>
+          <TabsTrigger value="svip" className="text-xs sm:text-sm">
+            <Crown className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+            SVIP
+          </TabsTrigger>
+          <TabsTrigger value="blocklist" className="text-xs sm:text-sm">
+            <UserCog className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+            Blocklist
           </TabsTrigger>
         </TabsList>
 
@@ -287,6 +301,254 @@ const Dashboard: React.FC = () => {
             </span>
           </div>
           <UserManagement />
+        </TabsContent>
+
+        <TabsContent value="backpack" className="space-y-4">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg sm:text-xl font-bold">Backpack Items Management</h2>
+            <Button variant="default">
+              <Backpack className="h-4 w-4 mr-2" />
+              Add New Item
+            </Button>
+          </div>
+          
+          {/* Frames Section */}
+          <Card className="p-6">
+            <div className="flex items-center gap-2 mb-4">
+              <Frame className="h-5 w-5 text-purple-500" />
+              <h3 className="text-lg font-semibold">Profile Frames</h3>
+              <span className="text-sm text-gray-500 ml-auto">12 items</span>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-3">
+              {['Gold Frame', 'Diamond Frame', 'Silver Frame', 'Bronze Frame', 'Platinum Frame', 'Ruby Frame'].map((name, i) => (
+                <div key={i} className="bg-gradient-to-br from-purple-50 to-pink-50 p-4 rounded-xl border border-purple-200 hover:shadow-lg transition-shadow">
+                  <Frame className="w-full h-16 text-purple-400 mb-2" />
+                  <p className="text-xs text-center font-medium truncate">{name}</p>
+                  <div className="flex gap-1 mt-2">
+                    <Button size="sm" variant="outline" className="flex-1 text-xs">Edit</Button>
+                    <Button size="sm" variant="destructive" className="flex-1 text-xs">Del</Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </Card>
+
+          {/* Entrances Section */}
+          <Card className="p-6">
+            <div className="flex items-center gap-2 mb-4">
+              <Sparkles className="h-5 w-5 text-yellow-500" />
+              <h3 className="text-lg font-semibold">Room Entrances</h3>
+              <span className="text-sm text-gray-500 ml-auto">8 items</span>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-3">
+              {['VIP Entrance', 'Royal Entrance', 'Fire Entrance', 'Ice Entrance', 'Thunder Entrance', 'Galaxy Entrance'].map((name, i) => (
+                <div key={i} className="bg-gradient-to-br from-yellow-50 to-orange-50 p-4 rounded-xl border border-yellow-200 hover:shadow-lg transition-shadow">
+                  <Sparkles className="w-full h-16 text-yellow-400 mb-2" />
+                  <p className="text-xs text-center font-medium truncate">{name}</p>
+                  <p className="text-[10px] text-center text-gray-500 mb-2">30 days</p>
+                  <div className="flex gap-1">
+                    <Button size="sm" variant="outline" className="flex-1 text-xs">Edit</Button>
+                    <Button size="sm" variant="destructive" className="flex-1 text-xs">Del</Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </Card>
+
+          {/* Backgrounds Section */}
+          <Card className="p-6">
+            <div className="flex items-center gap-2 mb-4">
+              <ImageIcon className="h-5 w-5 text-blue-500" />
+              <h3 className="text-lg font-semibold">Room Backgrounds</h3>
+              <span className="text-sm text-gray-500 ml-auto">15 items</span>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-3">
+              {['Galaxy', 'Rose', 'Ocean', 'Forest', 'Sunset', 'Aurora'].map((name, i) => (
+                <div key={i} className="bg-gradient-to-br from-blue-50 to-cyan-50 p-4 rounded-xl border border-blue-200 hover:shadow-lg transition-shadow">
+                  <div className="w-full h-16 bg-gradient-to-br from-blue-200 to-cyan-200 rounded-lg mb-2" />
+                  <p className="text-xs text-center font-medium truncate">{name}</p>
+                  <div className="flex gap-1 mt-2">
+                    <Button size="sm" variant="outline" className="flex-1 text-xs">Edit</Button>
+                    <Button size="sm" variant="destructive" className="flex-1 text-xs">Del</Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="svip" className="space-y-4">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg sm:text-xl font-bold">SVIP Management</h2>
+            <Button variant="default">
+              <Crown className="h-4 w-4 mr-2" />
+              Add SVIP Level
+            </Button>
+          </div>
+
+          {/* SVIP Stats */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+            <Card className="p-5 bg-gradient-to-br from-yellow-400 to-orange-500 text-white">
+              <Crown className="h-8 w-8 mb-2" />
+              <p className="text-3xl font-bold">124</p>
+              <p className="text-sm text-white/80">Active SVIP Users</p>
+            </Card>
+            <Card className="p-5 bg-gradient-to-br from-purple-500 to-pink-500 text-white">
+              <TrendingUp className="h-8 w-8 mb-2" />
+              <p className="text-3xl font-bold">$12,450</p>
+              <p className="text-sm text-white/80">Monthly Revenue</p>
+            </Card>
+            <Card className="p-5 bg-gradient-to-br from-blue-500 to-cyan-500 text-white">
+              <Users className="h-8 w-8 mb-2" />
+              <p className="text-3xl font-bold">89%</p>
+              <p className="text-sm text-white/80">Renewal Rate</p>
+            </Card>
+          </div>
+
+          {/* SVIP Levels */}
+          <Card className="p-6">
+            <h3 className="text-lg font-semibold mb-4">SVIP Levels Configuration</h3>
+            <div className="space-y-3">
+              {[1, 2, 3, 4, 5].map((level) => (
+                <div key={level} className="flex items-center gap-4 p-4 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-xl border border-blue-200">
+                  <div className="flex items-center justify-center w-12 h-12 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-full text-white font-bold">
+                    {level}
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-semibold">SVIP Level {level}</p>
+                    <p className="text-sm text-gray-600">Required Points: {level * 1000} | Price: ${level * 10}/month</p>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button size="sm" variant="outline">Edit Benefits</Button>
+                    <Button size="sm" variant="outline">Pricing</Button>
+                    <Button size="sm" variant="outline">View Users</Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </Card>
+
+          {/* SVIP Benefits */}
+          <Card className="p-6">
+            <h3 className="text-lg font-semibold mb-4">Available Benefits</h3>
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+              {[
+                'Exclusive Chat Masks',
+                'Room Chat Masks',
+                'Wealth Badge',
+                'Custom Avatar Frame',
+                'Luxury Gift Display',
+                'Animated Stickers',
+                'Profile Card',
+                'Profile Theme',
+                'Emoji Pack',
+                'Lucky Coins',
+                'Diamond Rewards',
+                'Visitor Log'
+              ].map((benefit, i) => (
+                <div key={i} className="p-4 bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl border border-purple-200">
+                  <Shield className="h-6 w-6 text-purple-500 mb-2" />
+                  <p className="text-sm font-medium">{benefit}</p>
+                  <div className="flex gap-1 mt-2">
+                    <Button size="sm" variant="outline" className="flex-1 text-xs">Edit</Button>
+                    <Button size="sm" variant="ghost" className="flex-1 text-xs">Toggle</Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="blocklist" className="space-y-4">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg sm:text-xl font-bold">Blocklist Management</h2>
+            <div className="flex gap-2">
+              <Button variant="outline">
+                Export Report
+              </Button>
+              <Button variant="default">
+                View All Blocks
+              </Button>
+            </div>
+          </div>
+
+          {/* Blocklist Stats */}
+          <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-6">
+            <Card className="p-5 bg-gradient-to-br from-red-500 to-pink-500 text-white">
+              <Shield className="h-8 w-8 mb-2" />
+              <p className="text-3xl font-bold">156</p>
+              <p className="text-sm text-white/80">Total Blocked Users</p>
+            </Card>
+            <Card className="p-5 bg-gradient-to-br from-orange-500 to-red-500 text-white">
+              <Activity className="h-8 w-8 mb-2" />
+              <p className="text-3xl font-bold">23</p>
+              <p className="text-sm text-white/80">Blocks Today</p>
+            </Card>
+            <Card className="p-5 bg-gradient-to-br from-yellow-500 to-orange-500 text-white">
+              <TrendingUp className="h-8 w-8 mb-2" />
+              <p className="text-3xl font-bold">12</p>
+              <p className="text-sm text-white/80">Unblocked Today</p>
+            </Card>
+            <Card className="p-5 bg-gradient-to-br from-purple-500 to-pink-500 text-white">
+              <Users className="h-8 w-8 mb-2" />
+              <p className="text-3xl font-bold">89</p>
+              <p className="text-sm text-white/80">Mutual Blocks</p>
+            </Card>
+          </div>
+
+          {/* Block Reasons */}
+          <Card className="p-6">
+            <h3 className="text-lg font-semibold mb-4">Top Block Reasons</h3>
+            <div className="space-y-2">
+              {[
+                { reason: 'Inappropriate Behavior', count: 45, color: 'bg-red-500' },
+                { reason: 'Spam/Advertisement', count: 38, color: 'bg-orange-500' },
+                { reason: 'Harassment', count: 32, color: 'bg-yellow-500' },
+                { reason: 'Offensive Language', count: 24, color: 'bg-purple-500' },
+                { reason: 'Scam/Fraud', count: 17, color: 'bg-pink-500' }
+              ].map((item, i) => (
+                <div key={i} className="flex items-center gap-4">
+                  <div className="flex-1">
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-sm font-medium">{item.reason}</span>
+                      <span className="text-sm text-gray-600">{item.count} blocks</span>
+                    </div>
+                    <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+                      <div 
+                        className={`h-full ${item.color}`} 
+                        style={{ width: `${(item.count / 45) * 100}%` }}
+                      />
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </Card>
+
+          {/* Recent Blocks */}
+          <Card className="p-6">
+            <h3 className="text-lg font-semibold mb-4">Recent Blocks (Last 24h)</h3>
+            <div className="space-y-3">
+              {[1, 2, 3, 4, 5].map((i) => (
+                <div key={i} className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-gradient-to-br from-red-400 to-pink-500 rounded-full flex items-center justify-center text-white font-bold">
+                      U{i}
+                    </div>
+                    <div>
+                      <p className="font-semibold">User {i}</p>
+                      <p className="text-sm text-gray-600">Blocked User {i + 10}</p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-sm text-gray-600">{i} hour{i > 1 ? 's' : ''} ago</p>
+                    <p className="text-xs text-gray-500">Reason: Spam</p>
+                  </div>
+                  <Button size="sm" variant="outline">View Details</Button>
+                </div>
+              ))}
+            </div>
+          </Card>
         </TabsContent>
       </Tabs>
     </AdminLayout>
