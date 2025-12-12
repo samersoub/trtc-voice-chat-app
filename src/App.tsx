@@ -64,6 +64,7 @@ import BottomTabController from "@/components/mobile/BottomTabController";
 import Home from "./pages/Home";
 import GamesPage from "./pages/games/GamesPage";
 import LudoGame from "./pages/games/LudoGame";
+import UnoGame from "./pages/games/UnoGame";
 import Recharge from "./pages/finance/Recharge";
 import SuperSupport from "./pages/support/SuperSupport";
 import Rankings from "./pages/Rankings";
@@ -125,6 +126,7 @@ const App = () => (
               {/* Games */}
               <Route path="/games" element={<GamesPage />} />
               <Route path="/games/ludo" element={<LudoGame />} />
+              <Route path="/games/uno" element={<UnoGame />} />
               {/* Support */}
               <Route path="/support" element={<SuperSupport />} />
               {/* Agency */}

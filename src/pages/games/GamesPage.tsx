@@ -17,6 +17,15 @@ const GamesPage = () => {
       bgColor: "bg-gradient-to-br from-red-500 to-pink-500",
       players: "2-4 لاعبين",
       route: "/games/ludo"
+    },
+    {
+      id: 2,
+      title: "أونو",
+      titleEn: "UNO",
+      icon: "🎴",
+      bgColor: "bg-gradient-to-br from-yellow-500 via-red-500 to-blue-500",
+      players: "2-10 لاعبين",
+      route: "/games/uno"
     }
   ];
 
