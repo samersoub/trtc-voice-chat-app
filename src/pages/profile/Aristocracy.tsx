@@ -118,37 +118,6 @@ export default function Aristocracy() {
       bgGradient: "from-purple-800 via-purple-900 to-indigo-950",
       glowColor: "purple",
       badgeIcon: "💎",
-      price: "980000 عملة",
-      duration: "30",
-      coins: "10500",
-      benefits: {
-        entranceEffect: true,
-        avatarFrame: false,
-        nameTag: false,
-        exclusiveEntry: false,
-        onlineCard: false,
-        profileCard: false,
-        specialGift: false
-      },
-      privileges: {
-        dailyCoins: "10500",
-        expBoost: "",
-        freeRename: false,
-        storeDiscount: "20%",
-        topList: false,
-        fastUpgrade: "120%",
-        superMic: false,
-        invisibility: false,
-        kickProtection: false
-      }
-    },
-    {
-      id: "noble",
-      name: "Noble",
-      nameAr: "النبيل",
-      bgGradient: "from-yellow-700 via-orange-800 to-amber-900",
-      glowColor: "yellow",
-      badgeIcon: "🦁",
       price: "2940000 عملة",
       duration: "30",
       coins: "31500",
@@ -171,6 +140,37 @@ export default function Aristocracy() {
         superMic: true,
         invisibility: false,
         kickProtection: true
+      }
+    },
+    {
+      id: "noble",
+      name: "Noble",
+      nameAr: "النبيل",
+      bgGradient: "from-yellow-700 via-orange-800 to-amber-900",
+      glowColor: "yellow",
+      badgeIcon: "🦁",
+      price: "980000 عملة",
+      duration: "30",
+      coins: "10500",
+      benefits: {
+        entranceEffect: true,
+        avatarFrame: false,
+        nameTag: false,
+        exclusiveEntry: false,
+        onlineCard: false,
+        profileCard: false,
+        specialGift: false
+      },
+      privileges: {
+        dailyCoins: "10500",
+        expBoost: "",
+        freeRename: false,
+        storeDiscount: "20%",
+        topList: false,
+        fastUpgrade: "120%",
+        superMic: false,
+        invisibility: false,
+        kickProtection: false
       }
     },
     {
