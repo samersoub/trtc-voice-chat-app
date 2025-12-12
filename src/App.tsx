@@ -29,6 +29,7 @@ import AccountSettings from "./pages/profile/AccountSettings";
 import Blocklist from "./pages/profile/Blocklist";
 import Backpack from "./pages/profile/Backpack";
 import SVIP from "./pages/profile/SVIP";
+import Aristocracy from "./pages/profile/Aristocracy";
 import LoveHouse from "./pages/love-house/LoveHouse";
 import AdminDashboard from "./pages/admin/Dashboard";
 import AdminUsers from "./pages/admin/Users";
@@ -147,6 +148,7 @@ const App = () => (
               <Route path="/settings/blocklist" element={<Blocklist />} />
               <Route path="/backpack" element={<Backpack />} />
               <Route path="/svip" element={<SVIP />} />
+              <Route path="/aristocracy" element={<Aristocracy />} />
               {/* Love House */}
               <Route path="/love-house" element={<LoveHouse />} />
               {/* Matching */}
