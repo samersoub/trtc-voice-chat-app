@@ -488,27 +488,33 @@ const AuthenticLamaVoiceRoom: React.FC = () => {
         
         console.log('📤 Sending seat data to Supabase:', seatData);
         
-        // First, try to delete any existing entry for this seat
-        supabase
-          .from('voice_room_seats')
-          .delete()
-          .match({ room_id: roomId, seat_number: seatNumber })
-          .then(() => {
+        // Use async function for proper error handling
+        (async () => {
+          try {
+            // First, delete any existing entry for this seat
+            const { error: deleteError } = await supabase
+              .from('voice_room_seats')
+              .delete()
+              .match({ room_id: roomId, seat_number: seatNumber });
+            
+            if (deleteError && deleteError.code !== 'PGRST116') { // PGRST116 = no rows found (ok)
+              console.warn('Delete warning:', deleteError);
+            }
+            
             // Then insert the new seat data
-            return supabase
+            const { error: insertError } = await supabase
               .from('voice_room_seats')
               .insert(seatData);
-          })
-          .then(({ data, error }) => {
-            if (error) {
-              console.error('❌ Supabase insert error:', error);
+            
+            if (insertError) {
+              console.error('❌ Supabase insert error:', insertError);
             } else {
-              console.log('✅ Seat updated in Supabase:', data);
+              console.log('✅ Seat updated in Supabase');
             }
-          })
-          .catch(err => {
+          } catch (err) {
             console.error('❌ Failed to update Supabase:', err);
-          });
+          }
+        })();
       } else {
         console.log('⚠️ Supabase not ready, working in demo mode');
       }
@@ -528,14 +534,21 @@ const AuthenticLamaVoiceRoom: React.FC = () => {
       setMessages(prev => [...prev, joinMessage]);
       
       // Also send to Supabase (background)
-      if (isSupabaseReady) {
-        supabase!.from('voice_room_messages').insert({
-          room_id: roomId,
-          user_id: 'system',
-          user_name: 'النظام',
-          message: joinMessage.message,
-          message_type: 'system'
-        }).catch(err => console.error('Failed to send join message:', err));
+      if (isSupabaseReady && supabase) {
+        (async () => {
+          try {
+            const { error } = await supabase.from('voice_room_messages').insert({
+              room_id: roomId,
+              user_id: 'system',
+              user_name: 'النظام',
+              message: joinMessage.message,
+              message_type: 'system'
+            });
+            if (error) console.error('Failed to send join message:', error);
+          } catch (err) {
+            console.error('Failed to send join message:', err);
+          }
+        })();
       }
     } catch (error) {
       console.error('❌ Failed to join seat:', error);
@@ -565,26 +578,28 @@ const AuthenticLamaVoiceRoom: React.FC = () => {
       setMessageInput('');
       
       // Send to Supabase in background (don't block on failure)
-      if (isSupabaseReady) {
+      if (isSupabaseReady && supabase) {
         console.log('📤 Sending to Supabase...');
-        supabase!.from('voice_room_messages').insert({
-          room_id: roomId,
-          user_id: newMsg.userId,
-          user_name: newMsg.userName,
-          user_avatar: newMsg.userAvatar,
-          message: newMsg.message,
-          message_type: 'text'
-        })
-        .then(({ error }) => {
-          if (error) {
-            console.error('❌ Supabase insert error:', error);
-          } else {
-            console.log('✅ Message sent to Supabase');
+        (async () => {
+          try {
+            const { error } = await supabase.from('voice_room_messages').insert({
+              room_id: roomId,
+              user_id: newMsg.userId,
+              user_name: newMsg.userName,
+              user_avatar: newMsg.userAvatar,
+              message: newMsg.message,
+              message_type: 'text'
+            });
+            
+            if (error) {
+              console.error('❌ Supabase insert error:', error);
+            } else {
+              console.log('✅ Message sent to Supabase');
+            }
+          } catch (err) {
+            console.error('❌ Failed to send to Supabase:', err);
           }
-        })
-        .catch(err => {
-          console.error('❌ Failed to send to Supabase:', err);
-        });
+        })();
       } else {
         console.log('⚠️ Supabase not ready, message saved locally only');
       }

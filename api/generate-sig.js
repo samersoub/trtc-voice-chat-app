@@ -1,8 +1,9 @@
 const { genTestUserSig } = require('trtc-js-sdk/plugins/GenerateTestUserSig'); 
 
 // Read keys securely from Vercel Environment Variables
-const SDK_APP_ID = process.env.TRTC_SDK_APP_ID || '20029772';
-const SECRET_KEY = process.env.TRTC_SECRET_KEY || '327e12f1341af38c683505739a2426dae2248b875decf8b41124e75b142360'; 
+// ⚠️ NEVER commit these values to Git - use Vercel Environment Variables only
+const SDK_APP_ID = process.env.TRTC_SDK_APP_ID;
+const SECRET_KEY = process.env.TRTC_SECRET_KEY; 
 
 module.exports = (req, res) => {
     // CORS headers - allow requests from any origin

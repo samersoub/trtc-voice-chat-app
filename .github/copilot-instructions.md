@@ -1,22 +1,56 @@
 # Copilot Instructions for TRTC Voice Chat App
 
 ## Overview
-This is a React + TypeScript web application built with Vite, featuring voice chat rooms powered by TRTC SDK, real-time messaging, gift system, and admin management. The app supports bilingual UI (English/Arabic) with RTL support.
+React 18 + TypeScript voice chat application built with Vite. Features TRTC SDK-powered voice rooms, real-time messaging, gift economy, and admin management. Bilingual UI (English/Arabic) with RTL support.
 
 ## Tech Stack & Key Dependencies
 - **Framework**: React 18 + TypeScript + React Router v6
-- **UI Components**: shadcn/ui (Radix UI) + Tailwind CSS
-- **Real-time Communication**: TRTC JS SDK (Tencent Real-Time Communication)
-- **Backend**: Supabase (PostgreSQL + Auth)
-- **State Management**: React Query (TanStack Query)
-- **Audio**: WebRTC + custom AudioManager utility
-- **Build**: Vite with optimized chunking (React, Router, TRTC, Supabase, UI as separate chunks)
+- **UI**: shadcn/ui (Radix UI) + Tailwind CSS (dark mode via `[class="dark"]`)
+- **Real-time**: TRTC JS SDK + Supabase Realtime
+- **Backend**: Supabase (PostgreSQL + Auth) — **optional** (app degrades to demo mode)
+- **State**: React Query (TanStack Query)
+- **Build**: Vite with manual chunks (react, router, trtc, supabase, ui, utils)
 
-## Architecture & Data Flow
+## Critical Architecture Patterns
 
-### Key Service Boundaries
-Services in `src/services/` follow a singleton pattern exposing object literals with methods. Never instantiate—always import and call methods directly.
+### Supabase "Graceful Degradation" Pattern
+**This is the most important architectural decision.** The app works WITHOUT Supabase configured.
 
+### Critical Data Consistency Pattern: DELETE-then-INSERT
+**Problem:** Supabase `upsert()` fails on unique constraints (`voice_room_seats` has UNIQUE on `room_id, seat_number`).
+
+**Solution:** Always DELETE before INSERT when seat data may conflict:
+```typescript
+// ✅ Correct** (max 8 speakers/room)
+- `useTrtc()` hook — TRTC client lifecycle; join/leave rooms, remote stream state
+- `MicService` — Seat allocation; tracks speaking state per room
+- `useMicControl()` — Mic toggle with "ghost mic" detection (no mic if unseated)
+- `WebRTCService` — WebRTC stream capture (mic/camera)
+- **TRTC UserSig** fetched from `https://trtc-sig-service.vercel.app/api/generate-sig` (see `trtcConfig.ts`)
+  - Critical: App fails silently if endpoint unreachable — always check console for `TRTC: Join flow start`
+// 2. Insert new seat data
+coEconomy**
+- `GiftService` — Gift catalog (Rose, Luxury Car, Golden Dragon); Lottie animations in `public/lottie/`
+- `EconomyService` — Transaction ledger (coins/diamonds)
+- `CoinPackageService` — Coin purchase packages
+
+**Admin/Moderation**
+- `ReportService`, `BannerService`, `GiftAdminService`
+- `ActivityLogService` — Event logging (logins, room joins, gifts)
+- `AnalyticsService` — Engagement metrics
+
+**Utilities**
+- `toast.ts` — `showSuccess()`, `showError()` (Sonner + Radix Toast)
+- `AudioManager` — Web Audio API wrapper
+- `trtcAuth.ts` — UserSig fetching with retry logic
+
+### localStorage Keys (Persistence Strategy)
+- `auth:user` — Current user object (survives page reload)
+- `app:locale` — Language preference (en/ar)
+- `trtcAnonId` — Anonymous TRTC ID if unauthenticated
+
+### Feature Flags
+`src/config/dyad.ts` — Toggles for voice_chat, gift_system, virtual_economy, live_matching, monetization
 **Authentication & Profile**
 - `AuthService` — User registration, login, token management; stores user in localStorage (key: `auth:user`)
 - `ProfileService` — Profile CRUD, avatar handling; manages user metadata in Supabase
@@ -36,35 +70,29 @@ Services in `src/services/` follow a singleton pattern exposing object literals 
 - Room settings stored in Supabase; WebRTC handshake via TRTC cloud
 
 **Economy & Gifts**
-- `GiftService` — Gift catalog (Rose, Luxury Car, Golden Dragon); categories define availability
-- `EconomyService` — Transaction ledger (coins, diamonds); accumulates from gifts + purchases
-- `CoinPackageService` — Purchasable coin packages; manages coin packages in admin
-- Gift animations via Lottie (assets in `public/lottie/`)
 
-**Admin & Moderation**
-- `AdminService` (implied) — Admin dashboard roles/permissions
-- `ReportService` — User reports; moderation queue
-- `BannerService` — In-app banners for announcements
-- `GiftAdminService` — Admin gift management
+### Component Organization
+- `src/components/ui/` — **shadcn/ui primitives (DO NOT EDIT)** — wrap in new components instead
+- `src/components/{admin,chat,voice,music,profile,trtc,mobile,moderation,gifts,discover}/` — feature domains
+- Key voice component: `AuthenticLamaVoiceRoom.tsx` — implements DELETE-INSERT pattern
 
-**Notifications & Logging**
-- `NotificationFeedService` — Notification inbox; uses Supabase real-time
-- `ActivityLogService` — Event logging (logins, room joins, gifts sent)
-- `AnalyticsService` — Engagement metrics; fires on key user actions
+### Pages & Routing
+All routes defined in `src/App.tsx`. Pages in `src/pages/`:
+- Auth: `auth/Login`, `auth/Register`, `auth/PhoneVerification`
+- Voice: `voice-chat/RoomList`, `RoomDetails`, `CreateRoom`
+- Admin: `admin/Dashboard`, `admin/Users`, `admin/Rooms`, etc.
 
-**Utilities**
-- `api.ts` — Generic `ApiResponse<T>` type with `ok()` / `fail()` helpers
-- `toast.ts` — Sonner + Radix Toast integration; use `showSuccess()`, `showError()`
-- `AudioManager` — Web Audio API wrapper; handles mic/speaker control, volume normalization
-- `trtcAuth.ts` — UserSig token fetching; includes fallback retry logic
+### Hooks
+- `useTrtc()` — TRTC lifecycle (join/leave/streams)
+- `useMicControl()` — Mic toggle with seat validation
+- `use-mobile.tsx` — Responsive breakpoint detection
 
-### Supabase Integration
-- Client initialized in `src/services/db/supabaseClient.ts`
-- Export: `supabase` (nullable), `isSupabaseReady` (boolean), `safe()` wrapper for error handling
-- Auth stored in Supabase; UI state synced to localStorage (persistence across page reloads)
-- Real-time subscriptions used for notifications, room state updates
+### Contexts
+- `LocaleProvider` — Bilingual i18n (en/ar); provides `t(key)`, `locale`, `dir` (ltr/rtl)
+  - Add new keys directly to `src/contexts/locale.tsx` dict object
 
-### Configuration & Feature Flags
+### Models (`src/models/`)
+TypeScript interfaces only—no logic: `User`, `Message`, `ChatRoom`, `Contact`, `RoomData`, etc.
 `src/config/dyad.ts` exports `DyadConfig` object defining:
 - Feature toggles: voice_chat, gift_system, virtual_economy, live_matching, monetization
 - Quality settings: voice quality levels, max participants, recording capability
@@ -74,77 +102,66 @@ Services in `src/services/` follow a singleton pattern exposing object literals 
 
 ### Pages (`src/pages/`)
 - All pages are route components; routing managed in `src/App.tsx`
-- Main entry: `Index.tsx` (default `/` route) — landing/home
-- Auth pages: `auth/Login`, `auth/Register`, `auth/PhoneVerification`, `auth/ForgotPassword`
-- Voice chat: `voice-chat/RoomList`, `RoomDetails`, `VoiceChat`, `CreateRoom`
-- Admin pages: `admin/Dashboard`, `admin/Users`, `admin/Rooms`, etc.
-- Each page uses `ChatLayout` or similar layout wrapper for consistent header/nav
+- MaCommands
+```bash
+pnpm dev       # Dev server on localhost:8080
+pnpm build     # Production build (optimized chunks)
+pnpm lint      # ESLint (includes react-hooks/exhaustive-deps)
+pnpm preview   # Preview production build
+```
 
-### Components (`src/components/`)
-- **UI components** (`ui/`) — shadcn/ui imports (Button, Card, Dialog, etc.); do NOT edit these
-- **Layout** — `made-with-dyad.tsx`, chat layout wrappers
-- **Feature components** — organized by domain: `admin/`, `chat/`, `voice/`, `music/`, `profile/`, `trtc/`, `mobile/`, `moderation/`, `gifts/`, `discover/`
-- Create new domain folders for new feature areas
+### Styling (Tailwind Only)
+- Dark mode: `[class="dark"]` selector
+- CSS vars: `hsl(var(--primary))`
+- No custom CSS except `globals.css` theme overrides
+- Example: `<Button className="w-full mt-4">Action</Button>`
 
-### Hooks (`src/hooks/`)
-- `useTrtc()` — main voice chat hook; returns join/leave/remote stream methods
-- `useMicControl()` — mic toggle with seat validation
-- `useBottomBarVisibility` — mobile bottom bar show/hide logic
-- `use-mobile.tsx` — responsive breakpoint detection
-- `use-toast.ts` — toast trigger function
+### i18n Pattern
+```typescript
+import { useLocale } from "@/contexts";
+const { t, locale, dir } = useLocale();  // t("key"), dir="ltr"|"rtl"
+// Add keys to src/contexts/locale.tsx dict
+```
 
-### Contexts (`src/contexts/`)
-- `LocaleProvider` — bilingual support (en/ar); provides `t()` translation function and `locale`/`dir` (ltr/rtl)
-- Dictionary keys defined in-file; add new keys as needed
-
-### Models (`src/models/`)
-- TypeScript interfaces: `User`, `Message`, `ChatRoom`, `Contact`, `Playlist`, `MusicTrack`, `RoomData`
-- Keep models separate from services; models = data shape, services = behavior
-
-## Development Workflows
-
+### Adding Routes
+1. Create page in `src/pages/`
+2. Import in `App.tsx`
+3. Add `<Route path="/..." element={<YourPage />} />`
 ### Build & Dev
 ```bash
 pnpm dev          # Start dev server on :8080
 pnpm build        # Production build with optimized chunks
 pnpm build:dev    # Dev mode build (unminified)
-pnpm lint         # ESLint check (includes React Hooks rules)
-pnpm preview      # Local preview of production build
-```
+pnpm lint Code Patterns
 
-### Adding Routes
-1. Create page component in `src/pages/` or subdirectory
-2. Import in `src/App.tsx`
-3. Add `<Route path="/..." element={<YourPage />} />`
-4. If new feature, ensure page is linked from navigation (Index.tsx or admin menu)
-
-### Creating UI Components
-- Always import from `src/components/ui/` for shadcn components (pre-installed)
-- Wrap with Tailwind classes; avoid inline CSS
-- Example: `<Button className="w-full mt-4">Action</Button>`
-
-### Styling
-- Tailwind CSS exclusively; dark mode via `[class="dark"]`
-- CSS Variables in Tailwind (e.g., `hsl(var(--primary))`)
-- No custom CSS files unless absolutely necessary (globals.css is for theme overrides only)
-
-### Internationalization
-- Import `{ useLocale }` from `@/contexts` to access translation
-- Usage: `const { t, locale, dir } = useLocale()`
-- Add new translation keys to `src/contexts/locale.tsx` dict object
-
-## Common Patterns & Conventions
-
-### Service Usage Pattern
+### React Query Data Fetching
 ```typescript
-import { SomeService } from "@/services/SomeService";
-// Call directly — no instantiation
-const result = SomeService.methodName(args);
+const { data, isLoading } = useQuery({ 
+  queryKey: ['key'], 
+  queryFn: () => SomeService.fetch() 
+});
 ```
 
-### Async Data Fetching with React Query
-- Use `useQuery()` / `useMutation()` from `@tanstack/react-query`
-- Configured QueryClient in `App.tsx` with default retry/stale time
+### Voice Chat Flow
+```typescript
+// 1. Join room
+const { join, leave, remoteStreams } = useTrtc();
+await join(roomId, userId);  // Fetches UserSig, connects TRTC
+
+// 2. Mic control
+const { isMicOn, toggleMic } = useMicControl(roomId, seatNumber);
+toggleMic();  // Prevents "ghost mic" if not seated
+
+// 3. Cleanup
+leave();
+```
+
+### Toast Pattern
+```typescript
+import { showSuccess, showError } from "@/utils/toast";
+showSuccess("Action completed");  // Green toast
+showError("Failed");              // Red toast
+```le time
 - Example: `const { data, isLoading, error } = useQuery({ queryKey: ['data'], queryFn: () => SomeService.fetch() })`
 
 ### Toast Notifications
@@ -154,115 +171,37 @@ showSuccess("Action completed");
 showError("Something went wrong");
 ```
 
-### Voice Chat Integration Flow
-1. User joins room → `useTrtc().join(roomId, userId)`
-2. TRTC client fetches UserSig from external endpoint
-3. On success, remote streams managed in component state
-4. Mic control: `useMicControl()` with seat validation
-5. On leave: `useTrtc().leave()` cleans up streams
 
-### Error Handling Pattern
-- Use `safe()` wrapper from Supabase client for fire-and-forget calls
-- Check `isSupabaseReady` before making DB calls
-- Wrap async calls in try/catch; show toast on error
+### TRTC Voice Chat Issues
+**Console logging:** All TRTC events prefixed with `TRTC:` (see `useTrtc.ts:48-88`)
 
-### localStorage Keys
-- `auth:user` — current logged-in user (AuthService)
-- `app:locale` — locale preference (en/ar)
-- `trtcAnonId` — anonymous TRTC user ID if not authenticated
+**Common failures:**
+1. **UserSig fetch fails** → Check `USERSIG_API_ENDPOINT` in `trtcConfig.ts` is reachable
+2. **Silent join failure** → Look for `TRTC: Join flow start` log; verify `TRTC_SDK_APP_ID` matches 200297772
+3. **No remote streams** → Check browser mic permissions; may need TURN server
+4. **Ghost mic** → Check console for "Detected ghost mic" — user not seated
 
-## Debugging Workflows
+### Supabase Duplicate Key Errors
+**Error:** `duplicate key violates unique constraint "voice_room_seats_room_id_seat_number_key"`
 
-### Development Server Debugging
-```bash
-# Start dev server with full console logging (webpack/Vite debug info)
-pnpm dev
+**Fix:** Use DELETE-then-INSERT pattern (see "Critical Data Consistency Pattern" above).
 
-# Dev server runs on http://localhost:8080 — check browser DevTools Console for TRTC logs
+**Manual cleanup:**
+```sql
+-- Run in Supabase SQL Editor
+TRUNCATE TABLE public.voice_room_seats CASCADE;
+TRUNCATE TABLE public.voice_room_messages CASCADE;
 ```
+See `supabase/fix_voice_rooms.sql` for full cleanup script.
 
-**Browser DevTools Console patterns** — filtered by "TRTC:" prefix:
-- `TRTC: Join flow start` — room join initiated
-- `TRTC: Connection state:` — peer connection status
-- `TRTC: Remote stream added/subscribed` — remote users arriving
-- `TRTC: Peer unmuted audio/video` — media state changes
-- `console.error("TRTC: ...")` — explicit error signals (catch these)
-
-### Voice Chat / TRTC Debugging
-
-**Common TRTC failure points:**
-
-1. **UserSig fetch failure** — logs `Failed to fetch UserSig (400/404/500)`
-   - Verify `USERSIG_API_ENDPOINT` in `src/config/trtcConfig.ts` is reachable
-   - Check endpoint returns `{ userSig: "..." }` or `{ data: { userSig: "..." } }`
-   - See `src/utils/trtcAuth.ts` for response parsing logic
-
-2. **Silent join failure** — no console error but no streams appear
-   - Check browser console for `TRTC: Join flow start` log
-   - Verify TRTC app ID matches `TRTC_SDK_APP_ID` (200297772)
-   - Confirm room ID is valid in `TRTC_TEST_ROOM_ID` or passed dynamically
-   - TRTC SDK may fail silently on network issues
-
-3. **Remote stream subscription fails** — logs `TRTC: Subscribe failed: [userId]`
-   - Indicates peer exists but audio/video stream unreachable
-   - Check browser media permissions (microphone, camera)
-   - Verify WebRTC transport (may require TURN server in some networks)
-
-4. **Mic/audio not working** — see `src/hooks/useMicControl.ts` and `src/utils/AudioManager.ts`
-   - Ghost mic detection logs: "Detected ghost mic. Mic muted until you take a seat."
-   - Check `MicService.setSpeaking()` was called with correct roomId/userId
-   - Verify mic stream acquired: `WebRTCService.getMicStream()` should resolve
-
-### Linting & Type Checking
-
-```bash
-pnpm lint                # Run ESLint on all .ts/.tsx files
-# Output will show unused vars, React Hook violations (from react-hooks/exhaustive-deps)
-```
-
-**Common lint errors in this project:**
-- Unused variables — disabled by rule in `eslint.config.js` (set to "off")
-- Missing dependency in useEffect — **do NOT ignore** (catch real React Hook bugs)
-- Component must be PascalCase if exported — catch accidental lowercase exports
-
-### Network & API Debugging
-
-**Check Supabase connectivity** — in browser console:
+### Quick Checks
 ```javascript
-// Quick test if Supabase is reachable
-const { isSupabaseReady, supabase } = await import('@/services/db/supabaseClient.ts');
-console.log('Supabase ready:', isSupabaseReady, 'Client:', !!supabase);
+// Browser console
+localStorage.getItem('auth:user');     // Current user
+localStorage.getItem('trtcAnonId');    // Anonymous ID
+const { isSupabaseReady } = await import('@/services/db/supabaseClient.ts');
+console.log(isSupabaseReady);          // DB connectivity
 ```
-
-**Check localStorage state:**
-```javascript
-// View current auth user
-JSON.parse(localStorage.getItem('auth:user'));
-// View locale preference
-localStorage.getItem('app:locale');
-// View anonymous TRTC ID
-localStorage.getItem('trtcAnonId');
-```
-
-**Check React Query cache** (if ReactQueryDevtools installed):
-- Add `import { lazy } from 'react'; const RQDevtools = lazy(() => import('@tanstack/react-query-devtools'));` to App.tsx
-- Shows all query states, network requests, cache timing
-
-### Performance & Bundle Debugging
-
-```bash
-pnpm build             # Build with Vite's chunk optimization
-# Check generated dist/ for chunk sizes
-# Manual chunks defined in vite.config.ts: react, router, trtc, supabase, ui, utils
-```
-
-**Identify slow components:**
-- React DevTools Profiler (in browser) — measure render times
-- Vite's built-in bundle analysis — check chunk file sizes in dist/
-
-### Testing & Validation
-
-```bash
 pnpm lint              # Validate syntax and hook rules before push
 ```
 
@@ -299,3 +238,17 @@ Use browser DevTools device emulation to test mobile layouts.
 - **User state persists in localStorage** — clear on logout to prevent stale auth
 - **Supabase is optional** — app degrades gracefully if env vars missing (demo mode)
 - **Dyad framework** — Vite plugin auto-tags components for analytics; doesn't affect development
+
+- **Routing**: `src/App.tsx`
+- **Supabase client**: `src/services/db/supabaseClient.ts` (nullable client + `isSupabaseReady`)
+- **Voice chat**: `src/hooks/useTrtc.ts`, `src/components/voice/AuthenticLamaVoiceRoom.tsx`
+- **TRTC config**: `src/config/trtcConfig.ts`, `src/utils/trtcAuth.ts`
+- **i18n**: `src/contexts/locale.tsx`
+- **DB schemas**: `supabase/schema.sql`, `supabase/fix_voice_rooms.sql`
+
+## Critical Constraints
+- **Do NOT edit `src/components/ui/*`** — shadcn/ui primitives; wrap instead
+- **Max 8 mic seats per room** — enforced in `MicService`
+- **TRTC fails silently** if UserSig endpoint down — check console logs
+- **Supabase optional** — app works in demo mode without env vars
+- **Vite chunks** defined in `vite.config.ts` — don't add to manual chunks without reason
