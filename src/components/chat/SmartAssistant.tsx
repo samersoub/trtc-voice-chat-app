@@ -3,7 +3,6 @@ import { useLocale } from '@/contexts';
 import { X, Send, MessageCircle, Sparkles } from 'lucide-react';
 import { GeminiService } from '@/services/GeminiService';
 import Lottie from 'lottie-react';
-import chatbotAnimation from '/lottie/chatbot.json';
 
 interface Message {
   id: string;
@@ -18,6 +17,7 @@ const SmartAssistant = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputText, setInputText] = useState('');
   const [isTyping, setIsTyping] = useState(false);
+  const [animationData, setAnimationData] = useState<any>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Welcome message
@@ -40,7 +40,13 @@ const SmartAssistant = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  // Lottie animation using lottie-react (no dynamic import needed)
+  // Load Lottie animation
+  useEffect(() => {
+    fetch('/lottie/chatbot.json')
+      .then(res => res.json())
+      .then(data => setAnimationData(data))
+      .catch(err => console.error('Failed to load animation:', err));
+  }, []);
 
   const handleSendMessage = async () => {
     if (!inputText.trim()) return;
@@ -133,14 +139,17 @@ const SmartAssistant = () => {
           className="fixed bottom-24 right-6 z-50 group animate-bounce"
         >
           <div className="relative">
-            {/* Animation Containe w-20 h-20">
+            <div className="w-20 h-20">
             {/* Lottie Animation */}
-            <Lottie 
-              animationData={chatbotAnimation}
-              loop={true}
-              autoplay={true}
-              className="w-full h-full"
-            />
+            {animationData && (
+              <Lottie 
+                animationData={animationData}
+                loop={true}
+                autoplay={true}
+                className="w-full h-full"
+              />
+            )}
+            </div>
             {/* Notification Badge */}
             <div className="absolute -top-1 -right-1 w-6 h-6 bg-red-500 rounded-full flex items-center justify-center animate-pulse">
               <MessageCircle className="w-3 h-3 text-white" />

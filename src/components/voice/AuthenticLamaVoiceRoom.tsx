@@ -289,12 +289,19 @@ const AuthenticLamaVoiceRoom: React.FC = () => {
 
   // Supabase Real-time Subscriptions
   useEffect(() => {
+    console.log('=== Supabase Check ===');
+    console.log('isSupabaseReady:', isSupabaseReady);
+    console.log('roomId:', roomId);
+    console.log('supabase client:', supabase);
+    
     if (!isSupabaseReady || !roomId) {
-      console.warn('Supabase not ready or roomId missing');
+      console.warn('⚠️ Supabase not ready or roomId missing');
+      console.warn('isSupabaseReady:', isSupabaseReady);
+      console.warn('roomId:', roomId);
       return;
     }
 
-    console.log('Setting up Realtime subscriptions for room:', roomId);
+    console.log('✅ Setting up Realtime subscriptions for room:', roomId);
 
     // Subscribe to messages
     const messagesChannel = supabase!
@@ -429,9 +436,12 @@ const AuthenticLamaVoiceRoom: React.FC = () => {
     }
 
     try {
+      console.log('🪑 Joining seat:', seatNumber);
+      console.log('Current user:', currentUser);
+      
       // Update seat in Supabase
       if (isSupabaseReady) {
-        await supabase!.from('voice_room_seats').upsert({
+        const seatData = {
           room_id: roomId,
           seat_number: seatNumber,
           user_id: currentUser.id,
@@ -441,7 +451,18 @@ const AuthenticLamaVoiceRoom: React.FC = () => {
           is_speaking: false,
           is_muted: true,
           joined_at: new Date().toISOString()
-        });
+        };
+        
+        console.log('📤 Sending seat data to Supabase:', seatData);
+        
+        const { data, error } = await supabase!.from('voice_room_seats').upsert(seatData);
+        
+        if (error) {
+          console.error('❌ Supabase upsert error:', error);
+          throw error;
+        }
+        
+        console.log('✅ Seat updated in Supabase:', data);
       } else {
         // Demo mode - update local state
         setSeats(prev => prev.map(s =>
@@ -506,9 +527,13 @@ const AuthenticLamaVoiceRoom: React.FC = () => {
     };
 
     try {
+      console.log('📤 Sending message to Supabase...');
+      console.log('Room ID:', roomId);
+      console.log('Message:', newMsg);
+      
       if (isSupabaseReady) {
         // Send to Supabase - will be received via real-time subscription
-        await supabase!.from('voice_room_messages').insert({
+        const { data, error } = await supabase!.from('voice_room_messages').insert({
           room_id: roomId,
           user_id: newMsg.userId,
           user_name: newMsg.userName,
@@ -516,13 +541,21 @@ const AuthenticLamaVoiceRoom: React.FC = () => {
           message: newMsg.message,
           message_type: 'text'
         });
+        
+        if (error) {
+          console.error('❌ Supabase insert error:', error);
+          throw error;
+        }
+        
+        console.log('✅ Message sent to Supabase:', data);
       } else {
+        console.log('⚠️ Supabase not ready, adding message locally');
         // Demo mode - add locally
         setMessages(prev => [...prev, newMsg]);
       }
       setMessageInput('');
     } catch (error) {
-      console.error('Failed to send message:', error);
+      console.error('❌ Failed to send message:', error);
       showError('فشل إرسال الرسالة');
     }
   };

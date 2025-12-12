@@ -10,7 +10,8 @@ import {
   Check,
   Trophy,
   Sparkles,
-  MessageCircle
+  MessageCircle,
+  Camera
 } from 'lucide-react';
 import { AuthService } from '@/services/AuthService';
 import { InviteRewardsService } from '@/services/InviteRewardsService';
@@ -377,6 +378,3 @@ const SuperSupport: React.FC = () => {
 };
 
 export default SuperSupport;
-
-// Missing Camera import
-import { Camera } from 'lucide-react';

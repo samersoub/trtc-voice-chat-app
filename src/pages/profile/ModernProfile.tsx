@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import Lottie from 'lottie-react';
 import { 
   MapPin, 
   Link as LinkIcon, 
@@ -72,26 +73,24 @@ interface Highlight {
 }
 
 // Love Animation Component
-import Lottie from 'lottie-react';
-import loveAnimation from '/lottie/love.json';
-
 const LoveAnimation: React.FC = () => {
+  const [animationData, setAnimationData] = useState<any>(null);
+
+  useEffect(() => {
+    fetch('/lottie/love.json')
+      .then(res => res.json())
+      .then(data => setAnimationData(data))
+      .catch(err => console.error('Failed to load animation:', err));
+  }, []);
+
+  if (!animationData) return null;
+
   return (
     <div className="w-full h-full">
       <Lottie 
-        animationData={loveAnimation}
+        animationData={animationData}
         loop={true}
         autoplay={true}
-      />
-    </div>
-  );
-  }, []);
-
-  return (
-    <div className="relative flex items-center justify-center">
-      <div 
-        ref={lottieContainer}
-        className="w-32 h-32 scale-125"
       />
     </div>
   );
