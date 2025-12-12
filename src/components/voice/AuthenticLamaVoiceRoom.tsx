@@ -438,8 +438,29 @@ const AuthenticLamaVoiceRoom: React.FC = () => {
     try {
       console.log('🪑 Joining seat:', seatNumber);
       console.log('Current user:', currentUser);
+      console.log('isSupabaseReady:', isSupabaseReady);
       
-      // Update seat in Supabase
+      // Always update local state first for immediate feedback
+      setSeats(prev => prev.map(s =>
+        s.seatNumber === seatNumber
+          ? {
+              ...s,
+              user: {
+                id: currentUser.id,
+                name: currentUser.name || 'مستخدم',
+                avatar: currentUser.avatarUrl || 'https://api.dicebear.com/7.x/avataaars/svg?seed=' + currentUser.id,
+                level: 1,
+                isSpeaking: false,
+                isMuted: true
+              }
+            }
+          : s
+      ));
+      
+      setCurrentSeatNumber(seatNumber);
+      showSuccess(`تم الانضمام للمقعد ${seatNumber}`);
+      
+      // Update seat in Supabase (background - don't block on failure)
       if (isSupabaseReady) {
         const seatData = {
           room_id: roomId,
@@ -455,35 +476,20 @@ const AuthenticLamaVoiceRoom: React.FC = () => {
         
         console.log('📤 Sending seat data to Supabase:', seatData);
         
-        const { data, error } = await supabase!.from('voice_room_seats').upsert(seatData);
-        
-        if (error) {
-          console.error('❌ Supabase upsert error:', error);
-          throw error;
-        }
-        
-        console.log('✅ Seat updated in Supabase:', data);
+        supabase!.from('voice_room_seats').upsert(seatData)
+          .then(({ data, error }) => {
+            if (error) {
+              console.error('❌ Supabase upsert error:', error);
+            } else {
+              console.log('✅ Seat updated in Supabase:', data);
+            }
+          })
+          .catch(err => {
+            console.error('❌ Failed to update Supabase:', err);
+          });
       } else {
-        // Demo mode - update local state
-        setSeats(prev => prev.map(s =>
-          s.seatNumber === seatNumber
-            ? {
-                ...s,
-                user: {
-                  id: currentUser.id,
-                  name: currentUser.name || 'مستخدم',
-                  avatar: currentUser.avatarUrl || 'https://api.dicebear.com/7.x/avataaars/svg?seed=User',
-                  level: 1,
-                  isSpeaking: false,
-                  isMuted: true
-                }
-              }
-            : s
-        ));
+        console.log('⚠️ Supabase not ready, working in demo mode');
       }
-
-      setCurrentSeatNumber(seatNumber);
-      showSuccess(`انضممت للمقعد ${seatNumber}`);
       
       // Add system message
       const joinMessage: ChatMessage = {
@@ -496,20 +502,22 @@ const AuthenticLamaVoiceRoom: React.FC = () => {
         type: 'system'
       };
       
+      // Always add to local state
+      setMessages(prev => [...prev, joinMessage]);
+      
+      // Also send to Supabase (background)
       if (isSupabaseReady) {
-        await supabase!.from('voice_room_messages').insert({
+        supabase!.from('voice_room_messages').insert({
           room_id: roomId,
           user_id: 'system',
           user_name: 'النظام',
           message: joinMessage.message,
           message_type: 'system'
-        });
-      } else {
-        setMessages(prev => [...prev, joinMessage]);
+        }).catch(err => console.error('Failed to send join message:', err));
       }
     } catch (error) {
-      console.error('Failed to join seat:', error);
-      showError('فشل الانضمام للمقعد');
+      console.error('❌ Failed to join seat:', error);
+      showError('حدث خطأ أثناء الانضمام للمقعد');
     }
   };
 
@@ -527,36 +535,39 @@ const AuthenticLamaVoiceRoom: React.FC = () => {
     };
 
     try {
-      console.log('📤 Sending message to Supabase...');
-      console.log('Room ID:', roomId);
+      console.log('📤 Sending message...');
       console.log('Message:', newMsg);
       
+      // Always add to local state first for immediate feedback
+      setMessages(prev => [...prev, newMsg]);
+      setMessageInput('');
+      
+      // Send to Supabase in background (don't block on failure)
       if (isSupabaseReady) {
-        // Send to Supabase - will be received via real-time subscription
-        const { data, error } = await supabase!.from('voice_room_messages').insert({
+        console.log('📤 Sending to Supabase...');
+        supabase!.from('voice_room_messages').insert({
           room_id: roomId,
           user_id: newMsg.userId,
           user_name: newMsg.userName,
           user_avatar: newMsg.userAvatar,
           message: newMsg.message,
           message_type: 'text'
+        })
+        .then(({ error }) => {
+          if (error) {
+            console.error('❌ Supabase insert error:', error);
+          } else {
+            console.log('✅ Message sent to Supabase');
+          }
+        })
+        .catch(err => {
+          console.error('❌ Failed to send to Supabase:', err);
         });
-        
-        if (error) {
-          console.error('❌ Supabase insert error:', error);
-          throw error;
-        }
-        
-        console.log('✅ Message sent to Supabase:', data);
       } else {
-        console.log('⚠️ Supabase not ready, adding message locally');
-        // Demo mode - add locally
-        setMessages(prev => [...prev, newMsg]);
+        console.log('⚠️ Supabase not ready, message saved locally only');
       }
-      setMessageInput('');
     } catch (error) {
       console.error('❌ Failed to send message:', error);
-      showError('فشل إرسال الرسالة');
     }
   };
 
