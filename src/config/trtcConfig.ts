@@ -1,7 +1,7 @@
 /**
  * TRTC Application ID (This is safe to expose)
  */
-export const TRTC_SDK_APP_ID = 200297772;
+export const TRTC_SDK_APP_ID = 20031512;
 
 /**
  * A fixed Room ID for initial testing
