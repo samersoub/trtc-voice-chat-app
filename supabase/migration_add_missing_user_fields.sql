@@ -19,6 +19,10 @@ ADD COLUMN IF NOT EXISTS is_premium BOOLEAN DEFAULT FALSE;
 ALTER TABLE public.users 
 ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT TRUE;
 
+-- 2.2 Add Last Login Timestamp
+ALTER TABLE public.users 
+ADD COLUMN IF NOT EXISTS last_login TIMESTAMP WITH TIME ZONE;
+
 -- 3. Add Enhanced Location Fields
 ALTER TABLE public.users 
 ADD COLUMN IF NOT EXISTS location_lat DECIMAL(10, 8),
@@ -157,6 +161,7 @@ COMMENT ON COLUMN public.users.following IS 'قائمة معرفات المتا�
 COMMENT ON COLUMN public.users.interests IS 'قائمة الاهتمامات';
 COMMENT ON COLUMN public.users.is_premium IS 'حالة العضوية المميزة';
 COMMENT ON COLUMN public.users.is_active IS 'حالة المستخدم - نشط أم معطل';
+COMMENT ON COLUMN public.users.last_login IS 'آخر تسجيل دخول للمستخدم';
 COMMENT ON COLUMN public.users.location_lat IS 'خط العرض للموقع';
 COMMENT ON COLUMN public.users.location_lng IS 'خط الطول للموقع';
 COMMENT ON COLUMN public.users.city IS 'المدينة';
