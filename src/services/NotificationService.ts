@@ -398,6 +398,134 @@ class NotificationServiceClass {
     localStorage.removeItem(this.SETTINGS_KEY);
     this.notifyListeners();
   }
+
+  // ===================================================================
+  // Phase 1 Feature Badges
+  // ===================================================================
+
+  /**
+   * Get Phase 1 feature badges
+   */
+  async getPhase1Badges(userId: string): Promise<Phase1Badges> {
+    try {
+      const { DailyMissionsService } = await import('./DailyMissionsService');
+      const { FriendRecommendationService } = await import('./FriendRecommendationService');
+      const { LuckyWheelService } = await import('./LuckyWheelService');
+
+      // Get uncompleted missions
+      const missions = await DailyMissionsService.getMissions(userId);
+      const uncompletedMissions = missions.filter(m => !m.completed).length;
+      
+      // Get unclaimed rewards (completed but not claimed)
+      const unclaimedRewards = missions.filter(m => m.completed && !m.claimed).length;
+      
+      // Get friend recommendations
+      const recommendations = await FriendRecommendationService.getRecommendations(10);
+      const newRecommendations = this.getNewRecommendationsCount(recommendations.length);
+      
+      // Get available spins
+      const wheelStats = await LuckyWheelService.getSpinStats(userId);
+      const availableSpins = wheelStats.remainingSpins || 0;
+      
+      const badges: Phase1Badges = {
+        missions: uncompletedMissions,
+        friends: newRecommendations,
+        wheel: availableSpins,
+        rewards: unclaimedRewards,
+        total: uncompletedMissions + newRecommendations + availableSpins + unclaimedRewards
+      };
+      
+      // Cache badges
+      localStorage.setItem('phase1_badges', JSON.stringify(badges));
+      
+      return badges;
+    } catch (error) {
+      console.error('Failed to get Phase 1 badges:', error);
+      
+      // Return cached badges if available
+      const cached = localStorage.getItem('phase1_badges');
+      if (cached) {
+        try {
+          return JSON.parse(cached);
+        } catch { }
+      }
+      
+      // Return empty badges
+      return {
+        missions: 0,
+        friends: 0,
+        wheel: 0,
+        rewards: 0,
+        total: 0
+      };
+    }
+  }
+
+  /**
+   * Get cached Phase 1 badges (for quick access)
+   */
+  getCachedPhase1Badges(): Phase1Badges {
+    const cached = localStorage.getItem('phase1_badges');
+    if (cached) {
+      try {
+        return JSON.parse(cached);
+      } catch { }
+    }
+    
+    return {
+      missions: 0,
+      friends: 0,
+      wheel: 0,
+      rewards: 0,
+      total: 0
+    };
+  }
+
+  /**
+   * Get new recommendations count
+   */
+  private getNewRecommendationsCount(totalCount: number): number {
+    const lastCheck = localStorage.getItem('phase1_last_check');
+    const lastCheckData = lastCheck ? JSON.parse(lastCheck) : null;
+    
+    if (!lastCheckData || !lastCheckData.friendsCount) {
+      return totalCount > 0 ? totalCount : 0;
+    }
+    
+    const newCount = Math.max(0, totalCount - lastCheckData.friendsCount);
+    return newCount;
+  }
+
+  /**
+   * Clear specific Phase 1 badge
+   */
+  clearPhase1Badge(type: keyof Omit<Phase1Badges, 'total'>): void {
+    const badges = this.getCachedPhase1Badges();
+    badges[type] = 0;
+    badges.total = badges.missions + badges.friends + badges.wheel + badges.rewards;
+    localStorage.setItem('phase1_badges', JSON.stringify(badges));
+    this.notifyListeners();
+  }
+
+  /**
+   * Refresh Phase 1 badges
+   */
+  async refreshPhase1Badges(userId: string): Promise<void> {
+    try {
+      await this.getPhase1Badges(userId);
+      this.notifyListeners();
+    } catch (error) {
+      console.error('Failed to refresh Phase 1 badges:', error);
+    }
+  }
+}
+
+export interface Phase1Badges {
+  missions: number; // Uncompleted missions
+  friends: number; // New friend recommendations
+  wheel: number; // Available spins
+  rewards: number; // Unclaimed rewards
+  total: number; // Total badges
 }
 
 export const NotificationService = new NotificationServiceClass();

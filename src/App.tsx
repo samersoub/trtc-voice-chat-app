@@ -68,6 +68,21 @@ import UnoGame from "./pages/games/UnoGame";
 import Recharge from "./pages/finance/Recharge";
 import SuperSupport from "./pages/support/SuperSupport";
 import Rankings from "./pages/Rankings";
+import DailyMissions from "./pages/profile/DailyMissions";
+import FriendRecommendations from "./pages/profile/FriendRecommendations";
+import RoomThemes from "./pages/voice-chat/RoomThemes";
+import LuckyWheel from "./pages/games/LuckyWheel";
+import VoiceEffects from "./pages/voice-chat/VoiceEffects";
+import Phase1Analytics from "./pages/admin/Phase1Analytics";
+import PremiumSubscription from "./pages/premium/PremiumSubscription";
+import FamilyDashboard from "./pages/family/FamilyDashboard";
+import ReferralPage from "./pages/referral/ReferralPage";
+import LiveStreamPage from "./pages/livestream/LiveStreamPage";
+import EventsPage from "./pages/events/EventsPage";
+import CreatorDashboard from "./pages/creator/CreatorDashboard";
+import DiscoverEnhanced from "./components/discover/DiscoverEnhanced";
+import AIMatchingPage from "./pages/matching/AIMatchingPage";
+import AdvancedAdminPanel from "./pages/admin/AdvancedAdminPanel";
 
 const queryClient = new QueryClient();
 
@@ -97,6 +112,7 @@ const App = () => (
               <Route path="/admin/room-settings" element={<AdminSettings />} />
               <Route path="/admin/gifts" element={<GiftsAdmin />} />
               <Route path="/admin/coins" element={<CoinsAdmin />} />
+              <Route path="/admin/analytics" element={<Phase1Analytics />} />
               {/* Auth */}
               <Route path="/auth/login" element={<Login />} />
               <Route path="/auth/register" element={<Register />} />
@@ -111,6 +127,8 @@ const App = () => (
               <Route path="/voice/rooms/:id/lama" element={<LamaStyleVoiceRoom />} />
               <Route path="/voice/rooms/:id/premium" element={<PremiumVoiceRoom />} />
               <Route path="/voice/rooms/:id/classic" element={<VoiceChatRoomRedesign />} />
+              <Route path="/voice/themes" element={<RoomThemes />} />
+              <Route path="/voice/effects" element={<VoiceEffects />} />
               {/* Finance & Store */}
               <Route path="/wallet" element={<Wallet />} />
               <Route path="/wealth" element={<Wealth />} />
@@ -127,6 +145,7 @@ const App = () => (
               <Route path="/games" element={<GamesPage />} />
               <Route path="/games/ludo" element={<LudoGame />} />
               <Route path="/games/uno" element={<UnoGame />} />
+              <Route path="/games/lucky-wheel" element={<LuckyWheel />} />
               {/* Support */}
               <Route path="/support" element={<SuperSupport />} />
               {/* Agency */}
@@ -151,6 +170,37 @@ const App = () => (
               <Route path="/backpack" element={<Backpack />} />
               <Route path="/svip" element={<SVIP />} />
               <Route path="/aristocracy" element={<Aristocracy />} />
+              <Route path="/profile/missions" element={<DailyMissions />} />
+              <Route path="/profile/friends/recommendations" element={<FriendRecommendations />} />
+              {/* Premium */}
+              <Route path="/premium" element={<PremiumSubscription />} />
+              {/* Families */}
+              <Route path="/family" element={<FamilyDashboard />} />
+              <Route path="/family/create" element={<FamilyDashboard />} />
+              <Route path="/family/:id" element={<FamilyDashboard />} />
+              {/* Referral */}
+              <Route path="/referral" element={<ReferralPage />} />
+              {/* Live Streaming */}
+              <Route path="/stream/:streamId" element={<LiveStreamPage />} />
+              <Route path="/stream/create" element={<LiveStreamPage />} />
+              {/* Events */}
+              <Route path="/events" element={<EventsPage />} />
+              <Route path="/event/:eventId" element={<EventsPage />} />
+              <Route path="/event/create" element={<EventsPage />} />
+              {/* Creator Dashboard */}
+              <Route path="/creator/dashboard" element={<CreatorDashboard />} />
+              {/* Discover Enhanced */}
+              <Route path="/discover/enhanced" element={
+                <div className="min-h-screen bg-gradient-to-br from-gray-950 via-purple-950/20 to-gray-950 p-6">
+                  <div className="max-w-7xl mx-auto">
+                    <DiscoverEnhanced />
+                  </div>
+                </div>
+              } />
+              {/* AI Matching */}
+              <Route path="/matching/ai" element={<AIMatchingPage />} />
+              {/* Advanced Admin */}
+              <Route path="/admin/advanced" element={<AdvancedAdminPanel />} />
               {/* Love House */}
               <Route path="/love-house" element={<LoveHouse />} />
               {/* Matching */}

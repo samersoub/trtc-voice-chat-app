@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { ChevronRight, Users, Play, Plus, Shuffle } from "lucide-react";
+import { ChevronRight, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { AuthService } from "@/services/AuthService";
 
@@ -110,14 +110,39 @@ const UnoGame = () => {
     setCurrentPlayerIndex(0);
   };
 
-  const canPlayCard = (card: Card, topCard: Card): boolean => {
+  const canPlayCard = useCallback((card: Card, topCard: Card): boolean => {
     if (card.color === "wild") return true;
     if (card.color === topCard.color) return true;
     if (card.value === topCard.value) return true;
     return false;
-  };
+  }, []);
 
-  const playCard = (playerIndex: number, cardIndex: number) => {
+  const nextTurn = useCallback(() => {
+    const nextIndex = direction === "clockwise"
+      ? (currentPlayerIndex + 1) % players.length
+      : (currentPlayerIndex - 1 + players.length) % players.length;
+    setCurrentPlayerIndex(nextIndex);
+  }, [currentPlayerIndex, direction, players.length]);
+
+  const handleSpecialCard = useCallback((card: Card) => {
+    switch (card.value) {
+      case "skip":
+        nextTurn(); // Skip next player
+        break;
+      case "reverse":
+        setDirection(direction === "clockwise" ? "counterclockwise" : "clockwise");
+        break;
+      case "draw2":
+        // Next player draws 2 cards
+        break;
+      case "wild":
+      case "wild_draw4":
+        // Show color selector
+        break;
+    }
+  }, [direction, nextTurn]);
+
+  const playCard = useCallback((playerIndex: number, cardIndex: number) => {
     const player = players[playerIndex];
     const card = player.cards[cardIndex];
     const topCard = discardPile[discardPile.length - 1];
@@ -146,9 +171,9 @@ const UnoGame = () => {
 
     // Move to next player
     nextTurn();
-  };
+  }, [players, discardPile, handleSpecialCard, nextTurn, canPlayCard]);
 
-  const drawCard = (playerIndex: number) => {
+  const drawCard = useCallback((playerIndex: number) => {
     if (deck.length === 0) {
       // Reshuffle discard pile
       const topCard = discardPile[discardPile.length - 1];
@@ -165,32 +190,7 @@ const UnoGame = () => {
     setPlayers(newPlayers);
     setDeck(deck.slice(1));
     nextTurn();
-  };
-
-  const handleSpecialCard = (card: Card) => {
-    switch (card.value) {
-      case "skip":
-        nextTurn(); // Skip next player
-        break;
-      case "reverse":
-        setDirection(direction === "clockwise" ? "counterclockwise" : "clockwise");
-        break;
-      case "draw2":
-        // Next player draws 2 cards
-        break;
-      case "wild":
-      case "wild_draw4":
-        // Show color selector
-        break;
-    }
-  };
-
-  const nextTurn = () => {
-    const nextIndex = direction === "clockwise"
-      ? (currentPlayerIndex + 1) % players.length
-      : (currentPlayerIndex - 1 + players.length) % players.length;
-    setCurrentPlayerIndex(nextIndex);
-  };
+  }, [deck, players, discardPile, nextTurn]);
 
   const getCardColor = (color: CardColor): string => {
     switch (color) {
@@ -220,7 +220,7 @@ const UnoGame = () => {
     
     const currentPlayer = players[currentPlayerIndex];
     if (currentPlayer && currentPlayer.isComputer) {
-      setTimeout(() => {
+      const timeout = setTimeout(() => {
         const topCard = discardPile[discardPile.length - 1];
         const playableCardIndex = currentPlayer.cards.findIndex(card => canPlayCard(card, topCard));
         
@@ -230,8 +230,10 @@ const UnoGame = () => {
           drawCard(currentPlayerIndex);
         }
       }, 1500);
+      
+      return () => clearTimeout(timeout);
     }
-  }, [currentPlayerIndex, gameStarted]);
+  }, [currentPlayerIndex, gameStarted, players, discardPile, canPlayCard, playCard, drawCard]);
 
   if (!gameStarted) {
     return (

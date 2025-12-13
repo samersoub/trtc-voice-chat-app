@@ -3,13 +3,17 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { 
   Mic, MicOff, Volume2, Gift, MessageCircle, Users, 
   MoreVertical, Crown, Send, X, ArrowLeft, 
-  Lock, UserPlus, Share2, Settings, Star, Heart
+  Lock, UserPlus, Share2, Settings, Star, Heart,
+  Palette, Music2
 } from 'lucide-react';
 import { AuthService } from '@/services/AuthService';
 import { showSuccess, showError } from '@/utils/toast';
 import { useTrtc } from '@/hooks/useTrtc';
 import { supabase, isSupabaseReady } from '@/services/db/supabaseClient';
+import MicPermissionDialog from './MicPermissionDialog';
 import '@/styles/lama-voice-room.css';
+import { RoomThemesService, type RoomTheme } from '@/services/RoomThemesService';
+import { VoiceEffectsService, type VoiceEffect } from '@/services/VoiceEffectsService';
 
 // ===================================================================
 // TypeScript Interfaces
@@ -252,8 +256,18 @@ const AuthenticLamaVoiceRoom: React.FC = () => {
   const [messageInput, setMessageInput] = useState('');
   const [isMicActive, setIsMicActive] = useState(false);
   const [showGiftPanel, setShowGiftPanel] = useState(false);
+  const [showThemePanel, setShowThemePanel] = useState(false);
+  const [showEffectsPanel, setShowEffectsPanel] = useState(false);
   const [onlineCount, setOnlineCount] = useState(1);
   const [announcementText, setAnnouncementText] = useState('محمد أرسل Rose بقيمة 50000 إلى فاطمة');
+  const [showMicPermission, setShowMicPermission] = useState(true);
+  const [micPermissionGranted, setMicPermissionGranted] = useState(false);
+  
+  // Phase 1 Features State
+  const [currentTheme, setCurrentTheme] = useState<RoomTheme | null>(null);
+  const [currentEffect, setCurrentEffect] = useState<VoiceEffect | null>(null);
+  const [themes, setThemes] = useState<RoomTheme[]>([]);
+  const [effects, setEffects] = useState<VoiceEffect[]>([]);
 
   // Room Info
   const roomInfo = {
@@ -265,8 +279,40 @@ const AuthenticLamaVoiceRoom: React.FC = () => {
     category: 'ترفيه'
   };
 
-  // Auto-join TRTC room on mount
+  // Load Phase 1 Features Data
   useEffect(() => {
+    const loadFeatures = async () => {
+      try {
+        // Load themes
+        const allThemes = await RoomThemesService.getAllThemes();
+        setThemes(allThemes);
+        
+        // Get saved theme from localStorage
+        const savedThemeId = localStorage.getItem(`room_theme_${roomId}`);
+        if (savedThemeId) {
+          const theme = allThemes.find(t => t.id === savedThemeId);
+          if (theme) setCurrentTheme(theme);
+        }
+        
+        // Load voice effects
+        const allEffects = await VoiceEffectsService.getAllEffects();
+        setEffects(allEffects);
+        
+        // Get active effect
+        const activeEffect = await VoiceEffectsService.getActiveEffect(currentUser?.id || 'guest');
+        if (activeEffect) setCurrentEffect(activeEffect);
+      } catch (error) {
+        console.error('Failed to load Phase 1 features:', error);
+      }
+    };
+    
+    loadFeatures();
+  }, [roomId, currentUser?.id]);
+
+  // Auto-join TRTC room on mount (only after mic permission)
+  useEffect(() => {
+    if (!micPermissionGranted) return;
+
     const joinRoom = async () => {
       try {
         const userId = currentUser?.id || `guest_${Date.now()}`;
@@ -285,7 +331,7 @@ const AuthenticLamaVoiceRoom: React.FC = () => {
       leave();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [micPermissionGranted]);
 
   // Supabase Real-time Subscriptions
   useEffect(() => {
@@ -608,6 +654,38 @@ const AuthenticLamaVoiceRoom: React.FC = () => {
     }
   };
 
+  // Theme Change Handler
+  const handleThemeChange = async (theme: RoomTheme) => {
+    try {
+      setCurrentTheme(theme);
+      localStorage.setItem(`room_theme_${roomId}`, theme.id);
+      
+      if (currentUser?.id) {
+        RoomThemesService.activateTheme(currentUser.id, theme.id);
+      }
+      
+      showSuccess(`تم تطبيق ثيم ${theme.name}`);
+      setShowThemePanel(false);
+    } catch (error) {
+      console.error('Failed to apply theme:', error);
+      showError('فشل تطبيق الثيم');
+    }
+  };
+  
+  // Voice Effect Handler
+  const handleEffectChange = async (effect: VoiceEffect) => {
+    try {
+      const userId = currentUser?.id || 'guest';
+      VoiceEffectsService.activateEffect(userId, effect.id);
+      setCurrentEffect(effect);
+      showSuccess(`تم تطبيق مؤثر ${effect.name}`);
+      setShowEffectsPanel(false);
+    } catch (error) {
+      console.error('Failed to apply effect:', error);
+      showError('فشل تطبيق المؤثر الصوتي');
+    }
+  };
+
   const handleSendGift = async (gift: GiftItem) => {
     const giftMsg: ChatMessage = {
       id: Date.now().toString(),
@@ -658,6 +736,24 @@ const AuthenticLamaVoiceRoom: React.FC = () => {
       const newMicState = !isMicActive;
       setIsMicActive(newMicState);
       
+      // Apply voice effect if active and mic is on
+      if (newMicState && currentEffect) {
+        try {
+          // Get current audio stream
+          const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+          
+          // Apply the voice effect
+          const processedStream = VoiceEffectsService.applyEffect(stream, currentEffect);
+          
+          // Here you would replace the TRTC stream with the processed one
+          // Note: TRTC SDK integration would be needed here
+          console.log('Applied voice effect:', currentEffect.name, 'to microphone stream');
+        } catch (error) {
+          console.error('Failed to apply voice effect:', error);
+          // Continue without effect
+        }
+      }
+      
       showSuccess(newMicState ? 'تم تشغيل المايكروفون' : 'تم كتم المايكروفون');
 
       // Update seat mic status in Supabase
@@ -693,8 +789,34 @@ const AuthenticLamaVoiceRoom: React.FC = () => {
   // ===================================================================
   // Render: Authentic Lama Chat UI (Based on Screenshot)
   // ===================================================================
+  
+  // Show mic permission dialog first
+  if (showMicPermission) {
+    return (
+      <MicPermissionDialog
+        onPermissionGranted={() => {
+          setMicPermissionGranted(true);
+          setShowMicPermission(false);
+        }}
+        onPermissionDenied={() => {
+          setMicPermissionGranted(false);
+          setShowMicPermission(false);
+          showSuccess('يمكنك الآن الاستماع فقط. لتفعيل الميكروفون، انقر على أيقونة المايك.');
+        }}
+      />
+    );
+  }
+
   return (
-    <div className="h-screen w-full flex flex-col bg-gradient-to-br from-blue-900 via-blue-800 to-blue-900" dir="rtl">
+    <div 
+      className="h-screen w-full flex flex-col bg-gradient-to-br transition-all duration-700" 
+      dir="rtl"
+      style={{
+        backgroundImage: currentTheme 
+          ? `linear-gradient(135deg, ${currentTheme.colors.primary}, ${currentTheme.colors.secondary})`
+          : 'linear-gradient(135deg, #1e3a8a, #1e40af, #1e3a8a)'
+      }}
+    >
       
       {/* Top Animated Banner - Gift/Prize Announcements */}
       <div className="bg-gradient-to-r from-yellow-500/95 via-orange-500/95 to-pink-500/95 backdrop-blur-sm overflow-hidden h-10 flex items-center">
@@ -913,6 +1035,30 @@ const AuthenticLamaVoiceRoom: React.FC = () => {
             <Send className="w-5 h-5 text-white" />
           </button>
 
+          {/* Theme Button */}
+          <button
+            onClick={() => setShowThemePanel(true)}
+            className="p-2.5 rounded-full bg-pink-600 hover:bg-pink-700 transition-colors flex-shrink-0 relative"
+            title="ثيمات الغرفة"
+          >
+            <Palette className="w-5 h-5 text-white" />
+            {currentTheme && (
+              <span className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-black"></span>
+            )}
+          </button>
+
+          {/* Voice Effects Button */}
+          <button
+            onClick={() => setShowEffectsPanel(true)}
+            className="p-2.5 rounded-full bg-indigo-600 hover:bg-indigo-700 transition-colors flex-shrink-0 relative"
+            title="مؤثرات صوتية"
+          >
+            <Music2 className="w-5 h-5 text-white" />
+            {currentEffect && (
+              <span className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-black"></span>
+            )}
+          </button>
+
           {/* Gift Button */}
           <button
             onClick={() => setShowGiftPanel(true)}
@@ -956,6 +1102,143 @@ const AuthenticLamaVoiceRoom: React.FC = () => {
                   <span className="text-xs text-yellow-300">{gift.price} 💎</span>
                 </button>
               ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Theme Panel Modal */}
+      {showThemePanel && (
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-end" onClick={() => setShowThemePanel(false)}>
+          <div className="w-full bg-gradient-to-br from-pink-900 to-purple-900 rounded-t-3xl p-4 max-h-[70vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                <Palette className="w-5 h-5" />
+                ثيمات الغرفة
+              </h3>
+              <button onClick={() => setShowThemePanel(false)} className="text-white/80 hover:text-white">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            
+            {currentTheme && (
+              <div className="mb-4 p-3 bg-green-900/30 rounded-lg border border-green-500/30">
+                <p className="text-sm text-green-300 flex items-center gap-2">
+                  ✓ الثيم الحالي: <span className="font-bold">{currentTheme.name}</span>
+                </p>
+              </div>
+            )}
+
+            <div className="grid grid-cols-2 gap-3">
+              {themes.map((theme) => (
+                <button
+                  key={theme.id}
+                  onClick={() => handleThemeChange(theme)}
+                  className={`
+                    relative rounded-xl overflow-hidden transition-all hover:scale-105
+                    ${currentTheme?.id === theme.id ? 'ring-4 ring-green-500 shadow-lg shadow-green-500/30' : ''}
+                  `}
+                >
+                  <div 
+                    className="h-32 bg-gradient-to-br p-4 flex flex-col justify-between"
+                    style={{
+                      backgroundImage: `linear-gradient(135deg, ${theme.colors.primary}, ${theme.colors.secondary})`
+                    }}
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="text-2xl">{theme.background.type === 'gradient' ? '🎨' : '🖼️'}</span>
+                      {!theme.isPremium && (
+                        <span className="text-xs bg-white/20 px-2 py-0.5 rounded-full text-white">
+                          مجاني
+                        </span>
+                      )}
+                      {theme.isPremium && (
+                        <span className="text-xs bg-yellow-500/80 px-2 py-0.5 rounded-full text-black font-bold">
+                          VIP
+                        </span>
+                      )}
+                    </div>
+                    <div>
+                      <p className="text-white font-bold text-sm">{theme.name}</p>
+                      <p className="text-white/80 text-xs">{theme.description}</p>
+                    </div>
+                  </div>
+                  {currentTheme?.id === theme.id && (
+                    <div className="absolute top-2 left-2 w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
+                      <span className="text-white text-xs">✓</span>
+                    </div>
+                  )}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Voice Effects Panel Modal */}
+      {showEffectsPanel && (
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-end" onClick={() => setShowEffectsPanel(false)}>
+          <div className="w-full bg-gradient-to-br from-indigo-900 to-purple-900 rounded-t-3xl p-4 max-h-[70vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                <Music2 className="w-5 h-5" />
+                مؤثرات صوتية
+              </h3>
+              <button onClick={() => setShowEffectsPanel(false)} className="text-white/80 hover:text-white">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {currentEffect && (
+              <div className="mb-4 p-3 bg-green-900/30 rounded-lg border border-green-500/30">
+                <p className="text-sm text-green-300 flex items-center gap-2">
+                  ✓ المؤثر الحالي: <span className="font-bold">{currentEffect.name}</span>
+                </p>
+              </div>
+            )}
+
+            <div className="space-y-2">
+              {effects.map((effect) => (
+                <button
+                  key={effect.id}
+                  onClick={() => handleEffectChange(effect)}
+                  className={`
+                    w-full p-4 rounded-xl transition-all hover:scale-[1.02]
+                    ${currentEffect?.id === effect.id 
+                      ? 'bg-green-600/30 border-2 border-green-500 shadow-lg shadow-green-500/30' 
+                      : 'bg-white/10 hover:bg-white/20 border-2 border-transparent'
+                    }
+                  `}
+                >
+                  <div className="flex items-center gap-3">
+                    <span className="text-3xl">{effect.icon}</span>
+                    <div className="flex-1 text-right">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          {effect.isPremium && (
+                            <span className="text-xs bg-yellow-500/80 px-2 py-0.5 rounded-full text-black font-bold">
+                              VIP
+                            </span>
+                          )}
+                          {currentEffect?.id === effect.id && (
+                            <span className="text-xs bg-green-500 px-2 py-0.5 rounded-full text-white">
+                              مُفعّل
+                            </span>
+                          )}
+                        </div>
+                        <p className="font-bold text-white">{effect.name}</p>
+                      </div>
+                      <p className="text-sm text-white/70 mt-1">{effect.description}</p>
+                    </div>
+                  </div>
+                </button>
+              ))}
+            </div>
+
+            <div className="mt-4 p-3 bg-blue-900/30 rounded-lg border border-blue-500/30">
+              <p className="text-xs text-blue-300 text-center">
+                💡 المؤثرات الصوتية تعمل على الميكروفون الخاص بك فقط
+              </p>
             </div>
           </div>
         </div>

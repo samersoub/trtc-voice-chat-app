@@ -437,8 +437,7 @@ export default function Aristocracy() {
               </div>
             )}
           </div>
-        </div>
-
+          </div>
         </div>
         
         {/* Privileges Section */}
@@ -545,6 +544,7 @@ export default function Aristocracy() {
                 <p className="relative text-white text-sm text-center font-bold drop-shadow">مكافح الطرد</p>
               </div>
             )}
+          </div>
           </div>
         </div>
 

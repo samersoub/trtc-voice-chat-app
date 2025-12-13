@@ -27,7 +27,7 @@ function uid(prefix = "tx") {
 }
 
 export const EconomyService = {
-  getBalance(): Balance {
+  getBalance(userId?: string): Balance {
     return read<Balance>(BAL_KEY, { coins: 5000, diamonds: 200 });
   },
   saveBalance(bal: Balance) {
@@ -85,6 +85,34 @@ export const EconomyService = {
     bal.coins -= amount;
     this.saveBalance(bal);
     this.log({ id: uid(), type: "transfer", amount, meta, at: Date.now() });
+    return bal;
+  },
+
+  // Add coins (for rewards, referrals, etc.)
+  addCoins(userId: string, amount: number, reason?: string): Balance {
+    const bal = this.getBalance();
+    bal.coins += amount;
+    this.saveBalance(bal);
+    this.log({ id: uid(), type: "recharge", amount, meta: { userId, reason }, at: Date.now() });
+    return bal;
+  },
+
+  // Add diamonds (for rewards, gifts, etc.)
+  addDiamonds(userId: string, amount: number, reason?: string): Balance {
+    const bal = this.getBalance();
+    bal.diamonds += amount;
+    this.saveBalance(bal);
+    this.log({ id: uid(), type: "recharge", amount, meta: { userId, reason, currency: 'diamonds' }, at: Date.now() });
+    return bal;
+  },
+
+  // Deduct coins (for purchases, subscriptions, etc.)
+  deductCoins(userId: string, amount: number, reason?: string): Balance {
+    const bal = this.getBalance();
+    if (amount > bal.coins) throw new Error("Insufficient Coins");
+    bal.coins -= amount;
+    this.saveBalance(bal);
+    this.log({ id: uid(), type: "transfer", amount, meta: { userId, reason }, at: Date.now() });
     return bal;
   },
 

@@ -1365,6 +1365,51 @@ const ModernProfile: React.FC = () => {
               </div>
             )}
 
+            {/* Phase 1 Features Quick Access */}
+            <div className="bg-gradient-to-br from-blue-500/10 to-purple-500/10 backdrop-blur-sm rounded-2xl p-4 border border-blue-500/20">
+              <h3 className="text-white font-semibold mb-3 flex items-center gap-2" dir="rtl">
+                <Sparkles className="w-5 h-5 text-yellow-400" />
+                الميزات الجديدة
+              </h3>
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  onClick={() => navigate('/profile/missions')}
+                  className="flex flex-col items-center gap-2 p-3 bg-white/10 hover:bg-white/20 rounded-xl transition-all"
+                >
+                  <span className="text-3xl">🎯</span>
+                  <span className="text-sm text-white font-medium" dir="rtl">المهام اليومية</span>
+                </button>
+                <button
+                  onClick={() => navigate('/profile/friends/recommendations')}
+                  className="flex flex-col items-center gap-2 p-3 bg-white/10 hover:bg-white/20 rounded-xl transition-all"
+                >
+                  <span className="text-3xl">👥</span>
+                  <span className="text-sm text-white font-medium" dir="rtl">توصيات أصدقاء</span>
+                </button>
+                <button
+                  onClick={() => navigate('/voice/themes')}
+                  className="flex flex-col items-center gap-2 p-3 bg-white/10 hover:bg-white/20 rounded-xl transition-all"
+                >
+                  <span className="text-3xl">🎨</span>
+                  <span className="text-sm text-white font-medium" dir="rtl">ثيمات الغرف</span>
+                </button>
+                <button
+                  onClick={() => navigate('/voice/effects')}
+                  className="flex flex-col items-center gap-2 p-3 bg-white/10 hover:bg-white/20 rounded-xl transition-all"
+                >
+                  <span className="text-3xl">🎙️</span>
+                  <span className="text-sm text-white font-medium" dir="rtl">مؤثرات صوتية</span>
+                </button>
+                <button
+                  onClick={() => navigate('/games/lucky-wheel')}
+                  className="flex flex-col items-center gap-2 p-3 bg-white/10 hover:bg-white/20 rounded-xl transition-all col-span-2"
+                >
+                  <span className="text-3xl">🎰</span>
+                  <span className="text-sm text-white font-medium" dir="rtl">عجلة الحظ</span>
+                </button>
+              </div>
+            </div>
+
             {/* Highlights Section */}
             <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-4 border border-white/10">
               <div className="flex items-center justify-between mb-3">

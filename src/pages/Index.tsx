@@ -5,6 +5,7 @@ import TopNavigation from "@/components/discover/TopNavigation";
 import DiscoverHeader from "@/components/discover/DiscoverHeader";
 import LuxBannerCarousel from "@/components/discover/LuxBannerCarousel";
 import ArabicQuickActions from "@/components/discover/ArabicQuickActions";
+import Phase1QuickAccess from "@/components/discover/Phase1QuickAccess";
 import FilterTagsBar from "@/components/discover/FilterTagsBar";
 import LuxRoomsGrid from "@/components/discover/LuxRoomsGrid";
 import ActiveRoomsScroll from "@/components/discover/ActiveRoomsScroll";
@@ -184,6 +185,7 @@ const Index: React.FC = () => {
         <DiscoverHeader activeTab={activeTab} onTabChange={setActiveTab} />
         <LuxBannerCarousel />
         <ArabicQuickActions />
+        <Phase1QuickAccess />
         <ActiveRoomsScroll 
           rooms={rooms} 
           onRoomClick={(roomId) => navigate(`/voice/rooms/${roomId}/join?autoJoin=1`)}

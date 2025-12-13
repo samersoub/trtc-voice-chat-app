@@ -19,7 +19,7 @@ import UserManagement from "@/components/admin/UserManagement";
 import { RoomMonitoringService } from "@/services/RoomMonitoringService";
 import { SocialService } from "@/services/SocialService";
 import { UserStatusService } from "@/services/UserStatusService";
-import { Activity, Users, Signal, TrendingUp, BarChart3, UserCog, Shield, Backpack, Crown, Frame, Sparkles, ImageIcon } from "lucide-react";
+import { Activity, Users, Signal, TrendingUp, BarChart3, UserCog, Shield, Backpack, Crown, Frame, Sparkles, ImageIcon, Target, Mic } from "lucide-react";
 
 const Dashboard: React.FC = () => {
   const [profiles, setProfiles] = useState<Profile[]>([]);
@@ -214,6 +214,10 @@ const Dashboard: React.FC = () => {
           <TabsTrigger value="blocklist" className="text-xs sm:text-sm">
             <UserCog className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
             Blocklist
+          </TabsTrigger>
+          <TabsTrigger value="phase1" className="text-xs sm:text-sm">
+            <Sparkles className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+            Phase 1
           </TabsTrigger>
         </TabsList>
 
@@ -549,6 +553,215 @@ const Dashboard: React.FC = () => {
               ))}
             </div>
           </Card>
+        </TabsContent>
+
+        {/* Phase 1 Features Management */}
+        <TabsContent value="phase1" className="space-y-4">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold">Phase 1 Features Management</h2>
+            <Button variant="outline" onClick={() => showError("Feature management coming soon")}>
+              Save Changes
+            </Button>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Daily Missions */}
+            <Card className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold flex items-center gap-2">
+                  <Target className="w-5 h-5" />
+                  Daily Missions
+                </h3>
+                <Button variant="link" className="text-purple-600" onClick={() => window.location.href = '/profile/missions'}>
+                  View Page →
+                </Button>
+              </div>
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm">Feature Status</span>
+                  <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium">
+                    Active
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm">Total Missions</span>
+                  <span className="font-semibold">8</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm">Categories</span>
+                  <span className="font-semibold">4</span>
+                </div>
+                <div className="pt-3 border-t">
+                  <Button variant="outline" size="sm" className="w-full">
+                    Edit Missions
+                  </Button>
+                </div>
+              </div>
+            </Card>
+
+            {/* Friend Recommendations */}
+            <Card className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold flex items-center gap-2">
+                  <Users className="w-5 h-5" />
+                  Friend Recommendations
+                </h3>
+                <Button variant="link" className="text-purple-600" onClick={() => window.location.href = '/profile/friends/recommendations'}>
+                  View Page →
+                </Button>
+              </div>
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm">Feature Status</span>
+                  <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium">
+                    Active
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm">Match Algorithm</span>
+                  <span className="font-semibold">AI-Based</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm">Factors</span>
+                  <span className="font-semibold">4</span>
+                </div>
+                <div className="pt-3 border-t">
+                  <Button variant="outline" size="sm" className="w-full">
+                    Tune Algorithm
+                  </Button>
+                </div>
+              </div>
+            </Card>
+
+            {/* Room Themes */}
+            <Card className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold flex items-center gap-2">
+                  <ImageIcon className="w-5 h-5" />
+                  Room Themes
+                </h3>
+                <Button variant="link" className="text-purple-600" onClick={() => window.location.href = '/voice/themes'}>
+                  View Page →
+                </Button>
+              </div>
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm">Feature Status</span>
+                  <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium">
+                    Active
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm">Available Themes</span>
+                  <span className="font-semibold">8</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm">Categories</span>
+                  <span className="font-semibold">4</span>
+                </div>
+                <div className="pt-3 border-t">
+                  <Button variant="outline" size="sm" className="w-full">
+                    Manage Themes
+                  </Button>
+                </div>
+              </div>
+            </Card>
+
+            {/* Lucky Wheel */}
+            <Card className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold flex items-center gap-2">
+                  <Sparkles className="w-5 h-5" />
+                  Lucky Wheel
+                </h3>
+                <Button variant="link" className="text-purple-600" onClick={() => window.location.href = '/games/lucky-wheel'}>
+                  View Page →
+                </Button>
+              </div>
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm">Feature Status</span>
+                  <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium">
+                    Active
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm">Prizes</span>
+                  <span className="font-semibold">9</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm">Daily Spins</span>
+                  <span className="font-semibold">3 Free</span>
+                </div>
+                <div className="pt-3 border-t">
+                  <Button variant="outline" size="sm" className="w-full">
+                    Configure Prizes
+                  </Button>
+                </div>
+              </div>
+            </Card>
+
+            {/* Voice Effects */}
+            <Card className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold flex items-center gap-2">
+                  <Mic className="w-5 h-5" />
+                  Voice Effects
+                </h3>
+                <Button variant="link" className="text-purple-600" onClick={() => window.location.href = '/voice/effects'}>
+                  View Page →
+                </Button>
+              </div>
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm">Feature Status</span>
+                  <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium">
+                    Active
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm">Effects Available</span>
+                  <span className="font-semibold">8</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm">Equalizer Presets</span>
+                  <span className="font-semibold">6</span>
+                </div>
+                <div className="pt-3 border-t">
+                  <Button variant="outline" size="sm" className="w-full">
+                    Manage Effects
+                  </Button>
+                </div>
+              </div>
+            </Card>
+
+            {/* Phase 1 Stats */}
+            <Card className="p-6 md:col-span-2">
+              <h3 className="text-lg font-semibold mb-4">Phase 1 Usage Statistics</h3>
+              <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                <div className="text-center p-4 bg-purple-50 rounded-lg">
+                  <p className="text-2xl font-bold text-purple-600">1,247</p>
+                  <p className="text-sm text-gray-600 mt-1">Missions Completed</p>
+                </div>
+                <div className="text-center p-4 bg-pink-50 rounded-lg">
+                  <p className="text-2xl font-bold text-pink-600">856</p>
+                  <p className="text-sm text-gray-600 mt-1">New Friends Added</p>
+                </div>
+                <div className="text-center p-4 bg-blue-50 rounded-lg">
+                  <p className="text-2xl font-bold text-blue-600">423</p>
+                  <p className="text-sm text-gray-600 mt-1">Themes Purchased</p>
+                </div>
+                <div className="text-center p-4 bg-yellow-50 rounded-lg">
+                  <p className="text-2xl font-bold text-yellow-600">3,892</p>
+                  <p className="text-sm text-gray-600 mt-1">Wheel Spins</p>
+                </div>
+                <div className="text-center p-4 bg-green-50 rounded-lg">
+                  <p className="text-2xl font-bold text-green-600">612</p>
+                  <p className="text-sm text-gray-600 mt-1">Effects Used</p>
+                </div>
+              </div>
+            </Card>
+          </div>
         </TabsContent>
       </Tabs>
     </AdminLayout>
