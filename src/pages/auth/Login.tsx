@@ -31,9 +31,16 @@ const Login = () => {
     }
   };
 
-  const handleGoogleLogin = () => {
-    showSuccess(locale === 'ar' ? "جاري تسجيل الدخول عبر Google..." : "Logging in with Google...");
-    // TODO: Implement Google OAuth
+  const handleGoogleLogin = async () => {
+    try {
+      setIsLoading(true);
+      await AuthService.signInWithGoogle();
+      // Will redirect to Google OAuth, then back to /auth/callback
+    } catch (error: any) {
+      console.error('Google login error:', error);
+      showError(error.message || (locale === 'ar' ? 'فشل تسجيل الدخول عبر Google' : 'Google login failed'));
+      setIsLoading(false);
+    }
   };
 
   const handleFacebookLogin = () => {

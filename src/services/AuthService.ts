@@ -367,6 +367,32 @@ export const AuthService = {
     void NotificationHelper.notify("Password Changed", "Your password has been updated.", { meta: { kind: "security" } });
   },
 
+  /**
+   * Sign in with Google OAuth
+   */
+  async signInWithGoogle(): Promise<User> {
+    if (!isSupabaseReady || !supabase) {
+      throw new Error('Supabase not configured');
+    }
+
+    const { data, error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: window.location.origin + '/auth/callback',
+        queryParams: {
+          access_type: 'offline',
+          prompt: 'consent',
+        }
+      }
+    });
+
+    if (error) throw error;
+    
+    // OAuth will redirect to callback URL
+    // User will be available after redirect
+    return data as unknown as User;
+  },
+
   verifyPhone(code: string): boolean {
     // demo code
     return code === "123456";

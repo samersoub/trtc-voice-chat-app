@@ -11,6 +11,7 @@ import Login from "./pages/auth/Login";
 import Register from "./pages/auth/Register";
 import PhoneVerification from "./pages/auth/PhoneVerification";
 import ForgotPassword from "./pages/auth/ForgotPassword";
+import { GoogleCallback } from "./pages/auth/GoogleCallback";
 import AdminLogin from "./pages/admin/AdminLogin";
 import RoomList from "./pages/voice-chat/RoomList";
 import CreateRoom from "./pages/voice-chat/CreateRoom";
@@ -121,6 +122,7 @@ const App = () => (
               <Route path="/auth/register" element={<Register />} />
               <Route path="/auth/verify" element={<PhoneVerification />} />
               <Route path="/auth/forgot" element={<ForgotPassword />} />
+              <Route path="/auth/callback" element={<GoogleCallback />} />
               {/* Voice Chat */}
               <Route path="/voice/rooms" element={<RoomList />} />
               <Route path="/voice/create" element={<CreateRoom />} />
