@@ -32,6 +32,11 @@ CREATE TABLE IF NOT EXISTS public.room_participants (
   UNIQUE(room_id, user_id)
 );
 
+-- إضافة العمود is_online إذا لم يكن موجوداً (للجداول الموجودة مسبقاً)
+-- Add is_online column if it doesn't exist (for existing tables)
+ALTER TABLE public.room_participants 
+ADD COLUMN IF NOT EXISTS is_online BOOLEAN DEFAULT TRUE;
+
 -- إنشاء Indexes للأداء
 CREATE INDEX IF NOT EXISTS idx_room_participants_room ON public.room_participants(room_id);
 CREATE INDEX IF NOT EXISTS idx_room_participants_user ON public.room_participants(user_id);
