@@ -375,10 +375,13 @@ export const AuthService = {
       throw new Error('Supabase not configured');
     }
 
+    // Always use production URL for redirect
+    const redirectUrl = import.meta.env.VITE_PRODUCTION_URL || 'https://trtc-voice-chat-app.vercel.app';
+
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: window.location.origin + '/auth/callback',
+        redirectTo: `${redirectUrl}/auth/callback`,
         queryParams: {
           access_type: 'offline',
           prompt: 'consent',
