@@ -196,7 +196,7 @@ const Phase1QuickAccess: React.FC = () => {
             </div>
 
             {/* Title */}
-            <span className="text-xs font-medium text-white text-center max-w-[90px] line-clamp-1 group-hover:text-purple-300 transition-colors">
+            <span className="text-xs font-bold text-white text-center max-w-[90px] line-clamp-1 group-hover:text-purple-300 transition-colors opacity-100">
               {card.title}
             </span>
           </div>
