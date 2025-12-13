@@ -175,13 +175,39 @@ function writeLocal(items: Profile[]) {
 export const ProfileService = {
   async upsertProfile(p: Profile): Promise<Profile> {
     if (isSupabaseReady && supabase) {
-      const { data, error } = await supabase
-        .from("users")
-        .upsert(p)
-        .select()
-        .single();
-      if (error) throw new Error(error.message);
-      return data as Profile;
+      try {
+        const { data, error } = await supabase
+          .from("users")
+          .upsert(p)
+          .select()
+          .single();
+        
+        // إذا كان الخطأ RLS violation، استخدم localStorage فقط
+        if (error) {
+          if (error.code === '42501' || error.message.includes('row-level security')) {
+            console.warn('[ProfileService] RLS violation, using localStorage fallback:', error.message);
+            // Fallback to localStorage
+            const all = readLocal();
+            const idx = all.findIndex((x) => x.id === p.id);
+            if (idx >= 0) all[idx] = p;
+            else all.push(p);
+            writeLocal(all);
+            return p;
+          }
+          throw new Error(error.message);
+        }
+        
+        return data as Profile;
+      } catch (err: any) {
+        console.warn('[ProfileService] Supabase upsert failed, using localStorage:', err.message);
+        // Fallback to localStorage on any error
+        const all = readLocal();
+        const idx = all.findIndex((x) => x.id === p.id);
+        if (idx >= 0) all[idx] = p;
+        else all.push(p);
+        writeLocal(all);
+        return p;
+      }
     }
     const all = readLocal();
     const idx = all.findIndex((x) => x.id === p.id);
