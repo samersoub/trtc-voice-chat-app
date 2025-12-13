@@ -21,6 +21,11 @@ DROP POLICY IF EXISTS "Users can insert their own data" ON public.users;
 DROP POLICY IF EXISTS "Enable insert for authenticated users" ON public.users;
 DROP POLICY IF EXISTS "Enable read access for all users" ON public.users;
 DROP POLICY IF EXISTS "Enable update for users based on user_id" ON public.users;
+DROP POLICY IF EXISTS "Users can view all profiles" ON public.users;
+DROP POLICY IF EXISTS "Users can insert their own profile" ON public.users;
+DROP POLICY IF EXISTS "Users can update their own profile" ON public.users;
+DROP POLICY IF EXISTS "Users can delete their own profile" ON public.users;
+DROP POLICY IF EXISTS "Service role has full access" ON public.users;
 
 -- STEP 3: إنشاء Policies جديدة
 -- Create new policies
@@ -60,8 +65,6 @@ USING (auth.uid() = id);
 
 -- STEP 4: إنشاء Policy خاصة للـ Service Role (للعمليات الإدارية)
 -- Create policy for service role (for admin operations)
-DROP POLICY IF EXISTS "Service role has full access" ON public.users;
-
 CREATE POLICY "Service role has full access"
 ON public.users
 FOR ALL
