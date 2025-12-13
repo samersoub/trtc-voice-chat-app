@@ -39,7 +39,10 @@ CREATE INDEX IF NOT EXISTS idx_users_location ON public.users(location_lat, loca
 
 -- 6. Update RLS Policies for New Fields
 -- Users can update their own social data
-CREATE POLICY IF NOT EXISTS "Users can update own social data" 
+-- Drop existing policy if it exists, then create it
+DROP POLICY IF EXISTS "Users can update own social data" ON public.users;
+
+CREATE POLICY "Users can update own social data" 
   ON public.users FOR UPDATE 
   USING (auth.uid() = id)
   WITH CHECK (
