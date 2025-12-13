@@ -67,6 +67,83 @@ export const VoiceChatService = {
     void hydrateRoomsFromDB();
     return readRooms();
   },
+  
+  async getUserRoom(userId: string): Promise<ChatRoom | null> {
+    // البحث عن غرفة المستخدم (نشطة أو غير نشطة)
+    if (!isSupabaseReady || !supabase) {
+      return null;
+    }
+    
+    try {
+      const { data, error } = await supabase
+        .from("voice_rooms")
+        .select("*")
+        .eq('owner_id', userId)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .single();
+      
+      if (error || !data) {
+        console.log('[VoiceChatService] No existing room found for user:', userId);
+        return null;
+      }
+      
+      const room: ChatRoom = {
+        id: data.id,
+        name: data.name,
+        isPrivate: data.room_type === 'private',
+        hostId: data.owner_id,
+        participants: [data.owner_id],
+        createdAt: data.created_at,
+        updatedAt: data.updated_at,
+        description: data.description || undefined,
+        country: undefined,
+        background: data.cover_image || undefined,
+        moderators: [data.owner_id],
+      };
+      
+      console.log('[VoiceChatService] Found existing room:', room.id, 'is_active:', data.is_active);
+      return room;
+    } catch (err) {
+      console.error('[VoiceChatService] Error finding user room:', err);
+      return null;
+    }
+  },
+  
+  async reactivateRoom(room: ChatRoom): Promise<ChatRoom> {
+    // إعادة تفعيل الغرفة الموجودة
+    room.updatedAt = new Date().toISOString();
+    room.participants = [room.hostId];
+    
+    const rooms = readRooms();
+    const idx = rooms.findIndex(r => r.id === room.id);
+    if (idx !== -1) {
+      rooms[idx] = room;
+    } else {
+      rooms.push(room);
+    }
+    writeRooms(rooms);
+    
+    // تحديث في DB مع is_active = true
+    if (isSupabaseReady && supabase) {
+      await safe(
+        supabase.from("voice_rooms").upsert({
+          id: room.id,
+          name: room.name,
+          room_type: room.isPrivate ? 'private' : 'public',
+          owner_id: room.hostId,
+          description: room.description ?? null,
+          cover_image: room.background ?? null,
+          is_active: true, // ⭐ إعادة تفعيل
+          updated_at: room.updatedAt,
+        })
+      );
+      console.log('[VoiceChatService] Room reactivated:', room.id);
+    }
+    
+    return room;
+  },
+  
   createRoom(name: string, isPrivate: boolean, hostId: string, country: string, description?: string, background?: string): ChatRoom {
     const room: ChatRoom = {
       id: crypto.randomUUID(),

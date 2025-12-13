@@ -114,21 +114,47 @@ const CreateRoom = () => {
                     return;
                   }
                   if (imageFile) {
-                    await ProfileService.uploadProfileImage(user.id, imageFile);
-                    showSuccess("Profile image updated");
+                    // تحديث الصورة بدون تحديث جدول users (RLS issue)
+                    try {
+                      await ProfileService.uploadProfileImage(user.id, imageFile);
+                      showSuccess("Profile image updated");
+                    } catch (err: any) {
+                      console.warn('[CreateRoom] Profile image upload failed (non-critical):', err);
+                      // نستمر في إنشاء الغرفة حتى لو فشل رفع الصورة
+                    }
                   }
 
-                  // Map background selection to actual value (preset key or public path)
-                  const bg = background === "arabic" ? "/wallpapers/arabic-voice-room.jpeg" : background;
-                  const room = VoiceChatService.createRoom(name.trim(), isPrivate, user.id, country, undefined, bg);
-                  showSuccess("Room created successfully!");
+                  // تحقق إذا كان لدى المستخدم غرفة موجودة (غير نشطة)
+                  const existingRoom = await VoiceChatService.getUserRoom(user.id);
                   
-                  console.log('[CreateRoom] Created room:', room.id, room.name);
-                  
-                  // Navigate to the newly created room
-                  setTimeout(() => {
-                    nav(`/voice/rooms/${room.id}/join?autoJoin=1`);
-                  }, 500);
+                  if (existingRoom) {
+                    // إعادة تفعيل الغرفة الموجودة بدلاً من إنشاء جديدة
+                    console.log('[CreateRoom] Reactivating existing room:', existingRoom.id);
+                    
+                    // تحديث بيانات الغرفة
+                    existingRoom.name = name.trim();
+                    existingRoom.country = country;
+                    existingRoom.background = background === "arabic" ? "/wallpapers/arabic-voice-room.jpeg" : background;
+                    existingRoom.isPrivate = isPrivate;
+                    
+                    await VoiceChatService.reactivateRoom(existingRoom);
+                    showSuccess("تم إعادة تفعيل غرفتك!");
+                    
+                    setTimeout(() => {
+                      nav(`/voice/rooms/${existingRoom.id}/join?autoJoin=1`);
+                    }, 500);
+                  } else {
+                    // إنشاء غرفة جديدة (أول مرة فقط)
+                    const bg = background === "arabic" ? "/wallpapers/arabic-voice-room.jpeg" : background;
+                    const room = VoiceChatService.createRoom(name.trim(), isPrivate, user.id, country, undefined, bg);
+                    showSuccess("تم إنشاء غرفتك بنجاح!");
+                    
+                    console.log('[CreateRoom] Created new room:', room.id, room.name);
+                    
+                    setTimeout(() => {
+                      nav(`/voice/rooms/${room.id}/join?autoJoin=1`);
+                    }, 500);
+                  }
                 } catch (e: any) {
                   showError(e?.message || "Failed to create room. Please try again.");
                 } finally {
