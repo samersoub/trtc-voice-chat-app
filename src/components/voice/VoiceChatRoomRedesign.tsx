@@ -1,8 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useParams } from 'react-router-dom';
-import { Mic, MicOff, Volume2, VolumeX, Gift, MessageCircle, Users, Settings, MoreVertical, Crown, Radio, Send, Smile, X } from 'lucide-react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { Mic, MicOff, Volume2, VolumeX, Gift, MessageCircle, Users, Settings, MoreVertical, Crown, Radio, Send, Smile, X, LogOut } from 'lucide-react';
 import { AuthService } from '@/services/AuthService';
 import { UserPresenceService } from '@/services/UserPresenceService';
+import { RoomParticipantService } from '@/services/RoomParticipantService';
+import { VoiceChatService } from '@/services/VoiceChatService';
+import { showSuccess } from '@/utils/toast';
 
 // ===================================================================
 // TypeScript Interfaces
@@ -67,11 +70,13 @@ const emojis = ['😊', '😂', '❤️', '👍', '🎉', '🔥', '✨', '💯',
 // ===================================================================
 const VoiceChatRoomRedesign: React.FC = () => {
   const { id: roomId } = useParams();
+  const navigate = useNavigate();
   const currentUser = AuthService.getCurrentUser();
   const [seats, setSeats] = useState<SeatPosition[]>(initialSeats);
   const [isMicActive, setIsMicActive] = useState(false);
   const [isSpeakerActive, setIsSpeakerActive] = useState(true);
   const [callDuration, setCallDuration] = useState(1180);
+  const [isLeaving, setIsLeaving] = useState(false);
   
   // Chat states
   const [messages, setMessages] = useState<ChatMessage[]>([
@@ -81,16 +86,53 @@ const VoiceChatRoomRedesign: React.FC = () => {
   const [showGiftPanel, setShowGiftPanel] = useState(false);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
+  conHandle room exit
+  const handleLeaveRoom = async () => {
+    if (isLeaving || !currentUser?.id || !roomId) return;
+    
+    setIsLeaving(true);
+    console.log(`[VoiceChat] User ${currentUser.id} leaving room ${roomId}`);
+    
+    try {
+      // Remove user from room presence
+      UserPresenceService.removeUserFromRoom(currentUser.id);
+      
+      // Remove user from room participants (this triggers auto-hide if empty)
+      await RoomParticipantService.leaveRoom(roomId, currentUser.id);
+      
+      // Remove from VoiceChatService (localStorage)
+      VoiceChatService.leaveRoom(roomId, currentUser.id);
+      
+      console.log(`[VoiceChat] User successfully left room ${roomId}`);
+      showSuccess('Left room successfully');
+      
+      // Navigate back to room list
+      navigate('/voice/rooms');
+    } catch (error) {
+      console.error('[VoiceChat] Error leaving room:', error);
+      // Still navigate away even if error
+      navigate('/voice/rooms');
+    } finally {
+      setIsLeaving(false);
+    }
+  };
 
   // Register user presence when joining room
   useEffect(() => {
     if (currentUser?.id && roomId) {
       UserPresenceService.setUserInRoom(currentUser.id, roomId, 'Jordan Room');
+      
+      // Join room participants
+      RoomParticipantService.joinRoom(roomId, currentUser.id, 'listener');
     }
     
-    // Cleanup: remove user from room when leaving
+    // Cleanup: remove user from room when component unmounts
     return () => {
+      if (currentUser?.id && roomId) {
+        console.log(`[VoiceChat] Component unmount - cleaning up user ${currentUser.id}`);
+        UserPresenceService.removeUserFromRoom(currentUser.id);
+        RoomParticipantService.leaveRoom(roomId, currentUser.id);
+        VoiceChatService.leaveRoom(roomId, 
       if (currentUser?.id) {
         UserPresenceService.removeUserFromRoom(currentUser.id);
       }
@@ -160,10 +202,13 @@ const VoiceChatRoomRedesign: React.FC = () => {
       <div className="absolute top-20 left-20 w-72 h-72 bg-purple-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-pulse"></div>
       <div className="absolute top-40 right-20 w-72 h-72 bg-pink-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-pulse [animation-delay:2s]"></div>
       <div className="absolute -bottom-32 left-40 w-72 h-72 bg-blue-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-pulse [animation-delay:4s]"></div>
-
-      {/* Top Navigation Bar */}
-      <header className="fixed top-0 left-0 right-0 z-50 backdrop-blur-xl bg-black/30 border-b border-white/10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3">
+onClick={handleLeaveRoom}
+                disabled={isLeaving}
+                className="w-9 h-9 rounded-lg bg-red-500/20 hover:bg-red-500/30 backdrop-blur-sm border border-red-500/30 flex items-center justify-center transition-all hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                aria-label="Leave room"
+                title="Leave room"
+              >
+                <LogOut className="w-4 h-4 text-red-4>
           <div className="flex items-center justify-between">
             {/* Room Info */}
             <div className="flex items-center gap-3">

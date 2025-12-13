@@ -120,6 +120,9 @@ export function useTrtc() {
       });
 
       const targetRoomId = roomId || TRTC_TEST_ROOM_ID;
+      
+      console.log("TRTC: Attempting to join room:", targetRoomId, "with user:", currentUserID);
+      
       await client.join({ roomId: targetRoomId });
       joinedRef.current = true;
       currentRoomIdRef.current = targetRoomId;
@@ -128,8 +131,13 @@ export function useTrtc() {
       console.log("TRTC: Join success:", targetRoomId);
       showSuccess(`Joined TRTC room ${targetRoomId}`);
 
-      // Track participant in database
-      await RoomParticipantService.joinRoom(targetRoomId, currentUserID, 'listener');
+      // Track participant in database (mark as listener initially)
+      const joined = await RoomParticipantService.joinRoom(targetRoomId, currentUserID, 'listener');
+      if (joined) {
+        console.log(`[TRTC] User ${currentUserID} added to room ${targetRoomId} participants`);
+      } else {
+        console.warn(`[TRTC] Failed to add user to room participants (graceful degradation)`);
+      }
 
       const localStream = TRTC.createStream({ audio: true, video: true });
       localStreamRef.current = localStream;

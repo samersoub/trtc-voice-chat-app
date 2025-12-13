@@ -17,11 +17,7 @@ async function hydrateRoomsFromDB() {
   const { data, error } = await supabase.from("voice_rooms").select("*").eq('is_active', true).order("created_at", { ascending: false });
   if (error || !data) return;
   try {
-    // Get existing local rooms
-    const existingRooms = readRooms();
-    const existingIds = new Set(existingRooms.map(r => r.id));
-    
-    // Map DB rooms
+    // Map DB rooms (only active rooms)
     const dbRooms = (data as any[]).map((r) => ({
       id: r.id,
       name: r.name,
@@ -36,23 +32,11 @@ async function hydrateRoomsFromDB() {
       moderators: [r.owner_id],
     })) as ChatRoom[];
     
-    // Merge: keep existing local rooms and add new DB rooms
-    const mergedRooms = [...existingRooms];
-    for (const dbRoom of dbRooms) {
-      if (!existingIds.has(dbRoom.id)) {
-        mergedRooms.push(dbRoom);
-      } else {
-        // Update existing room data from DB
-        const idx = mergedRooms.findIndex(r => r.id === dbRoom.id);
-        if (idx !== -1) {
-          mergedRooms[idx] = { ...mergedRooms[idx], ...dbRoom };
-        }
-      }
-    }
-    
-    writeRooms(mergedRooms);
-  } catch {
-    // ignore mapping errors
+    // Replace localStorage with DB data (DB is source of truth)
+    writeRooms(dbRooms);
+    console.log(`[VoiceChatService] Hydrated ${dbRooms.length} active rooms from DB`);
+  } catch (e) {
+    console.error('[VoiceChatService] Failed to hydrate rooms:', e);
   }
 }
 

@@ -87,12 +87,23 @@ import DiscoverEnhanced from "./components/discover/DiscoverEnhanced";
 import AIMatchingPage from "./pages/matching/AIMatchingPage";
 import AdvancedAdminPanel from "./pages/admin/AdvancedAdminPanel";
 import { useSessionRestore } from "./hooks/useSessionRestore";
+import { RoomCleanupService } from "./services/RoomCleanupService";
+import { useEffect } from "react";
 
 const queryClient = new QueryClient();
 
 const AppContent = () => {
   // ✅ استرجاع الجلسة المحفوظة تلقائياً
   const { isLoading } = useSessionRestore();
+  
+  // ✅ بدء cleanup تلقائي للغرف الفارغة والمشاركين غير النشطين
+  useEffect(() => {
+    const stopCleanup = RoomCleanupService.startPeriodicCleanup(10); // كل 10 دقائق
+    
+    return () => {
+      stopCleanup(); // إيقاف cleanup عند unmount
+    };
+  }, []);
 
   // عرض شاشة تحميل أثناء استرجاع الجلسة
   if (isLoading) {

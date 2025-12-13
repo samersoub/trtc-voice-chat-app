@@ -121,9 +121,14 @@ const CreateRoom = () => {
                   // Map background selection to actual value (preset key or public path)
                   const bg = background === "arabic" ? "/wallpapers/arabic-voice-room.jpeg" : background;
                   const room = VoiceChatService.createRoom(name.trim(), isPrivate, user.id, country, undefined, bg);
-                  showSuccess("Room created successfully! You can now join your room.");
-                  // Navigate to room list so user can see their room
-                  nav(`/voice/rooms`);
+                  showSuccess("Room created successfully!");
+                  
+                  console.log('[CreateRoom] Created room:', room.id, room.name);
+                  
+                  // Navigate to the newly created room
+                  setTimeout(() => {
+                    nav(`/voice/rooms/${room.id}/join?autoJoin=1`);
+                  }, 500);
                 } catch (e: any) {
                   showError(e?.message || "Failed to create room. Please try again.");
                 } finally {
