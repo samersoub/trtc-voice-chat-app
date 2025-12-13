@@ -212,50 +212,59 @@ ON CONFLICT (id) DO UPDATE SET
 -- ============================================================
 
 -- Profile Images Policies
-CREATE POLICY IF NOT EXISTS "Users can upload their own profile image"
+DROP POLICY IF EXISTS "Users can upload their own profile image" ON storage.objects;
+CREATE POLICY "Users can upload their own profile image"
 ON storage.objects FOR INSERT TO authenticated
 WITH CHECK (
   bucket_id = 'profiles' 
   AND (storage.foldername(name))[1] = auth.uid()::text
 );
 
-CREATE POLICY IF NOT EXISTS "Users can update their own profile image"
+DROP POLICY IF EXISTS "Users can update their own profile image" ON storage.objects;
+CREATE POLICY "Users can update their own profile image"
 ON storage.objects FOR UPDATE TO authenticated
 USING (
   bucket_id = 'profiles'
   AND (storage.foldername(name))[1] = auth.uid()::text
 );
 
-CREATE POLICY IF NOT EXISTS "Users can delete their own profile image"
+DROP POLICY IF EXISTS "Users can delete their own profile image" ON storage.objects;
+CREATE POLICY "Users can delete their own profile image"
 ON storage.objects FOR DELETE TO authenticated
 USING (
   bucket_id = 'profiles'
   AND (storage.foldername(name))[1] = auth.uid()::text
 );
 
-CREATE POLICY IF NOT EXISTS "Public can view profile images"
+DROP POLICY IF EXISTS "Public can view profile images" ON storage.objects;
+CREATE POLICY "Public can view profile images"
 ON storage.objects FOR SELECT TO public
 USING (bucket_id = 'profiles');
 
 -- Room Covers Policies
-CREATE POLICY IF NOT EXISTS "Users can upload room covers"
+DROP POLICY IF EXISTS "Users can upload room covers" ON storage.objects;
+CREATE POLICY "Users can upload room covers"
 ON storage.objects FOR INSERT TO authenticated
 WITH CHECK (bucket_id = 'room-covers');
 
-CREATE POLICY IF NOT EXISTS "Users can update room covers"
+DROP POLICY IF EXISTS "Users can update room covers" ON storage.objects;
+CREATE POLICY "Users can update room covers"
 ON storage.objects FOR UPDATE TO authenticated
 USING (bucket_id = 'room-covers');
 
-CREATE POLICY IF NOT EXISTS "Public can view room covers"
+DROP POLICY IF EXISTS "Public can view room covers" ON storage.objects;
+CREATE POLICY "Public can view room covers"
 ON storage.objects FOR SELECT TO public
 USING (bucket_id = 'room-covers');
 
 -- Gifts Policies
-CREATE POLICY IF NOT EXISTS "Public can view gifts"
+DROP POLICY IF EXISTS "Public can view gifts" ON storage.objects;
+CREATE POLICY "Public can view gifts"
 ON storage.objects FOR SELECT TO public
 USING (bucket_id = 'gifts');
 
-CREATE POLICY IF NOT EXISTS "Admins can upload gifts"
+DROP POLICY IF EXISTS "Admins can upload gifts" ON storage.objects;
+CREATE POLICY "Admins can upload gifts"
 ON storage.objects FOR INSERT TO authenticated
 WITH CHECK (
   bucket_id = 'gifts'
