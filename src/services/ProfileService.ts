@@ -446,8 +446,9 @@ export const ProfileService = {
 
   async uploadProfileImage(userId: string, file: File): Promise<string | null> {
     if (!file) return null;
-    if (!(isSupabaseReady && supabase)) {
-      // Local fallback: store a base64 data URL in profile_image
+    
+    // Local fallback function for when Supabase is unavailable or bucket doesn't exist
+    const uploadLocally = async () => {
       const resized = await resizeImage(file, 512, 512, 0.9);
       const dataUrl = await new Promise<string>((resolve, reject) => {
         const reader = new FileReader();
@@ -460,24 +461,40 @@ export const ProfileService = {
         await this.upsertProfile({ ...prof, profile_image: dataUrl });
       }
       return dataUrl;
+    };
+    
+    if (!(isSupabaseReady && supabase)) {
+      return await uploadLocally();
     }
-    // Resize client-side for performance
-    const resized = await resizeImage(file, 512, 512, 0.9);
-    const path = `${userId}/${Date.now()}_${resized.name}`;
-    const { error: upErr } = await supabase.storage.from("profiles").upload(path, resized, {
-      upsert: true,
-      contentType: resized.type || "image/*",
-    });
-    if (upErr) throw new Error(upErr.message);
-    const { data } = supabase.storage.from("profiles").getPublicUrl(path);
-    const url = data?.publicUrl || null;
-    if (url) {
-      const prof = await this.getByUserId(userId);
-      if (prof) {
-        await this.upsertProfile({ ...prof, profile_image: url });
+    
+    try {
+      // Resize client-side for performance
+      const resized = await resizeImage(file, 512, 512, 0.9);
+      const path = `${userId}/${Date.now()}_${resized.name}`;
+      const { error: upErr } = await supabase.storage.from("profiles").upload(path, resized, {
+        upsert: true,
+        contentType: resized.type || "image/*",
+      });
+      
+      // If bucket doesn't exist, fallback to local storage
+      if (upErr) {
+        console.warn(`Storage upload failed (${upErr.message}), using local storage`);
+        return await uploadLocally();
       }
+      
+      const { data } = supabase.storage.from("profiles").getPublicUrl(path);
+      const url = data?.publicUrl || null;
+      if (url) {
+        const prof = await this.getByUserId(userId);
+        if (prof) {
+          await this.upsertProfile({ ...prof, profile_image: url });
+        }
+      }
+      return url;
+    } catch (err: any) {
+      console.warn(`Storage error: ${err.message}, using local storage`);
+      return await uploadLocally();
     }
-    return url;
   },
 };
 
