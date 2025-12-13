@@ -15,6 +15,10 @@ ADD COLUMN IF NOT EXISTS interests TEXT[] DEFAULT '{}';
 ALTER TABLE public.users 
 ADD COLUMN IF NOT EXISTS is_premium BOOLEAN DEFAULT FALSE;
 
+-- 2.1 Add Active Status (Required by ProfileService)
+ALTER TABLE public.users 
+ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT TRUE;
+
 -- 3. Add Enhanced Location Fields
 ALTER TABLE public.users 
 ADD COLUMN IF NOT EXISTS location_lat DECIMAL(10, 8),
@@ -29,6 +33,7 @@ ADD COLUMN IF NOT EXISTS age INTEGER;
 -- 5. Create Indexes for New Fields
 CREATE INDEX IF NOT EXISTS idx_users_level ON public.users(level);
 CREATE INDEX IF NOT EXISTS idx_users_premium ON public.users(is_premium);
+CREATE INDEX IF NOT EXISTS idx_users_active ON public.users(is_active);
 CREATE INDEX IF NOT EXISTS idx_users_location ON public.users(location_lat, location_lng);
 
 -- 6. Update RLS Policies for New Fields
@@ -151,6 +156,7 @@ COMMENT ON COLUMN public.users.followers IS 'قائمة معرفات المتا�
 COMMENT ON COLUMN public.users.following IS 'قائمة معرفات المتابَعين';
 COMMENT ON COLUMN public.users.interests IS 'قائمة الاهتمامات';
 COMMENT ON COLUMN public.users.is_premium IS 'حالة العضوية المميزة';
+COMMENT ON COLUMN public.users.is_active IS 'حالة المستخدم - نشط أم معطل';
 COMMENT ON COLUMN public.users.location_lat IS 'خط العرض للموقع';
 COMMENT ON COLUMN public.users.location_lng IS 'خط الطول للموقع';
 COMMENT ON COLUMN public.users.city IS 'المدينة';
