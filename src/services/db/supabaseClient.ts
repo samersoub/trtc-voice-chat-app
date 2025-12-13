@@ -21,7 +21,15 @@ const hasValidCredentials = isValidUrl(url) && key && key.length > 20;
 
 // Export a nullable client so callers can check readiness.
 export const supabase: SupabaseClient | null = hasValidCredentials 
-  ? createClient(url!, key!) 
+  ? createClient(url!, key!, {
+      auth: {
+        persistSession: true, // ✅ حفظ الجلسة في localStorage
+        autoRefreshToken: true, // ✅ تجديد التوكن تلقائياً
+        detectSessionInUrl: true, // ✅ كشف الجلسة من URL (مهم للـ OAuth)
+        storage: window.localStorage, // ✅ استخدام localStorage للحفظ
+        storageKey: 'supabase.auth.token', // مفتاح التخزين
+      }
+    })
   : null;
 
 /**
