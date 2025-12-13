@@ -11,6 +11,11 @@ ADD COLUMN IF NOT EXISTS followers TEXT[] DEFAULT '{}',
 ADD COLUMN IF NOT EXISTS following TEXT[] DEFAULT '{}',
 ADD COLUMN IF NOT EXISTS interests TEXT[] DEFAULT '{}';
 
+-- 1.1 Add Missing Wealth/Economy Fields
+ALTER TABLE public.users 
+ADD COLUMN IF NOT EXISTS total_gifts_received DECIMAL(10,2) DEFAULT 0,
+ADD COLUMN IF NOT EXISTS monthly_gifts DECIMAL(10,2) DEFAULT 0;
+
 -- 2. Add Premium Status
 ALTER TABLE public.users 
 ADD COLUMN IF NOT EXISTS is_premium BOOLEAN DEFAULT FALSE;
