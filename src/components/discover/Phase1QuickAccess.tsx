@@ -176,12 +176,12 @@ const Phase1QuickAccess: React.FC = () => {
       </div>
 
       {/* Icon Grid - Two Rows */}
-      <div className="grid grid-cols-6 gap-3 justify-items-center">
+      <div className="grid grid-cols-6 gap-4 justify-items-center">
         {cards.map((card) => (
           <div
             key={card.id}
             onClick={() => navigate(card.path)}
-            className="group relative cursor-pointer transition-all duration-300 hover:scale-110 flex flex-col items-center gap-2"
+            className="group relative cursor-pointer transition-all duration-300 hover:scale-105 flex flex-col items-center gap-2.5"
           >
             {/* Badge */}
             {card.badge && (
@@ -195,8 +195,8 @@ const Phase1QuickAccess: React.FC = () => {
               {React.cloneElement(card.icon as React.ReactElement, { className: 'w-7 h-7' })}
             </div>
 
-            {/* Title */}
-            <span className="text-xs font-bold text-white text-center max-w-[90px] line-clamp-1 group-hover:text-purple-300 transition-colors opacity-100">
+            {/* Title - Always Visible with Clear Styling */}
+            <span className="text-sm font-bold text-white text-center max-w-[95px] line-clamp-2 group-hover:text-purple-300 transition-colors drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]" style={{ textShadow: '0 2px 8px rgba(0,0,0,0.9), 0 0 2px rgba(0,0,0,1)' }}>
               {card.title}
             </span>
           </div>
