@@ -5,6 +5,7 @@ import TRTC from "trtc-js-sdk";
 import { TRTC_SDK_APP_ID, TRTC_TEST_ROOM_ID, USERSIG_API_ENDPOINT } from "@/config/trtcConfig";
 import { fetchUserSig } from "@/utils/trtcAuth";
 import { showError, showSuccess } from "@/utils/toast";
+import { RoomParticipantService } from "@/services/RoomParticipantService";
 
 export type RemoteStreamItem = { id: string | number; stream: any };
 
@@ -12,9 +13,11 @@ export function useTrtc() {
   const clientRef = React.useRef<any>(null);
   const localStreamRef = React.useRef<any>(null);
   const joinedRef = React.useRef<boolean>(false);
+  const currentRoomIdRef = React.useRef<string | null>(null);
+  const currentUserIdRef = React.useRef<string | null>(null);
   const [remoteStreams, setRemoteStreams] = React.useState<RemoteStreamItem[]>([]);
 
-  const join = React.useCallback(async (userId?: string) => {
+  const join = React.useCallback(async (userId?: string, roomId?: string) => {
     if (joinedRef.current) {
       console.log("TRTC: Already joined; skipping.");
       return;
@@ -116,10 +119,17 @@ export function useTrtc() {
         setRemoteStreams((prev) => prev.filter((x) => x.id !== id));
       });
 
-      await client.join({ roomId: TRTC_TEST_ROOM_ID });
+      const targetRoomId = roomId || TRTC_TEST_ROOM_ID;
+      await client.join({ roomId: targetRoomId });
       joinedRef.current = true;
-      console.log("TRTC: Join success:", TRTC_TEST_ROOM_ID);
-      showSuccess(`Joined TRTC room ${TRTC_TEST_ROOM_ID}`);
+      currentRoomIdRef.current = targetRoomId;
+      currentUserIdRef.current = currentUserID;
+      
+      console.log("TRTC: Join success:", targetRoomId);
+      showSuccess(`Joined TRTC room ${targetRoomId}`);
+
+      // Track participant in database
+      await RoomParticipantService.joinRoom(targetRoomId, currentUserID, 'listener');
 
       const localStream = TRTC.createStream({ audio: true, video: true });
       localStreamRef.current = localStream;
@@ -139,8 +149,11 @@ export function useTrtc() {
     }
   }, []);
 
-  const leave = React.useCallback(() => {
+  const leave = React.useCallback(async () => {
     const c = clientRef.current;
+    const roomId = currentRoomIdRef.current;
+    const userId = currentUserIdRef.current;
+    
     if (c) {
       try {
         const ls = localStreamRef.current;
@@ -158,7 +171,15 @@ export function useTrtc() {
       } catch {}
       clientRef.current = null;
     }
+    
+    // Remove participant from database
+    if (roomId && userId) {
+      await RoomParticipantService.leaveRoom(roomId, userId);
+    }
+    
     joinedRef.current = false;
+    currentRoomIdRef.current = null;
+    currentUserIdRef.current = null;
     setRemoteStreams([]);
     console.log("TRTC: Left room and cleaned up.");
   }, []);
