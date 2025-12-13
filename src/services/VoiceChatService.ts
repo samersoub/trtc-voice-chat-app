@@ -14,15 +14,20 @@ function writeRooms(rooms: ChatRoom[]) {
 
 async function hydrateRoomsFromDB() {
   if (!isSupabaseReady || !supabase) return;
-  const { data, error } = await supabase.from("voice_rooms").select("*").order("created_at", { ascending: false });
+  const { data, error } = await supabase.from("voice_rooms").select("*").eq('is_active', true).order("created_at", { ascending: false });
   if (error || !data) return;
   try {
-    const rooms = (data as any[]).map((r) => ({
+    // Get existing local rooms
+    const existingRooms = readRooms();
+    const existingIds = new Set(existingRooms.map(r => r.id));
+    
+    // Map DB rooms
+    const dbRooms = (data as any[]).map((r) => ({
       id: r.id,
       name: r.name,
       isPrivate: r.room_type === 'private',
       hostId: r.owner_id,
-      participants: [],
+      participants: [r.owner_id],
       createdAt: r.created_at,
       updatedAt: r.updated_at,
       description: r.description || undefined,
@@ -30,7 +35,22 @@ async function hydrateRoomsFromDB() {
       background: r.cover_image || undefined,
       moderators: [r.owner_id],
     })) as ChatRoom[];
-    writeRooms(rooms);
+    
+    // Merge: keep existing local rooms and add new DB rooms
+    const mergedRooms = [...existingRooms];
+    for (const dbRoom of dbRooms) {
+      if (!existingIds.has(dbRoom.id)) {
+        mergedRooms.push(dbRoom);
+      } else {
+        // Update existing room data from DB
+        const idx = mergedRooms.findIndex(r => r.id === dbRoom.id);
+        if (idx !== -1) {
+          mergedRooms[idx] = { ...mergedRooms[idx], ...dbRoom };
+        }
+      }
+    }
+    
+    writeRooms(mergedRooms);
   } catch {
     // ignore mapping errors
   }

@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -6,7 +6,20 @@ import { VoiceChatService } from "@/services/VoiceChatService";
 import ChatLayout from "@/components/chat/ChatLayout";
 
 const RoomList = () => {
-  const rooms = useMemo(() => VoiceChatService.listRooms(), []);
+  const [rooms, setRooms] = useState(VoiceChatService.listRooms());
+  
+  // Reload rooms every time component mounts or when returning from create room
+  useEffect(() => {
+    const loadRooms = () => {
+      const updatedRooms = VoiceChatService.listRooms();
+      setRooms(updatedRooms);
+    };
+    loadRooms();
+    
+    // Reload rooms every 3 seconds to catch new rooms from DB
+    const interval = setInterval(loadRooms, 3000);
+    return () => clearInterval(interval);
+  }, []);
   return (
     <ChatLayout title="Rooms">
       <div className="mx-auto max-w-2xl p-4 space-y-4">
