@@ -175,42 +175,42 @@ const Phase1QuickAccess: React.FC = () => {
         </div>
       </div>
 
-      {/* Cards Grid */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+      {/* Cards Grid - Compact 2-row layout */}
+      <div className="grid grid-cols-6 gap-2">
         {cards.map((card) => (
           <Card
             key={card.id}
             onClick={() => navigate(card.path)}
-            className="group relative overflow-hidden cursor-pointer transition-all duration-300 hover:scale-105 hover:shadow-2xl hover:shadow-purple-500/30 border-purple-500/20 bg-gradient-to-br from-purple-900/40 to-indigo-900/40 backdrop-blur-sm"
+            className="group relative overflow-hidden cursor-pointer transition-all duration-300 hover:scale-105 hover:shadow-xl hover:shadow-purple-500/20 border-purple-500/20 bg-gradient-to-br from-purple-900/40 to-indigo-900/40 backdrop-blur-sm"
           >
             {/* Badge */}
             {card.badge && (
-              <div className={`absolute top-2 right-2 px-2 py-0.5 rounded-full text-xs font-bold text-white ${card.badgeColor} shadow-lg z-10`}>
+              <div className={`absolute top-1 right-1 px-1.5 py-0.5 rounded-full text-[10px] font-bold text-white ${card.badgeColor} shadow-md z-10`}>
                 {card.badge}
               </div>
             )}
 
             {/* Content */}
-            <div className="p-4 space-y-3">
+            <div className="p-2 space-y-1.5">
               {/* Icon with Gradient */}
-              <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${card.gradient} flex items-center justify-center text-white shadow-lg group-hover:scale-110 transition-transform duration-300`}>
-                {card.icon}
+              <div className={`w-8 h-8 rounded-lg bg-gradient-to-br ${card.gradient} flex items-center justify-center text-white shadow-md group-hover:scale-110 transition-transform duration-300`}>
+                {React.cloneElement(card.icon as React.ReactElement, { className: 'w-4 h-4' })}
               </div>
 
               {/* Text */}
               <div>
-                <h3 className="font-bold text-white text-sm mb-1 group-hover:text-purple-300 transition-colors">
+                <h3 className="font-bold text-white text-xs mb-0.5 group-hover:text-purple-300 transition-colors line-clamp-1">
                   {card.title}
                 </h3>
-                <p className="text-xs text-gray-400 line-clamp-2">
+                <p className="text-[10px] text-gray-400 line-clamp-1">
                   {card.description}
                 </p>
               </div>
 
               {/* Arrow */}
-              <div className="flex items-center text-purple-400 text-xs font-medium group-hover:text-purple-300">
+              <div className="flex items-center text-purple-400 text-[10px] font-medium group-hover:text-purple-300">
                 <span>استكشف</span>
-                <ChevronRight className="w-3 h-3 group-hover:translate-x-1 transition-transform" />
+                <ChevronRight className="w-2.5 h-2.5 group-hover:translate-x-0.5 transition-transform" />
               </div>
             </div>
 
