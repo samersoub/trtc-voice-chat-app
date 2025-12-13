@@ -10,6 +10,7 @@ ADD COLUMN IF NOT EXISTS interests TEXT[] DEFAULT '{}',
 ADD COLUMN IF NOT EXISTS is_premium BOOLEAN DEFAULT FALSE,
 ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT TRUE,
 ADD COLUMN IF NOT EXISTS last_login TIMESTAMP WITH TIME ZONE,
+ADD COLUMN IF NOT EXISTS role TEXT DEFAULT 'user',
 ADD COLUMN IF NOT EXISTS location_lat DECIMAL(10, 8),
 ADD COLUMN IF NOT EXISTS location_lng DECIMAL(11, 8),
 ADD COLUMN IF NOT EXISTS city TEXT,
@@ -32,7 +33,7 @@ WHERE table_name = 'users'
   AND table_schema = 'public'
   AND column_name IN (
     'level', 'followers', 'following', 'interests',
-    'is_premium', 'is_active', 'last_login',
+    'is_premium', 'is_active', 'last_login', 'role',
     'location_lat', 'location_lng', 'city', 'age',
     'total_gifts_received', 'monthly_gifts'
   )

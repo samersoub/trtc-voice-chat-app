@@ -28,6 +28,10 @@ ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT TRUE;
 ALTER TABLE public.users 
 ADD COLUMN IF NOT EXISTS last_login TIMESTAMP WITH TIME ZONE;
 
+-- 2.3 Add User Role
+ALTER TABLE public.users 
+ADD COLUMN IF NOT EXISTS role TEXT DEFAULT 'user' CHECK (role IN ('user', 'admin', 'moderator', 'vip'));
+
 -- 3. Add Enhanced Location Fields
 ALTER TABLE public.users 
 ADD COLUMN IF NOT EXISTS location_lat DECIMAL(10, 8),
