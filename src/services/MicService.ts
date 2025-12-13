@@ -100,34 +100,35 @@ export const MicService = {
   
   putOnMic(roomId: string, userId: string, name?: string, targetIndex?: number): SeatInfo[] {
     const seats = read(roomId);
-    // If already on mic, just update name or move if targetIndex given
-    const current = findByUser(seats, userId);
-    if (current && typeof targetIndex === "number" && targetIndex >= 0 && targetIndex < seats.length) {
-      const to = seats[targetIndex];
-      if (to.locked || to.userId) throw new Error("Target seat unavailable");
-      // clear current
-      current.userId = undefined;
-      current.name = undefined;
-      current.speaking = false;
-      current.muted = false;
-      // move to target
-      to.userId = userId;
-      to.name = name ?? to.name ?? "Guest";
-      write(roomId, seats);
-      return seats;
-    }
-    // Choose first available seat if none specified
+    
+    // CRITICAL FIX: Always remove user from ALL other seats first
+    // This prevents the "ghost user" bug where user appears on multiple seats
+    seats.forEach((seat) => {
+      if (seat.userId === userId) {
+        seat.userId = undefined;
+        seat.name = undefined;
+        seat.speaking = false;
+        seat.muted = false;
+      }
+    });
+    
+    // Choose target seat
     const idx =
       typeof targetIndex === "number" && targetIndex >= 0 && targetIndex < seats.length
         ? targetIndex
         : seats.findIndex((s) => !s.locked && !s.userId);
+    
     if (idx === -1) throw new Error("No available seats");
+    
     const seat = seats[idx];
     if (seat.locked || seat.userId) throw new Error("Seat is not available");
+    
+    // Assign user to new seat
     seat.userId = userId;
     seat.name = name ?? "Guest";
     seat.speaking = false;
     seat.muted = false;
+    
     write(roomId, seats);
     return seats;
   },

@@ -54,10 +54,54 @@ class AdvancedSearchServiceClass {
     limit: number = 50,
     offset: number = 0
   ): Promise<SearchResult[]> {
-    // TODO: الاتصال بـ Supabase للبحث الحقيقي
-    // في الوقت الحالي، استخدام بيانات تجريبية
-
-    let results = this.getDemoUsers();
+    // PRODUCTION MODE - Use Supabase for real search
+    // Fallback to demo data only if Supabase not available
+    const { supabase, isSupabaseReady } = await import('./db/supabaseClient');
+    
+    let results: User[] = [];
+    
+    if (isSupabaseReady && supabase) {
+      try {
+        // Build Supabase query
+        let query = supabase.from('users').select('*');
+        
+        // Apply filters
+        if (filters.minAge) {
+          query = query.gte('age', filters.minAge);
+        }
+        if (filters.maxAge) {
+          query = query.lte('age', filters.maxAge);
+        }
+        if (filters.gender && filters.gender !== 'all') {
+          query = query.eq('gender', filters.gender);
+        }
+        if (filters.country) {
+          query = query.eq('country', filters.country);
+        }
+        if (filters.isOnline) {
+          query = query.eq('is_online', true);
+        }
+        if (filters.isVerified) {
+          query = query.eq('is_verified', true);
+        }
+        
+        // Execute query
+        const { data, error } = await query.range(offset, offset + limit - 1);
+        
+        if (error) {
+          console.error('Search error:', error);
+          results = this.getDemoUsers();
+        } else {
+          results = data || [];
+        }
+      } catch (err) {
+        console.error('Search failed:', err);
+        results = this.getDemoUsers();
+      }
+    } else {
+      console.warn('⚠️ Supabase not ready - using demo data');
+      results = this.getDemoUsers();
+    }
 
     // تطبيق الفلاتر
     results = this.applyFilters(results, filters);
@@ -89,8 +133,31 @@ class AdvancedSearchServiceClass {
   /**
    * البحث السريع (autocomplete)
    */
-  quickSearch(query: string, limit: number = 10): User[] {
+  async quickSearch(query: string, limit: number = 10): Promise<User[]> {
     if (!query.trim()) return [];
+
+    // PRODUCTION MODE - Use Supabase for real search
+    const { supabase, isSupabaseReady } = await import('./db/supabaseClient');
+    
+    if (isSupabaseReady && supabase) {
+      try {
+        const { data, error } = await supabase
+          .from('users')
+          .select('*')
+          .or(`username.ilike.%${query}%,full_name.ilike.%${query}%`)
+          .limit(limit);
+        
+        if (error) {
+          console.error('Quick search error:', error);
+          return this.getDemoUsers();
+        }
+        
+        return data || [];
+      } catch (err) {
+        console.error('Quick search failed:', err);
+        return this.getDemoUsers();
+      }
+    }
 
     const users = this.getDemoUsers();
     const lowerQuery = query.toLowerCase();

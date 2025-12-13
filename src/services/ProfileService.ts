@@ -8,14 +8,58 @@ export type Profile = {
   username: string;
   email: string;
   phone: string;
-  profile_image?: string | null;
+  
+  // Profile fields (matching users table)
+  full_name?: string | null;
+  avatar_url?: string | null;
+  profile_image?: string | null; // For backward compatibility
+  bio?: string | null;
+  gender?: 'male' | 'female' | 'other' | null;
+  date_of_birth?: string | null;
+  age?: number | null;
+  country?: string | null;
+  language?: string;
+  
+  // Voice chat fields
+  voice_quality?: string;
+  total_voice_minutes?: number;
+  
+  // Economy
   coins: number;
+  diamonds?: number;
+  
+  // Wealth system
+  wealth_level?: number;
+  total_recharge?: number;
+  monthly_recharge?: number;
+  total_gifts_sent?: number;
+  total_gifts_received?: number;
+  
+  // Social & Gaming (NEW)
+  level?: number;
+  followers?: string[];
+  following?: string[];
+  interests?: string[];
+  
+  // Location (NEW)
+  location_lat?: number | null;
+  location_lng?: number | null;
+  city?: string | null;
+  
+  // Status
+  is_online?: boolean;
+  last_seen?: string | null;
   is_active: boolean;
   is_verified: boolean;
+  is_banned?: boolean;
+  ban_reason?: string | null;
+  is_premium?: boolean;
+  
+  // Metadata
   role: string;
   created_at: string;
+  updated_at?: string;
   last_login?: string | null;
-  ban_reason?: string | null;
 };
 
 const LOCAL_KEY = "profiles";
@@ -27,12 +71,27 @@ const DEMO_PROFILES: Profile[] = [
     username: "admin",
     email: "admin@example.com",
     phone: "+1234567890",
-    profile_image: null,
+    full_name: "Admin User",
+    avatar_url: null,
+    language: "ar",
+    voice_quality: "high",
+    total_voice_minutes: 0,
     coins: 1000,
+    diamonds: 0,
+    wealth_level: 1,
+    total_recharge: 0,
+    monthly_recharge: 0,
+    total_gifts_sent: 0,
+    total_gifts_received: 0,
+    level: 1,
+    followers: [],
+    following: [],
+    interests: [],
     is_active: true,
     is_verified: true,
     role: "admin",
     created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
     last_login: new Date().toISOString(),
     ban_reason: null
   },
@@ -41,12 +100,27 @@ const DEMO_PROFILES: Profile[] = [
     username: "user1",
     email: "user1@example.com",
     phone: "+1234567891",
-    profile_image: null,
+    full_name: "Demo User 1",
+    avatar_url: null,
+    language: "ar",
+    voice_quality: "medium",
+    total_voice_minutes: 0,
     coins: 500,
+    diamonds: 0,
+    wealth_level: 1,
+    total_recharge: 0,
+    monthly_recharge: 0,
+    total_gifts_sent: 0,
+    total_gifts_received: 0,
+    level: 1,
+    followers: [],
+    following: [],
+    interests: [],
     is_active: true,
     is_verified: true,
     role: "user",
     created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
     last_login: new Date().toISOString(),
     ban_reason: null
   },
@@ -55,12 +129,27 @@ const DEMO_PROFILES: Profile[] = [
     username: "user2",
     email: "user2@example.com",
     phone: "+1234567892",
-    profile_image: null,
+    full_name: "Demo User 2",
+    avatar_url: null,
+    language: "ar",
+    voice_quality: "medium",
+    total_voice_minutes: 0,
     coins: 250,
+    diamonds: 0,
+    wealth_level: 1,
+    total_recharge: 0,
+    monthly_recharge: 0,
+    total_gifts_sent: 0,
+    total_gifts_received: 0,
+    level: 1,
+    followers: [],
+    following: [],
+    interests: [],
     is_active: true,
     is_verified: false,
     role: "user",
     created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
     last_login: new Date().toISOString(),
     ban_reason: null
   }

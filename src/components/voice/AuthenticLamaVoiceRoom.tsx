@@ -56,166 +56,14 @@ interface GiftItem {
 // ===================================================================
 // Initial Seats - 20 Seats in 4x5 Grid
 // ===================================================================
-const initialSeats: VoiceSeat[] = [
-  // Row 1 (Seats 1-5)
-  {
-    seatNumber: 1,
-    user: {
-      id: 'host',
-      name: 'سلطان',
-      avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Sultan',
-      level: 99,
-      vipLevel: 7,
-      isHost: true,
-      isSpeaking: true,
-      isMuted: false
-    },
-    isLocked: false
-  },
-  {
-    seatNumber: 2,
-    user: {
-      id: 'user2',
-      name: 'نور',
-      avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Noor',
-      level: 45,
-      vipLevel: 3,
-      isSpeaking: false,
-      isMuted: false
-    },
-    isLocked: false
-  },
-  {
-    seatNumber: 3,
-    user: {
-      id: 'user3',
-      name: 'أحمد',
-      avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Ahmed',
-      level: 32,
-      isSpeaking: true,
-      isMuted: false
-    },
-    isLocked: false
-  },
-  {
-    seatNumber: 4,
+// Generate empty seats (20 seats) - will be populated from Supabase
+const generateEmptySeats = (count: number = 20): VoiceSeat[] => {
+  return Array.from({ length: count }, (_, i) => ({
+    seatNumber: i + 1,
     user: null,
     isLocked: false
-  },
-  {
-    seatNumber: 5,
-    user: null,
-    isLocked: true
-  },
-  // Row 2 (Seats 6-10)
-  {
-    seatNumber: 6,
-    user: {
-      id: 'user6',
-      name: 'ليلى',
-      avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Layla',
-      level: 28,
-      isSpeaking: false,
-      isMuted: false
-    },
-    isLocked: false
-  },
-  {
-    seatNumber: 7,
-    user: null,
-    isLocked: false
-  },
-  {
-    seatNumber: 8,
-    user: null,
-    isLocked: false
-  },
-  {
-    seatNumber: 9,
-    user: null,
-    isLocked: true
-  },
-  {
-    seatNumber: 10,
-    user: null,
-    isLocked: false
-  },
-  // Row 3 (Seats 11-15)
-  {
-    seatNumber: 11,
-    user: null,
-    isLocked: false
-  },
-  {
-    seatNumber: 12,
-    user: null,
-    isLocked: false
-  },
-  {
-    seatNumber: 13,
-    user: null,
-    isLocked: false
-  },
-  {
-    seatNumber: 14,
-    user: null,
-    isLocked: false
-  },
-  {
-    seatNumber: 15,
-    user: null,
-    isLocked: false
-  },
-  // Row 4 (Seats 16-20)
-  {
-    seatNumber: 16,
-    user: null,
-    isLocked: false
-  },
-  {
-    seatNumber: 17,
-    user: {
-      id: 'user17',
-      name: 'محمد',
-      avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Mohammad',
-      level: 18,
-      vipLevel: 1,
-      isSpeaking: false,
-      isMuted: true
-    },
-    isLocked: false
-  },
-  {
-    seatNumber: 18,
-    user: {
-      id: 'user18',
-      name: 'فاطمة',
-      avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Fatima',
-      level: 52,
-      vipLevel: 5,
-      isSpeaking: false,
-      isMuted: false
-    },
-    isLocked: false
-  },
-  {
-    seatNumber: 19,
-    user: {
-      id: 'user19',
-      name: 'خالد',
-      avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Khaled',
-      level: 24,
-      isSpeaking: true,
-      isMuted: false
-    },
-    isLocked: false
-  },
-  {
-    seatNumber: 20,
-    user: null,
-    isLocked: false
-  }
-];
+  }));
+};
 
 const gifts: GiftItem[] = [
   { id: '1', name: 'وردة', icon: '🌹', price: 10 },
@@ -240,8 +88,8 @@ const AuthenticLamaVoiceRoom: React.FC = () => {
   const [isJoined, setIsJoined] = useState(false);
   const [currentSeatNumber, setCurrentSeatNumber] = useState<number | null>(null);
 
-  // States
-  const [seats, setSeats] = useState<VoiceSeat[]>(initialSeats);
+  // States - Start with empty seats, load from Supabase
+  const [seats, setSeats] = useState<VoiceSeat[]>(generateEmptySeats(20));
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       id: '1',
@@ -349,18 +197,101 @@ const AuthenticLamaVoiceRoom: React.FC = () => {
 
     console.log('✅ Setting up Realtime subscriptions for room:', roomId);
     
-    // Clean up old seats (optional - removes seats older than 1 hour)
-    const cleanupOldSeats = async () => {
-      const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
-      await supabase
-        .from('voice_room_seats')
-        .delete()
-        .eq('room_id', roomId)
-        .lt('joined_at', oneHourAgo);
-      console.log('🧹 Cleaned up old seats');
+    // Clean up duplicate seats (CRITICAL FIX for ghost user bug)
+    const cleanupDuplicateSeats = async () => {
+      try {
+        // Get all seats for this room
+        const { data: allSeats, error } = await supabase
+          .from('voice_room_seats')
+          .select('*')
+          .eq('room_id', roomId);
+        
+        if (error) {
+          console.error('Failed to fetch seats for cleanup:', error);
+          return;
+        }
+        
+        if (!allSeats || allSeats.length === 0) return;
+        
+        // Find duplicate users (users appearing on multiple seats)
+        const userSeatMap = new Map<string, any[]>();
+        allSeats.forEach(seat => {
+          const userId = seat.user_id;
+          if (!userSeatMap.has(userId)) {
+            userSeatMap.set(userId, []);
+          }
+          userSeatMap.get(userId)!.push(seat);
+        });
+        
+        // For each user with multiple seats, keep only the latest one
+        for (const [userId, seats] of userSeatMap.entries()) {
+          if (seats.length > 1) {
+            // Sort by joined_at (newest first)
+            seats.sort((a, b) => new Date(b.joined_at).getTime() - new Date(a.joined_at).getTime());
+            
+            // Delete all except the first (newest) one
+            const seatsToDelete = seats.slice(1);
+            for (const seat of seatsToDelete) {
+              await supabase
+                .from('voice_room_seats')
+                .delete()
+                .match({ room_id: roomId, seat_number: seat.seat_number });
+              
+              console.log(`🧹 Removed duplicate seat ${seat.seat_number} for user ${userId}`);
+            }
+          }
+        }
+        
+        console.log('✅ Cleanup complete - removed duplicate seats');
+      } catch (err) {
+        console.error('Failed to cleanup duplicate seats:', err);
+      }
     };
     
-    cleanupOldSeats().catch(err => console.error('Failed to cleanup:', err));
+    cleanupDuplicateSeats();
+
+    // Load existing seats from Supabase
+    const loadExistingSeats = async () => {
+      try {
+        const { data: existingSeats, error } = await supabase
+          .from('voice_room_seats')
+          .select('*')
+          .eq('room_id', roomId);
+        
+        if (error) {
+          console.error('Failed to load seats:', error);
+          return;
+        }
+        
+        console.log('📥 Loaded seats from Supabase:', existingSeats);
+        
+        if (existingSeats && existingSeats.length > 0) {
+          setSeats(prev => prev.map(seat => {
+            const dbSeat = existingSeats.find(s => s.seat_number === seat.seatNumber);
+            if (dbSeat && dbSeat.user_id) {
+              return {
+                ...seat,
+                user: {
+                  id: dbSeat.user_id,
+                  name: dbSeat.user_name,
+                  avatar: dbSeat.user_avatar,
+                  level: dbSeat.user_level || 1,
+                  vipLevel: dbSeat.vip_level || undefined,
+                  isSpeaking: dbSeat.is_speaking || false,
+                  isMuted: dbSeat.is_muted !== false // Default to true
+                },
+                isLocked: dbSeat.is_locked || false
+              };
+            }
+            return seat;
+          }));
+        }
+      } catch (err) {
+        console.error('Failed to load existing seats:', err);
+      }
+    };
+    
+    loadExistingSeats();
 
     // Subscribe to messages
     const messagesChannel = supabase!
@@ -537,17 +468,30 @@ const AuthenticLamaVoiceRoom: React.FC = () => {
         // Use async function for proper error handling
         (async () => {
           try {
-            // First, delete any existing entry for this seat
-            const { error: deleteError } = await supabase
+            // CRITICAL: First, remove this user from ALL seats in this room
+            // This prevents the "ghost user" issue where user appears on multiple seats
+            const { error: deleteUserError } = await supabase
+              .from('voice_room_seats')
+              .delete()
+              .match({ room_id: roomId, user_id: currentUser.id });
+            
+            if (deleteUserError && deleteUserError.code !== 'PGRST116') { // PGRST116 = no rows found (ok)
+              console.warn('Delete user from old seats warning:', deleteUserError);
+            } else {
+              console.log('✅ Removed user from old seats');
+            }
+            
+            // Then, delete any existing entry for this specific seat
+            const { error: deleteSeatError } = await supabase
               .from('voice_room_seats')
               .delete()
               .match({ room_id: roomId, seat_number: seatNumber });
             
-            if (deleteError && deleteError.code !== 'PGRST116') { // PGRST116 = no rows found (ok)
-              console.warn('Delete warning:', deleteError);
+            if (deleteSeatError && deleteSeatError.code !== 'PGRST116') {
+              console.warn('Delete seat warning:', deleteSeatError);
             }
             
-            // Then insert the new seat data
+            // Finally, insert the new seat data
             const { error: insertError } = await supabase
               .from('voice_room_seats')
               .insert(seatData);

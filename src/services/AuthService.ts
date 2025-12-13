@@ -199,12 +199,54 @@ export const AuthService = {
         username,
         email,
         phone,
-        profile_image: null,
-        coins: 100,
+        
+        // Profile fields matching users table
+        full_name: username,
+        avatar_url: null,
+        bio: null,
+        gender: null,
+        date_of_birth: null,
+        country: null,
+        language: 'ar',
+        
+        // Voice chat
+        voice_quality: 'medium',
+        total_voice_minutes: 0,
+        
+        // Economy
+        coins: 1000, // Welcome bonus
+        diamonds: 0,
+        
+        // Wealth
+        wealth_level: 1,
+        total_recharge: 0,
+        monthly_recharge: 0,
+        total_gifts_sent: 0,
+        total_gifts_received: 0,
+        
+        // Social & Gaming
+        level: 1,
+        followers: [],
+        following: [],
+        interests: [],
+        
+        // Location
+        location_lat: null,
+        location_lng: null,
+        city: null,
+        
+        // Status
+        is_online: false,
+        last_seen: null,
         is_active: true,
         is_verified: !!u.email_confirmed_at,
+        is_banned: false,
+        is_premium: false,
+        
+        // Metadata
         role: "user",
         created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
         last_login: null,
       };
       await ProfileService.upsertProfile(created);
@@ -240,12 +282,43 @@ export const AuthService = {
       username,
       email,
       phone,
-      profile_image: null,
-      coins: 100,
+      
+      // Profile fields
+      full_name: username,
+      avatar_url: null,
+      bio: null,
+      language: 'ar',
+      
+      // Voice chat
+      voice_quality: 'medium',
+      total_voice_minutes: 0,
+      
+      // Economy
+      coins: 1000,
+      diamonds: 0,
+      
+      // Wealth
+      wealth_level: 1,
+      total_recharge: 0,
+      monthly_recharge: 0,
+      total_gifts_sent: 0,
+      total_gifts_received: 0,
+      
+      // Social & Gaming
+      level: 1,
+      followers: [],
+      following: [],
+      interests: [],
+      
+      // Status
       is_active: true,
       is_verified: false,
+      is_premium: false,
+      
+      // Metadata
       role: "user",
       created_at: user.createdAt,
+      updated_at: user.createdAt,
       last_login: null,
     };
     await ProfileService.upsertProfile(p);

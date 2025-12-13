@@ -71,7 +71,7 @@ export const AdvancedFeaturesConfig = {
   // إعدادات عامة
   general: {
     enableAllFeatures: true,
-    enableDemoData: true, // بيانات تجريبية للاختبار
+    enableDemoData: false, // PRODUCTION MODE - No demo data
     debugMode: false,
     logErrors: true,
   },
