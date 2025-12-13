@@ -175,48 +175,31 @@ const Phase1QuickAccess: React.FC = () => {
         </div>
       </div>
 
-      {/* Cards Grid - Compact 2-row layout */}
-      <div className="grid grid-cols-6 gap-2">
+      {/* Compact Icon Grid - Single Row */}
+      <div className="flex items-center justify-center gap-4 flex-wrap">
         {cards.map((card) => (
-          <Card
+          <div
             key={card.id}
             onClick={() => navigate(card.path)}
-            className="group relative overflow-hidden cursor-pointer transition-all duration-300 hover:scale-105 hover:shadow-xl hover:shadow-purple-500/20 border-purple-500/20 bg-gradient-to-br from-purple-900/40 to-indigo-900/40 backdrop-blur-sm"
+            className="group relative cursor-pointer transition-all duration-300 hover:scale-110 flex flex-col items-center gap-1.5"
           >
             {/* Badge */}
             {card.badge && (
-              <div className={`absolute top-1 right-1 px-1.5 py-0.5 rounded-full text-[10px] font-bold text-white ${card.badgeColor} shadow-md z-10`}>
+              <div className={`absolute -top-1 -right-1 px-1.5 py-0.5 rounded-full text-[9px] font-bold text-white ${card.badgeColor} shadow-lg z-10`}>
                 {card.badge}
               </div>
             )}
 
-            {/* Content */}
-            <div className="p-2 space-y-1.5">
-              {/* Icon with Gradient */}
-              <div className={`w-8 h-8 rounded-lg bg-gradient-to-br ${card.gradient} flex items-center justify-center text-white shadow-md group-hover:scale-110 transition-transform duration-300`}>
-                {React.cloneElement(card.icon as React.ReactElement, { className: 'w-4 h-4' })}
-              </div>
-
-              {/* Text */}
-              <div>
-                <h3 className="font-bold text-white text-xs mb-0.5 group-hover:text-purple-300 transition-colors line-clamp-1">
-                  {card.title}
-                </h3>
-                <p className="text-[10px] text-gray-400 line-clamp-1">
-                  {card.description}
-                </p>
-              </div>
-
-              {/* Arrow */}
-              <div className="flex items-center text-purple-400 text-[10px] font-medium group-hover:text-purple-300">
-                <span>استكشف</span>
-                <ChevronRight className="w-2.5 h-2.5 group-hover:translate-x-0.5 transition-transform" />
-              </div>
+            {/* Icon with Gradient */}
+            <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${card.gradient} flex items-center justify-center text-white shadow-lg group-hover:shadow-2xl transition-all duration-300`}>
+              {React.cloneElement(card.icon as React.ReactElement, { className: 'w-6 h-6' })}
             </div>
 
-            {/* Hover Glow Effect */}
-            <div className="absolute inset-0 bg-gradient-to-br from-purple-500/0 to-pink-500/0 group-hover:from-purple-500/10 group-hover:to-pink-500/10 transition-all duration-300" />
-          </Card>
+            {/* Title */}
+            <span className="text-xs font-medium text-white text-center max-w-[80px] line-clamp-2 group-hover:text-purple-300 transition-colors">
+              {card.title}
+            </span>
+          </div>
         ))}
       </div>
 
