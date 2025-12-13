@@ -48,6 +48,7 @@ import HostAgency from "./pages/agency/HostAgency";
 import RechargeAgency from "./pages/agency/RechargeAgency";
 import Store from "./pages/store/Store";
 import Hosts from "./pages/hosts/Hosts";
+import AdvancedSearch from "./pages/search/AdvancedSearch";
 import Moments from "./pages/Moments";
 import Messages from "./pages/Messages";
 import Inbox from "./pages/notifications/Inbox";
@@ -148,6 +149,8 @@ const App = () => (
               <Route path="/games/lucky-wheel" element={<LuckyWheel />} />
               {/* Support */}
               <Route path="/support" element={<SuperSupport />} />
+              {/* Advanced Search */}
+              <Route path="/search/advanced" element={<AdvancedSearch />} />
               {/* Agency */}
               <Route path="/agency/host" element={<HostAgency />} />
               <Route path="/agency/recharge" element={<RechargeAgency />} />
