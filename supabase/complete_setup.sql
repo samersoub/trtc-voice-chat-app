@@ -8,9 +8,82 @@
 -- 2. مشكلة Google OAuth (trigger + profiles)
 -- 3. مشكلة "Bucket not found" عند رفع الصور
 -- 4. إعداد صلاحيات Storage
+-- 5. مشكلة "profile_image column not found"
 --
 -- يمكنك تطبيقه مرة واحدة وسيعمل كل شيء!
 -- ============================================================
+
+-- ============================================================
+-- PART 0: Fix Schema - Add profile_image column
+-- ============================================================
+
+-- إضافة عمود profile_image إلى جدول users
+ALTER TABLE public.users 
+ADD COLUMN IF NOT EXISTS profile_image TEXT;
+
+-- نسخ البيانات من avatar_url إلى profile_image
+UPDATE public.users 
+SET profile_image = avatar_url 
+WHERE profile_image IS NULL AND avatar_url IS NOT NULL;
+
+-- إنشاء Trigger لمزامنة profile_image مع avatar_url
+CREATE OR REPLACE FUNCTION sync_profile_image_with_avatar()
+RETURNS TRIGGER AS $$
+BEGIN
+  IF NEW.avatar_url IS DISTINCT FROM OLD.avatar_url THEN
+    NEW.profile_image := NEW.avatar_url;
+  END IF;
+  IF NEW.profile_image IS DISTINCT FROM OLD.profile_image THEN
+    NEW.avatar_url := NEW.profile_image;
+  END IF;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS sync_profile_avatar ON public.users;
+CREATE TRIGGER sync_profile_avatar
+  BEFORE UPDATE ON public.users
+  FOR EACH ROW
+  EXECUTE FUNCTION sync_profile_image_with_avatar();
+
+-- ============================================================
+-- PART 0.5: Fix RLS Policies for users table
+-- ============================================================
+
+-- تفعيل RLS على جدول users
+ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;
+
+-- حذف الـ policies القديمة
+DROP POLICY IF EXISTS "Users can view their own data" ON public.users;
+DROP POLICY IF EXISTS "Users can update their own data" ON public.users;
+DROP POLICY IF EXISTS "Users can insert their own data" ON public.users;
+DROP POLICY IF EXISTS "Enable insert for authenticated users" ON public.users;
+DROP POLICY IF EXISTS "Enable read access for all users" ON public.users;
+DROP POLICY IF EXISTS "Enable update for users based on user_id" ON public.users;
+DROP POLICY IF EXISTS "Service role has full access" ON public.users;
+
+-- إنشاء Policies جديدة
+CREATE POLICY "Users can view all profiles"
+ON public.users FOR SELECT TO authenticated, anon
+USING (true);
+
+CREATE POLICY "Users can insert their own profile"
+ON public.users FOR INSERT TO authenticated
+WITH CHECK (auth.uid() = id);
+
+CREATE POLICY "Users can update their own profile"
+ON public.users FOR UPDATE TO authenticated
+USING (auth.uid() = id)
+WITH CHECK (auth.uid() = id);
+
+CREATE POLICY "Users can delete their own profile"
+ON public.users FOR DELETE TO authenticated
+USING (auth.uid() = id);
+
+CREATE POLICY "Service role has full access"
+ON public.users FOR ALL TO service_role
+USING (true)
+WITH CHECK (true);
 
 -- ============================================================
 -- PART 1: Users & Authentication
