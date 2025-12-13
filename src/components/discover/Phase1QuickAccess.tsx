@@ -175,13 +175,13 @@ const Phase1QuickAccess: React.FC = () => {
         </div>
       </div>
 
-      {/* Compact Icon Grid - Single Row */}
-      <div className="flex items-center justify-center gap-4 flex-wrap">
+      {/* Icon Grid - Two Rows */}
+      <div className="grid grid-cols-6 gap-3 justify-items-center">
         {cards.map((card) => (
           <div
             key={card.id}
             onClick={() => navigate(card.path)}
-            className="group relative cursor-pointer transition-all duration-300 hover:scale-110 flex flex-col items-center gap-1.5"
+            className="group relative cursor-pointer transition-all duration-300 hover:scale-110 flex flex-col items-center gap-2"
           >
             {/* Badge */}
             {card.badge && (
@@ -191,60 +191,17 @@ const Phase1QuickAccess: React.FC = () => {
             )}
 
             {/* Icon with Gradient */}
-            <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${card.gradient} flex items-center justify-center text-white shadow-lg group-hover:shadow-2xl transition-all duration-300`}>
-              {React.cloneElement(card.icon as React.ReactElement, { className: 'w-6 h-6' })}
+            <div className={`w-14 h-14 rounded-xl bg-gradient-to-br ${card.gradient} flex items-center justify-center text-white shadow-lg group-hover:shadow-2xl transition-all duration-300`}>
+              {React.cloneElement(card.icon as React.ReactElement, { className: 'w-7 h-7' })}
             </div>
 
             {/* Title */}
-            <span className="text-xs font-medium text-white text-center max-w-[80px] line-clamp-2 group-hover:text-purple-300 transition-colors">
+            <span className="text-xs font-medium text-white text-center max-w-[90px] line-clamp-1 group-hover:text-purple-300 transition-colors">
               {card.title}
             </span>
           </div>
         ))}
       </div>
-
-      {/* Stats Summary Bar */}
-      <Card className="bg-gradient-to-r from-purple-900/50 to-indigo-900/50 border-purple-500/30 backdrop-blur-sm">
-        <div className="p-4 flex items-center justify-around gap-4">
-          <div className="text-center">
-            <div className="flex items-center justify-center gap-1 text-yellow-500 mb-1">
-              <Trophy className="w-4 h-4" />
-              <span className="text-xl font-bold">{missionStats.totalCompleted}</span>
-            </div>
-            <p className="text-xs text-gray-400">مهام مكتملة</p>
-          </div>
-          
-          <div className="h-8 w-px bg-purple-500/30" />
-          
-          <div className="text-center">
-            <div className="flex items-center justify-center gap-1 text-blue-500 mb-1">
-              <Users className="w-4 h-4" />
-              <span className="text-xl font-bold">{friendSuggestions.length}</span>
-            </div>
-            <p className="text-xs text-gray-400">توصيات</p>
-          </div>
-          
-          <div className="h-8 w-px bg-purple-500/30" />
-          
-          <div className="text-center">
-            <div className="flex items-center justify-center gap-1 text-yellow-500 mb-1">
-              <Sparkles className="w-4 h-4" />
-              <span className="text-xl font-bold">{wheelStats.totalSpins}</span>
-            </div>
-            <p className="text-xs text-gray-400">لفات</p>
-          </div>
-          
-          <div className="h-8 w-px bg-purple-500/30" />
-          
-          <div className="text-center">
-            <div className="flex items-center justify-center gap-1 text-green-500 mb-1">
-              <span className="text-xl font-bold">🪙</span>
-              <span className="text-xl font-bold">{missionStats.totalCoinsEarned}</span>
-            </div>
-            <p className="text-xs text-gray-400">عملات مكتسبة</p>
-          </div>
-        </div>
-      </Card>
     </div>
   );
 };
