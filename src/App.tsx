@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { Suspense, lazy } from "react";
+import ErrorBoundary from "@/components/ErrorBoundary";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import Login from "./pages/auth/Login";
@@ -94,9 +95,10 @@ const App = () => (
       <TooltipProvider>
         <Toaster />
         <Sonner />
-        <BrowserRouter>
-          <Suspense fallback={<div className="flex items-center justify-center p-6 text-muted-foreground">Loading...</div>}>
-            <Routes>
+        <ErrorBoundary>
+          <BrowserRouter>
+            <Suspense fallback={<div className="flex items-center justify-center p-6 text-muted-foreground">Loading...</div>}>
+              <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/home" element={<Home />} />
               {/* Admin Panel */}
@@ -214,11 +216,12 @@ const App = () => (
               <Route path="/rankings" element={<Rankings />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
-            </Routes>
-          </Suspense>
-          {/* Global bottom bar controller */}
-          <BottomTabController />
-        </BrowserRouter>
+              </Routes>
+            </Suspense>
+            {/* Global bottom bar controller */}
+            <BottomTabController />
+          </BrowserRouter>
+        </ErrorBoundary>
       </TooltipProvider>
     </QueryClientProvider>
     </LocaleProvider>

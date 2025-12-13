@@ -359,7 +359,8 @@ class TranslationServiceClass {
     try {
       const data = localStorage.getItem('translationCache');
       if (data) {
-        const entries: [string, any][] = JSON.parse(data);
+        interface CacheEntry { text: string; from: string; to: string; timestamp: string; cached?: boolean; }
+        const entries: [string, CacheEntry][] = JSON.parse(data);
         entries.forEach(([key, value]) => {
           this.cache.set(key, {
             ...value,

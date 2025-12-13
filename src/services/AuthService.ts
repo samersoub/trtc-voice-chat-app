@@ -184,7 +184,7 @@ export const AuthService = {
     if (isSupabaseReady && supabase) {
       const existingUser = await ProfileService.getByUsername(username);
       if (existingUser) throw new Error("Username already exists");
-      const { data: byEmail } = await supabase.from("profiles").select("id").eq("email", email).maybeSingle?.() as any;
+      const { data: byEmail } = await supabase.from("users").select("id").eq("email", email).maybeSingle?.() as any;
       if (byEmail) throw new Error("Email already exists");
 
       const { data, error } = await supabase.auth.signUp({

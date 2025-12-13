@@ -50,7 +50,11 @@ class ChatHistoryServiceClass {
     messages.push(message);
 
     // ترتيب حسب التاريخ
-    messages.sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
+    messages.sort((a, b) => {
+      const aTime = a.timestamp || new Date(a.createdAt);
+      const bTime = b.timestamp || new Date(b.createdAt);
+      return aTime.getTime() - bTime.getTime();
+    });
 
     // الحفاظ على الحد الأقصى
     if (messages.length > this.MAX_MESSAGES_PER_ROOM) {
@@ -86,10 +90,16 @@ class ChatHistoryServiceClass {
 
     // تطبيق فلاتر التاريخ
     if (before) {
-      messages = messages.filter(m => m.timestamp < before);
+      messages = messages.filter(m => {
+        const time = m.timestamp ? (typeof m.timestamp === 'string' ? new Date(m.timestamp) : m.timestamp) : new Date(m.createdAt);
+        return time < before;
+      });
     }
     if (after) {
-      messages = messages.filter(m => m.timestamp > after);
+      messages = messages.filter(m => {
+        const time = m.timestamp ? (typeof m.timestamp === 'string' ? new Date(m.timestamp) : m.timestamp) : new Date(m.createdAt);
+        return time > after;
+      });
     }
 
     const total = messages.length;
@@ -125,7 +135,7 @@ class ChatHistoryServiceClass {
 
     const filtered = messages.filter(
       msg =>
-        msg.text?.toLowerCase().includes(lowerQuery) ||
+        (msg.text || msg.content)?.toLowerCase().includes(lowerQuery) ||
         msg.senderName?.toLowerCase().includes(lowerQuery)
     );
 
@@ -197,7 +207,10 @@ class ChatHistoryServiceClass {
    */
   clearOldMessages(roomId: string, before: Date): number {
     const messages = this.history.get(roomId) || [];
-    const filtered = messages.filter(m => m.timestamp >= before);
+    const filtered = messages.filter(m => {
+      const time = m.timestamp ? (typeof m.timestamp === 'string' ? new Date(m.timestamp) : m.timestamp) : new Date(m.createdAt);
+      return time >= before;
+    });
     
     const deletedCount = messages.length - filtered.length;
     
@@ -228,8 +241,8 @@ class ChatHistoryServiceClass {
 
     return {
       totalMessages: messages.length,
-      firstMessageAt: messages[0]?.timestamp,
-      lastMessageAt: messages[messages.length - 1]?.timestamp,
+      firstMessageAt: messages[0] ? (messages[0].timestamp ? (typeof messages[0].timestamp === 'string' ? new Date(messages[0].timestamp) : messages[0].timestamp) : new Date(messages[0].createdAt)) : undefined,
+      lastMessageAt: messages[messages.length - 1] ? (messages[messages.length - 1].timestamp ? (typeof messages[messages.length - 1].timestamp === 'string' ? new Date(messages[messages.length - 1].timestamp) : messages[messages.length - 1].timestamp) : new Date(messages[messages.length - 1].createdAt)) : undefined,
       uniqueUsers: Object.keys(messagesPerUser).length,
       messagesPerUser,
     };
@@ -248,8 +261,8 @@ class ChatHistoryServiceClass {
     // تنسيق نصي
     return messages
       .map(msg => {
-        const time = msg.timestamp.toLocaleString('ar-SA');
-        return `[${time}] ${msg.senderName}: ${msg.text}`;
+        const time = (msg.timestamp || new Date(msg.createdAt)).toLocaleString('ar-SA');
+        return `[${time}] ${msg.senderName || 'Unknown'}: ${msg.text || msg.content}`;
       })
       .join('\n');
   }
@@ -262,7 +275,9 @@ class ChatHistoryServiceClass {
       if (format === 'json') {
         const messages: Message[] = JSON.parse(data);
         messages.forEach(msg => {
-          msg.timestamp = new Date(msg.timestamp);
+          if (msg.timestamp && typeof msg.timestamp === 'string') {
+            msg.timestamp = new Date(msg.timestamp);
+          }
           this.addMessage(roomId, msg);
         });
         return messages.length;
@@ -305,7 +320,9 @@ class ChatHistoryServiceClass {
         if (data) {
           const messages: Message[] = JSON.parse(data);
           messages.forEach(msg => {
-            msg.timestamp = new Date(msg.timestamp);
+            if (msg.timestamp && typeof msg.timestamp === 'string') {
+              msg.timestamp = new Date(msg.timestamp);
+            }
           });
           this.history.set(roomId, messages);
         }

@@ -393,6 +393,7 @@ class AdvancedSearchServiceClass {
       },
       followers: [],
       following: [],
+      createdAt: new Date(Date.now() - Math.random() * 31536000000).toISOString(),
     }));
   }
 }

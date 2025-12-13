@@ -1,5 +1,4 @@
 // Service Worker للإشعارات الفورية
-/* eslint-disable no-restricted-globals */
 
 // التثبيت
 self.addEventListener('install', (event) => {

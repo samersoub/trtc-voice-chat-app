@@ -5,4 +5,9 @@ export interface Message {
   content: string;
   createdAt: string;
   type: "text" | "system";
+  
+  // Additional properties for chat history
+  text?: string;
+  senderName?: string;
+  timestamp?: Date;
 }

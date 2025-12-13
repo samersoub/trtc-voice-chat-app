@@ -87,7 +87,7 @@ export const ProfileService = {
   async upsertProfile(p: Profile): Promise<Profile> {
     if (isSupabaseReady && supabase) {
       const { data, error } = await supabase
-        .from("profiles")
+        .from("users")
         .upsert(p)
         .select()
         .single();
@@ -104,7 +104,7 @@ export const ProfileService = {
 
   async getByUserId(id: string): Promise<Profile | null> {
     if (isSupabaseReady && supabase) {
-      const { data, error } = await supabase.from("profiles").select("*").eq("id", id).single();
+      const { data, error } = await supabase.from("users").select("*").eq("id", id).single();
       if (error) return null;
       return data as Profile;
     }
@@ -113,7 +113,7 @@ export const ProfileService = {
 
   async getByUsername(username: string): Promise<Profile | null> {
     if (isSupabaseReady && supabase) {
-      const { data, error } = await supabase.from("profiles").select("*").eq("username", username).single();
+      const { data, error } = await supabase.from("users").select("*").eq("username", username).single();
       if (error) return null;
       return data as Profile;
     }
@@ -123,14 +123,14 @@ export const ProfileService = {
   async listAll(): Promise<Profile[]> {
     if (isSupabaseReady && supabase) {
       try {
-        const { data, error } = await supabase.from("profiles").select("*").order("created_at", { ascending: false });
+        const { data, error } = await supabase.from("users").select("*").order("created_at", { ascending: false });
         if (error) {
-          console.warn("Supabase profiles table not found, using demo data");
+          console.warn("Supabase users table not found, using demo data");
           return readLocal();
         }
         return (data || []) as Profile[];
       } catch (err) {
-        console.warn("Failed to fetch profiles from Supabase, using demo data");
+        console.warn("Failed to fetch users from Supabase, using demo data");
         return readLocal();
       }
     }

@@ -175,30 +175,48 @@ const Phase1QuickAccess: React.FC = () => {
         </div>
       </div>
 
-      {/* Icon Grid - Two Rows */}
+      {/* Icon Grid - Two Rows with Enhanced Animations */}
       <div className="grid grid-cols-6 gap-4 justify-items-center">
-        {cards.map((card) => (
+        {cards.map((card, index) => (
           <div
             key={card.id}
             onClick={() => navigate(card.path)}
-            className="group relative cursor-pointer transition-all duration-300 hover:scale-105 flex flex-col items-center gap-2.5"
+            className="group relative cursor-pointer flex flex-col items-center gap-2.5 animate-scale-in hover-lift"
+            style={{ animationDelay: `${index * 50}ms` }}
           >
-            {/* Badge */}
+            {/* Badge with Animation */}
             {card.badge && (
-              <div className={`absolute -top-1 -right-1 px-1.5 py-0.5 rounded-full text-[9px] font-bold text-white ${card.badgeColor} shadow-lg z-10`}>
+              <div className={`absolute -top-1 -right-1 px-2 py-0.5 rounded-full text-[10px] font-bold text-white ${card.badgeColor} shadow-xl z-10 animate-bounce-subtle`}>
                 {card.badge}
               </div>
             )}
 
-            {/* Icon with Gradient */}
-            <div className={`w-14 h-14 rounded-xl bg-gradient-to-br ${card.gradient} flex items-center justify-center text-white shadow-lg group-hover:shadow-2xl transition-all duration-300`}>
-              {React.cloneElement(card.icon as React.ReactElement, { className: 'w-7 h-7' })}
+            {/* Glow Effect Behind Icon */}
+            <div className="absolute inset-0 -z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-500">
+              <div className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${card.gradient} blur-xl`} />
             </div>
 
-            {/* Title - Always Visible with Clear Styling */}
-            <span className="text-sm font-bold text-white text-center max-w-[95px] line-clamp-2 group-hover:text-purple-300 transition-colors drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]" style={{ textShadow: '0 2px 8px rgba(0,0,0,0.9), 0 0 2px rgba(0,0,0,1)' }}>
+            {/* Icon with Enhanced Gradient and 3D Effect */}
+            <div className={`relative w-16 h-16 rounded-2xl bg-gradient-to-br ${card.gradient} flex items-center justify-center text-white shadow-xl group-hover:shadow-2xl transition-all duration-300 group-hover:scale-110 group-hover:rotate-3 overflow-hidden`}>
+              {/* Shimmer Effect */}
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-700" />
+              
+              {/* Icon */}
+              <div className="relative z-10 group-hover:scale-110 transition-transform duration-300">
+                {React.cloneElement(card.icon as React.ReactElement, { className: 'w-8 h-8' })}
+              </div>
+            </div>
+
+            {/* Title with Enhanced Shadow and Glow */}
+            <span className="text-sm font-bold text-white text-center max-w-[100px] line-clamp-2 group-hover:text-purple-300 group-hover:scale-105 transition-all duration-300" 
+                  style={{ 
+                    textShadow: '0 2px 12px rgba(0,0,0,0.9), 0 0 4px rgba(0,0,0,1), 0 4px 8px rgba(168,85,247,0.3)' 
+                  }}>
               {card.title}
             </span>
+
+            {/* Hover Ring Effect */}
+            <div className="absolute inset-0 rounded-2xl border-2 border-purple-500 opacity-0 group-hover:opacity-100 scale-90 group-hover:scale-100 transition-all duration-300 pointer-events-none" />
           </div>
         ))}
       </div>

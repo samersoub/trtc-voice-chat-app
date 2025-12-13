@@ -381,7 +381,7 @@ class ModerationServiceClass {
         
         if (parsed.blocked) {
           this.blockedUsers = new Map(
-            parsed.blocked.map(([k, v]: [string, any[]]) => [
+            parsed.blocked.map(([k, v]: [string, BlockedUser[]]) => [
               k,
               v.map(item => ({
                 ...item,
@@ -393,7 +393,7 @@ class ModerationServiceClass {
         
         if (parsed.muted) {
           this.mutedUsers = new Map(
-            parsed.muted.map(([k, v]: [string, any[]]) => [
+            parsed.muted.map(([k, v]: [string, MutedUser[]]) => [
               k,
               v.map(item => ({
                 ...item,
@@ -406,7 +406,7 @@ class ModerationServiceClass {
         
         if (parsed.reports) {
           this.reports = new Map(
-            parsed.reports.map(([k, v]: [string, any[]]) => [
+            parsed.reports.map(([k, v]: [string, Report[]]) => [
               k,
               v.map(item => ({
                 ...item,

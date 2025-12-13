@@ -181,34 +181,71 @@ const Index: React.FC = () => {
         onLogout={handleLogout}
         onSettingsClick={handleSettings}
       />
-      <div className="p-3 sm:p-4 lg:p-6 max-w-6xl mx-auto space-y-3 sm:space-y-4 pb-20 sm:pb-24 md:pb-28" dir="rtl">
-        <DiscoverHeader activeTab={activeTab} onTabChange={setActiveTab} />
-        <LuxBannerCarousel />
-        <ArabicQuickActions />
-        <Phase1QuickAccess />
-        <ActiveRoomsScroll 
-          rooms={rooms} 
-          onRoomClick={(roomId) => navigate(`/voice/rooms/${roomId}/join?autoJoin=1`)}
-        />
-        <FilterTagsBar selected={selectedTag} onChange={setSelectedTag} />
-        <LuxRoomsGrid
-          rooms={filteredRooms.length > 0 || searchQuery || activeFilter !== "all" ? filteredRooms : rooms}
-          filter={selectedTag}
-          onEnter={(roomId) => {
-            console.log('🚀 Navigating to room:', roomId, 'Path:', `/voice/rooms/${roomId}/join?autoJoin=1`);
-            navigate(`/voice/rooms/${roomId}/join?autoJoin=1`);
-          }}
-        />
+      {/* Animated Background Elements */}
+      <div className="fixed inset-0 pointer-events-none overflow-hidden -z-10">
+        <div className="absolute top-20 left-10 w-72 h-72 bg-purple-500/20 rounded-full blur-3xl animate-float" style={{ animationDelay: '0s', animationDuration: '8s' }} />
+        <div className="absolute top-40 right-20 w-96 h-96 bg-blue-500/20 rounded-full blur-3xl animate-float" style={{ animationDelay: '2s', animationDuration: '10s' }} />
+        <div className="absolute bottom-20 left-1/3 w-80 h-80 bg-indigo-500/20 rounded-full blur-3xl animate-float" style={{ animationDelay: '4s', animationDuration: '12s' }} />
       </div>
 
-      {/* Floating Action Button for Create Room */}
-      <Button
-        onClick={() => setShowCreateRoom(true)}
-        className="fixed bottom-16 sm:bottom-20 md:bottom-24 left-1/2 -translate-x-1/2 sm:left-auto sm:translate-x-0 sm:right-4 md:right-6 z-40 h-12 w-12 sm:h-14 sm:w-14 rounded-full bg-gradient-to-r from-blue-500 via-purple-500 to-indigo-600 hover:from-blue-600 hover:via-purple-600 hover:to-indigo-700 text-white shadow-2xl hover:shadow-blue-500/50 hover:scale-110 transition-all duration-300 btn-press animate-bounce-subtle touch-manipulation"
-        size="icon"
-      >
-        <Plus className="h-5 w-5 sm:h-6 sm:w-6" />
-      </Button>
+      <div className="relative p-3 sm:p-4 lg:p-6 max-w-6xl mx-auto space-y-3 sm:space-y-4 pb-20 sm:pb-24 md:pb-28 animate-fade-in" dir="rtl">
+        <div className="animate-slide-down" style={{ animationDelay: '100ms' }}>
+          <DiscoverHeader activeTab={activeTab} onTabChange={setActiveTab} />
+        </div>
+        
+        <div className="animate-slide-down" style={{ animationDelay: '200ms' }}>
+          <LuxBannerCarousel />
+        </div>
+        
+        <div className="animate-slide-down" style={{ animationDelay: '300ms' }}>
+          <ArabicQuickActions />
+        </div>
+        
+        <div className="animate-slide-down" style={{ animationDelay: '400ms' }}>
+          <Phase1QuickAccess />
+        </div>
+        
+        <div className="animate-slide-down" style={{ animationDelay: '500ms' }}>
+          <ActiveRoomsScroll 
+            rooms={rooms} 
+            onRoomClick={(roomId) => navigate(`/voice/rooms/${roomId}/join?autoJoin=1`)}
+          />
+        </div>
+        
+        <div className="animate-slide-down" style={{ animationDelay: '600ms' }}>
+          <FilterTagsBar selected={selectedTag} onChange={setSelectedTag} />
+        </div>
+        
+        <div className="animate-slide-down" style={{ animationDelay: '700ms' }}>
+          <LuxRoomsGrid
+            rooms={filteredRooms.length > 0 || searchQuery || activeFilter !== "all" ? filteredRooms : rooms}
+            filter={selectedTag}
+            onEnter={(roomId) => {
+              console.log('🚀 Navigating to room:', roomId, 'Path:', `/voice/rooms/${roomId}/join?autoJoin=1`);
+              navigate(`/voice/rooms/${roomId}/join?autoJoin=1`);
+            }}
+          />
+        </div>
+      </div>
+
+      {/* Floating Action Button for Create Room with Enhanced Effects */}
+      <div className="fixed bottom-16 sm:bottom-20 md:bottom-24 left-1/2 -translate-x-1/2 sm:left-auto sm:translate-x-0 sm:right-4 md:right-6 z-40 animate-scale-in" style={{ animationDelay: '800ms' }}>
+        {/* Pulse Rings */}
+        <div className="absolute inset-0 rounded-full bg-purple-500/30 animate-ping" style={{ animationDuration: '2s' }} />
+        <div className="absolute inset-0 rounded-full bg-blue-500/20 animate-ping" style={{ animationDuration: '3s', animationDelay: '0.5s' }} />
+        
+        <Button
+          onClick={() => setShowCreateRoom(true)}
+          className="relative h-12 w-12 sm:h-14 sm:w-14 rounded-full bg-gradient-to-r from-blue-500 via-purple-500 to-indigo-600 hover:from-blue-600 hover:via-purple-600 hover:to-indigo-700 text-white shadow-2xl hover:shadow-purple-500/60 hover:scale-110 transition-all duration-300 btn-press touch-manipulation overflow-hidden group"
+          size="icon"
+        >
+          {/* Shimmer Effect */}
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-700" />
+          
+          {/* Plus Icon with Animation */}
+          <Plus className="h-5 w-5 sm:h-6 sm:w-6 relative z-10 group-hover:rotate-90 transition-transform duration-300" />
+        </Button>
+      </div>
 
       {/* Create Room Modal */}
       <CreateRoomModal

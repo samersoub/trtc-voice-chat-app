@@ -210,9 +210,14 @@ export function showFeaturesInfo() {
 
 // تصدير للاستخدام من Console
 if (typeof window !== 'undefined') {
-  (window as any).testAllFeatures = testAllFeatures;
-  (window as any).quickTest = quickTest;
-  (window as any).showFeaturesInfo = showFeaturesInfo;
+  interface WindowWithTestFunctions extends Window {
+    testAllFeatures: typeof testAllFeatures;
+    quickTest: typeof quickTest;
+    showFeaturesInfo: typeof showFeaturesInfo;
+  }
+  (window as unknown as WindowWithTestFunctions).testAllFeatures = testAllFeatures;
+  (window as unknown as WindowWithTestFunctions).quickTest = quickTest;
+  (window as unknown as WindowWithTestFunctions).showFeaturesInfo = showFeaturesInfo;
   
   console.log(`
 🎉 ميزات الاختبار متاحة الآن!
