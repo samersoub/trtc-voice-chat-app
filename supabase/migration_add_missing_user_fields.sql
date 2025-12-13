@@ -21,16 +21,10 @@ ADD COLUMN IF NOT EXISTS location_lat DECIMAL(10, 8),
 ADD COLUMN IF NOT EXISTS location_lng DECIMAL(11, 8),
 ADD COLUMN IF NOT EXISTS city TEXT;
 
--- 4. Add Age Field (Optional - can be calculated from date_of_birth)
+-- 4. Add Age Field (Optional - will be calculated in application)
+-- Note: Cannot use GENERATED column because AGE() is not immutable
 ALTER TABLE public.users 
-ADD COLUMN IF NOT EXISTS age INTEGER 
-GENERATED ALWAYS AS (
-  CASE 
-    WHEN date_of_birth IS NOT NULL 
-    THEN EXTRACT(YEAR FROM AGE(date_of_birth))::INTEGER
-    ELSE NULL 
-  END
-) STORED;
+ADD COLUMN IF NOT EXISTS age INTEGER;
 
 -- 5. Create Indexes for New Fields
 CREATE INDEX IF NOT EXISTS idx_users_level ON public.users(level);
@@ -160,7 +154,7 @@ COMMENT ON COLUMN public.users.is_premium IS 'حالة العضوية الممي
 COMMENT ON COLUMN public.users.location_lat IS 'خط العرض للموقع';
 COMMENT ON COLUMN public.users.location_lng IS 'خط الطول للموقع';
 COMMENT ON COLUMN public.users.city IS 'المدينة';
-COMMENT ON COLUMN public.users.age IS 'العمر (محسوب تلقائياً من تاريخ الميلاد)';
+COMMENT ON COLUMN public.users.age IS 'العمر - يُحسب في التطبيق من تاريخ الميلاد';
 
 -- 11. Grant Necessary Permissions
 GRANT EXECUTE ON FUNCTION public.add_follower TO authenticated;
