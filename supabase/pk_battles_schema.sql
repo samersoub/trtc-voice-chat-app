@@ -387,9 +387,7 @@ CREATE OR REPLACE VIEW public.active_pk_battles AS
 SELECT 
   b.*,
   u1.username as room1_host_username,
-  u1.avatar as room1_host_avatar,
-  u2.username as room2_host_username,
-  u2.avatar as room2_host_avatar
+  u2.username as room2_host_username
 FROM public.pk_battles b
 LEFT JOIN public.users u1 ON u1.id = b.room1_host_id
 LEFT JOIN public.users u2 ON u2.id = b.room2_host_id

@@ -429,8 +429,7 @@ SELECT
   t.name as template_name,
   t.name_ar as template_name_ar,
   t.icon as template_icon,
-  u.username as creator_username,
-  u.avatar as creator_avatar
+  u.username as creator_username
 FROM public.lucky_bags b
 JOIN public.lucky_bag_templates t ON t.id = b.template_id
 JOIN public.users u ON u.id = b.creator_id
