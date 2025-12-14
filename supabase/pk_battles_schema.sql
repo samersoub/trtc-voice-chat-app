@@ -364,8 +364,6 @@ SELECT
   ROW_NUMBER() OVER (ORDER BY wins DESC, total_battles DESC) as rank,
   h.user_id,
   u.username,
-  u.avatar,
-  u.level,
   h.wins,
   h.losses,
   h.draws,
