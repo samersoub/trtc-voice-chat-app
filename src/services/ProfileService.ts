@@ -8,9 +8,10 @@ export type Profile = {
   username: string;
   email: string;
   phone: string;
-  
+
   // Profile fields (matching users table)
   full_name?: string | null;
+  display_id?: string | null; // Premium ID
   avatar_url?: string | null;
   profile_image?: string | null; // For backward compatibility
   bio?: string | null;
@@ -19,33 +20,33 @@ export type Profile = {
   age?: number | null;
   country?: string | null;
   language?: string;
-  
+
   // Voice chat fields
   voice_quality?: string;
   total_voice_minutes?: number;
-  
+
   // Economy
   coins: number;
   diamonds?: number;
-  
+
   // Wealth system
   wealth_level?: number;
   total_recharge?: number;
   monthly_recharge?: number;
   total_gifts_sent?: number;
   total_gifts_received?: number;
-  
+
   // Social & Gaming (NEW)
   level?: number;
   followers?: string[];
   following?: string[];
   interests?: string[];
-  
+
   // Location (NEW)
   location_lat?: number | null;
   location_lng?: number | null;
   city?: string | null;
-  
+
   // Status
   is_online?: boolean;
   last_seen?: string | null;
@@ -54,7 +55,7 @@ export type Profile = {
   is_banned?: boolean;
   ban_reason?: string | null;
   is_premium?: boolean;
-  
+
   // Metadata
   role: string;
   created_at: string;
@@ -181,7 +182,7 @@ export const ProfileService = {
           .upsert(p)
           .select()
           .single();
-        
+
         // إذا كان الخطأ RLS violation، استخدم localStorage فقط
         if (error) {
           if (error.code === '42501' || error.message.includes('row-level security')) {
@@ -196,7 +197,7 @@ export const ProfileService = {
           }
           throw new Error(error.message);
         }
-        
+
         return data as Profile;
       } catch (err: any) {
         console.warn('[ProfileService] Supabase upsert failed, using localStorage:', err.message);
@@ -218,38 +219,71 @@ export const ProfileService = {
   },
 
   async getByUserId(id: string): Promise<Profile | null> {
+    let dbProfile: Profile | null = null;
     if (isSupabaseReady && supabase) {
       const { data, error } = await supabase.from("users").select("*").eq("id", id).single();
-      if (error) return null;
-      return data as Profile;
+      if (!error && data) dbProfile = data as Profile;
     }
-    return readLocal().find((p) => p.id === id) || null;
+
+    // Always check local for overrides/fallbacks
+    const local = readLocal().find((p) => p.id === id) || null;
+
+    if (dbProfile && local) {
+      // Merge: Local overrides DB (assuming local is 'unsynced changes')
+      return { ...dbProfile, ...local };
+    }
+
+    return dbProfile || local;
   },
 
   async getByUsername(username: string): Promise<Profile | null> {
+    let dbProfile: Profile | null = null;
     if (isSupabaseReady && supabase) {
       const { data, error } = await supabase.from("users").select("*").eq("username", username).single();
-      if (error) return null;
-      return data as Profile;
+      if (!error && data) dbProfile = data as Profile;
     }
-    return readLocal().find((p) => p.username === username) || null;
+
+    const local = readLocal().find((p) => p.username === username) || null;
+
+    if (dbProfile && local) {
+      return { ...dbProfile, ...local };
+    }
+    return dbProfile || local;
   },
 
   async listAll(): Promise<Profile[]> {
+    let dbProfiles: Profile[] = [];
     if (isSupabaseReady && supabase) {
       try {
         const { data, error } = await supabase.from("users").select("*").order("created_at", { ascending: false });
-        if (error) {
-          console.warn("Supabase users table not found, using demo data");
-          return readLocal();
+        if (!error && data) {
+          dbProfiles = data as Profile[];
         }
-        return (data || []) as Profile[];
       } catch (err) {
-        console.warn("Failed to fetch users from Supabase, using demo data");
-        return readLocal();
+        console.warn("Failed to fetch users from Supabase:", err);
       }
     }
-    return readLocal();
+
+    const localProfiles = readLocal();
+
+    // Create a map of local profiles for faster lookup
+    const localMap = new Map(localProfiles.map(p => [p.id, p]));
+
+    // Merge DB profiles with Local overrides
+    const mergedProfiles = dbProfiles.map(dbP => {
+      const localP = localMap.get(dbP.id);
+      if (localP) {
+        return { ...dbP, ...localP };
+      }
+      return dbP;
+    });
+
+    // Optionally add local-only profiles (if created offline/demo)
+    // Filter out locals that were already merged
+    const dbIds = new Set(dbProfiles.map(p => p.id));
+    const localOnly = localProfiles.filter(p => !dbIds.has(p.id));
+
+    return [...mergedProfiles, ...localOnly];
   },
 
   async toggleActive(id: string): Promise<Profile | null> {
@@ -273,6 +307,13 @@ export const ProfileService = {
     return await this.upsertProfile(updated);
   },
 
+  async updateLevel(id: string, level: number): Promise<Profile | null> {
+    const current = await this.getByUserId(id);
+    if (!current) return null;
+    const updated = { ...current, level: Math.max(1, level) };
+    return await this.upsertProfile(updated);
+  },
+
   /**
    * Ban user - sets is_active to false and stores ban reason
    */
@@ -280,8 +321,8 @@ export const ProfileService = {
     if (isSupabaseReady && supabase) {
       const { data, error } = await supabase
         .from("users")
-        .update({ 
-          is_active: false, 
+        .update({
+          is_active: false,
           is_banned: true,
           ban_reason: reason,
           updated_at: new Date().toISOString()
@@ -289,7 +330,7 @@ export const ProfileService = {
         .eq("id", id)
         .select()
         .single();
-      
+
       if (error) throw new Error(error.message);
       return data as Profile;
     }
@@ -297,8 +338,8 @@ export const ProfileService = {
     // Local fallback
     const current = await this.getByUserId(id);
     if (!current) return null;
-    const updated = { 
-      ...current, 
+    const updated = {
+      ...current,
       is_active: false,
       role: current.role === 'admin' ? 'admin' : 'banned' // Don't ban admins
     };
@@ -338,7 +379,7 @@ export const ProfileService = {
 
     // Resize image for optimal performance
     const resized = await resizeImage(imageData, 400, 400);
-    
+
     const updated = { ...profile, profile_image: resized };
     return await this.upsertProfile(updated);
 
@@ -362,8 +403,8 @@ export const ProfileService = {
     if (isSupabaseReady && supabase) {
       const { data, error } = await supabase
         .from("users")
-        .update({ 
-          is_active: true, 
+        .update({
+          is_active: true,
           is_banned: false,
           ban_reason: null,
           updated_at: new Date().toISOString()
@@ -371,7 +412,7 @@ export const ProfileService = {
         .eq("id", id)
         .select()
         .single();
-      
+
       if (error) throw new Error(error.message);
       return data as Profile;
     }
@@ -379,8 +420,8 @@ export const ProfileService = {
     // Local fallback
     const current = await this.getByUserId(id);
     if (!current) return null;
-    const updated = { 
-      ...current, 
+    const updated = {
+      ...current,
       is_active: true,
       role: current.role === 'banned' ? 'user' : current.role
     };
@@ -394,14 +435,14 @@ export const ProfileService = {
     if (isSupabaseReady && supabase) {
       const { data, error } = await supabase
         .from("users")
-        .update({ 
+        .update({
           role: role,
           updated_at: new Date().toISOString()
         })
         .eq("id", id)
         .select()
         .single();
-      
+
       if (error) throw new Error(error.message);
       return data as Profile;
     }
@@ -422,7 +463,7 @@ export const ProfileService = {
         .from("users")
         .delete()
         .eq("id", id);
-      
+
       if (error) throw new Error(error.message);
       return true;
     }
@@ -441,14 +482,14 @@ export const ProfileService = {
     if (isSupabaseReady && supabase) {
       const { data, error } = await supabase
         .from("users")
-        .update({ 
+        .update({
           is_verified: verified,
           updated_at: new Date().toISOString()
         })
         .eq("id", id)
         .select()
         .single();
-      
+
       if (error) throw new Error(error.message);
       return data as Profile;
     }
@@ -472,7 +513,7 @@ export const ProfileService = {
 
   async uploadProfileImage(userId: string, file: File): Promise<string | null> {
     if (!file) return null;
-    
+
     // Local fallback function for when Supabase is unavailable or bucket doesn't exist
     const uploadLocally = async () => {
       const resized = await resizeImage(file, 512, 512, 0.9);
@@ -488,11 +529,11 @@ export const ProfileService = {
       }
       return dataUrl;
     };
-    
+
     if (!(isSupabaseReady && supabase)) {
       return await uploadLocally();
     }
-    
+
     try {
       // Resize client-side for performance
       const resized = await resizeImage(file, 512, 512, 0.9);
@@ -501,13 +542,13 @@ export const ProfileService = {
         upsert: true,
         contentType: resized.type || "image/*",
       });
-      
+
       // If bucket doesn't exist, fallback to local storage
       if (upErr) {
         console.warn(`Storage upload failed (${upErr.message}), using local storage`);
         return await uploadLocally();
       }
-      
+
       const { data } = supabase.storage.from("profiles").getPublicUrl(path);
       const url = data?.publicUrl || null;
       if (url) {

@@ -1,14 +1,15 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { 
-  Mic, MicOff, Volume2, Gift, MessageCircle, Users, 
-  MoreVertical, Crown, Send, X, ArrowLeft, 
+import {
+  Mic, MicOff, Volume2, Gift, MessageCircle, Users,
+  MoreVertical, Crown, Send, X, ArrowLeft,
   Lock, UserPlus, Share2, Settings, Star, Heart,
   Palette, Music2
 } from 'lucide-react';
 import { AuthService } from '@/services/AuthService';
 import { showSuccess, showError } from '@/utils/toast';
-import { useTrtc } from '@/hooks/useTrtc';
+// import { useTrtc } from '@/hooks/useTrtc'; // Replaced by Context
+import { useVoiceRoom } from '@/contexts/VoiceRoomContext';
 import { supabase, isSupabaseReady } from '@/services/db/supabaseClient';
 import MicPermissionDialog from './MicPermissionDialog';
 import '@/styles/lama-voice-room.css';
@@ -82,11 +83,21 @@ const AuthenticLamaVoiceRoom: React.FC = () => {
   const navigate = useNavigate();
   const currentUser = AuthService.getCurrentUser();
   const chatEndRef = useRef<HTMLDivElement>(null);
-  
+
   // TRTC Integration
-  const { join, leave, localStream, remoteStreams } = useTrtc();
-  const [isJoined, setIsJoined] = useState(false);
+  // Context Integration
+  const {
+    joinRoom: joinTrtcRoom,
+    leaveRoom: leaveTrtcRoom,
+    isJoined,
+    localStream,
+    remoteStreams,
+    currentRoomId
+  } = useVoiceRoom();
+
+  // const [isJoined, setIsJoined] = useState(false); // Using context state now
   const [currentSeatNumber, setCurrentSeatNumber] = useState<number | null>(null);
+  const [selectedSeatForMenu, setSelectedSeatForMenu] = useState<number | null>(null); // For Leave Seat Menu
 
   // States - Start with empty seats, load from Supabase
   const [seats, setSeats] = useState<VoiceSeat[]>(generateEmptySeats(20));
@@ -110,7 +121,7 @@ const AuthenticLamaVoiceRoom: React.FC = () => {
   const [announcementText, setAnnouncementText] = useState('محمد أرسل Rose بقيمة 50000 إلى فاطمة');
   const [showMicPermission, setShowMicPermission] = useState(true);
   const [micPermissionGranted, setMicPermissionGranted] = useState(false);
-  
+
   // Phase 1 Features State
   const [currentTheme, setCurrentTheme] = useState<RoomTheme | null>(null);
   const [currentEffect, setCurrentEffect] = useState<VoiceEffect | null>(null);
@@ -134,18 +145,18 @@ const AuthenticLamaVoiceRoom: React.FC = () => {
         // Load themes
         const allThemes = await RoomThemesService.getAllThemes();
         setThemes(allThemes);
-        
+
         // Get saved theme from localStorage
         const savedThemeId = localStorage.getItem(`room_theme_${roomId}`);
         if (savedThemeId) {
           const theme = allThemes.find(t => t.id === savedThemeId);
           if (theme) setCurrentTheme(theme);
         }
-        
+
         // Load voice effects
         const allEffects = await VoiceEffectsService.getAllEffects();
         setEffects(allEffects);
-        
+
         // Get active effect
         const activeEffect = await VoiceEffectsService.getActiveEffect(currentUser?.id || 'guest');
         if (activeEffect) setCurrentEffect(activeEffect);
@@ -153,19 +164,26 @@ const AuthenticLamaVoiceRoom: React.FC = () => {
         console.error('Failed to load Phase 1 features:', error);
       }
     };
-    
+
     loadFeatures();
   }, [roomId, currentUser?.id]);
 
   // Auto-join TRTC room on mount (only after mic permission)
   useEffect(() => {
-    if (!micPermissionGranted) return;
+    if (!micPermissionGranted || !roomId) return;
 
-    const joinRoom = async () => {
+    // If already joined to this room globally, don't rejoin
+    if (isJoined && currentRoomId === roomId) {
+      console.log('Already joined to this room contextually');
+      return;
+    }
+
+    const initRoom = async () => {
       try {
         const userId = currentUser?.id || `guest_${Date.now()}`;
-        await join(userId);
-        setIsJoined(true);
+        // await join(userId);
+        await joinTrtcRoom(roomId, userId);
+        // setIsJoined(true); // Handled by context
         showSuccess('تم الانضمام للغرفة الصوتية');
       } catch (error) {
         console.error('Failed to join TRTC room:', error);
@@ -173,13 +191,13 @@ const AuthenticLamaVoiceRoom: React.FC = () => {
       }
     };
 
-    joinRoom();
+    initRoom();
 
-    return () => {
-      leave();
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [micPermissionGranted]);
+    // Cleanup: DO NOT LEAVE on unmount to allow MiniPlayer
+    // return () => {
+    //   leave();
+    // };
+  }, [micPermissionGranted, roomId, isJoined, currentRoomId]);
 
   // Supabase Real-time Subscriptions
   useEffect(() => {
@@ -187,7 +205,7 @@ const AuthenticLamaVoiceRoom: React.FC = () => {
     console.log('isSupabaseReady:', isSupabaseReady);
     console.log('roomId:', roomId);
     console.log('supabase client:', supabase);
-    
+
     if (!isSupabaseReady || !roomId || !supabase) {
       console.warn('⚠️ Supabase not ready or roomId missing');
       console.warn('isSupabaseReady:', isSupabaseReady);
@@ -196,7 +214,7 @@ const AuthenticLamaVoiceRoom: React.FC = () => {
     }
 
     console.log('✅ Setting up Realtime subscriptions for room:', roomId);
-    
+
     // Clean up duplicate seats (CRITICAL FIX for ghost user bug)
     const cleanupDuplicateSeats = async () => {
       try {
@@ -205,14 +223,14 @@ const AuthenticLamaVoiceRoom: React.FC = () => {
           .from('voice_room_seats')
           .select('*')
           .eq('room_id', roomId);
-        
+
         if (error) {
           console.error('Failed to fetch seats for cleanup:', error);
           return;
         }
-        
+
         if (!allSeats || allSeats.length === 0) return;
-        
+
         // Find duplicate users (users appearing on multiple seats)
         const userSeatMap = new Map<string, any[]>();
         allSeats.forEach(seat => {
@@ -222,13 +240,13 @@ const AuthenticLamaVoiceRoom: React.FC = () => {
           }
           userSeatMap.get(userId)!.push(seat);
         });
-        
+
         // For each user with multiple seats, keep only the latest one
         for (const [userId, seats] of userSeatMap.entries()) {
           if (seats.length > 1) {
             // Sort by joined_at (newest first)
             seats.sort((a, b) => new Date(b.joined_at).getTime() - new Date(a.joined_at).getTime());
-            
+
             // Delete all except the first (newest) one
             const seatsToDelete = seats.slice(1);
             for (const seat of seatsToDelete) {
@@ -236,18 +254,18 @@ const AuthenticLamaVoiceRoom: React.FC = () => {
                 .from('voice_room_seats')
                 .delete()
                 .match({ room_id: roomId, seat_number: seat.seat_number });
-              
+
               console.log(`🧹 Removed duplicate seat ${seat.seat_number} for user ${userId}`);
             }
           }
         }
-        
+
         console.log('✅ Cleanup complete - removed duplicate seats');
       } catch (err) {
         console.error('Failed to cleanup duplicate seats:', err);
       }
     };
-    
+
     cleanupDuplicateSeats();
 
     // Load existing seats from Supabase
@@ -257,14 +275,14 @@ const AuthenticLamaVoiceRoom: React.FC = () => {
           .from('voice_room_seats')
           .select('*')
           .eq('room_id', roomId);
-        
+
         if (error) {
           console.error('Failed to load seats:', error);
           return;
         }
-        
+
         console.log('📥 Loaded seats from Supabase:', existingSeats);
-        
+
         if (existingSeats && existingSeats.length > 0) {
           setSeats(prev => prev.map(seat => {
             const dbSeat = existingSeats.find(s => s.seat_number === seat.seatNumber);
@@ -290,7 +308,7 @@ const AuthenticLamaVoiceRoom: React.FC = () => {
         console.error('Failed to load existing seats:', err);
       }
     };
-    
+
     loadExistingSeats();
 
     // Subscribe to messages
@@ -348,21 +366,21 @@ const AuthenticLamaVoiceRoom: React.FC = () => {
           console.log('Seat change received:', payload);
           if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
             const seatData = payload.new!;
-            setSeats(prev => prev.map(seat => 
+            setSeats(prev => prev.map(seat =>
               seat.seatNumber === Number(seatData.seat_number)
                 ? {
-                    ...seat,
-                    user: seatData.user_id ? {
-                      id: String(seatData.user_id),
-                      name: String(seatData.user_name),
-                      avatar: String(seatData.user_avatar),
-                      level: Number(seatData.user_level) || 1,
-                      vipLevel: seatData.vip_level ? Number(seatData.vip_level) : undefined,
-                      isSpeaking: Boolean(seatData.is_speaking),
-                      isMuted: Boolean(seatData.is_muted)
-                    } : null,
-                    isLocked: Boolean(seatData.is_locked)
-                  }
+                  ...seat,
+                  user: seatData.user_id ? {
+                    id: String(seatData.user_id),
+                    name: String(seatData.user_name),
+                    avatar: String(seatData.user_avatar),
+                    level: Number(seatData.user_level) || 1,
+                    vipLevel: seatData.vip_level ? Number(seatData.vip_level) : undefined,
+                    isSpeaking: Boolean(seatData.is_speaking),
+                    isMuted: Boolean(seatData.is_muted)
+                  } : null,
+                  isLocked: Boolean(seatData.is_locked)
+                }
                 : seat
             ));
           } else if (payload.eventType === 'DELETE') {
@@ -410,10 +428,14 @@ const AuthenticLamaVoiceRoom: React.FC = () => {
     if (!seat) return;
 
     if (seat.user) {
+      if (seat.user.id === currentUser?.id) {
+        setSelectedSeatForMenu(seatNumber);
+        return;
+      }
       showSuccess(`${seat.user.name} - المستوى ${seat.user.level}`);
       return;
     }
-    
+
     if (seat.isLocked) {
       showError('مقعد مقفل');
       return;
@@ -429,27 +451,33 @@ const AuthenticLamaVoiceRoom: React.FC = () => {
       console.log('🪑 Joining seat:', seatNumber);
       console.log('Current user:', currentUser);
       console.log('isSupabaseReady:', isSupabaseReady);
-      
+
       // Always update local state first for immediate feedback
-      setSeats(prev => prev.map(s =>
-        s.seatNumber === seatNumber
-          ? {
-              ...s,
-              user: {
-                id: currentUser.id,
-                name: currentUser.name || 'مستخدم',
-                avatar: currentUser.avatarUrl || 'https://api.dicebear.com/7.x/avataaars/svg?seed=' + currentUser.id,
-                level: 1,
-                isSpeaking: false,
-                isMuted: true
-              }
+      setSeats(prev => prev.map(s => {
+        // Clear user from previous seat if any
+        if (s.user?.id === currentUser.id) {
+          return { ...s, user: null };
+        }
+        // Occupy new seat
+        if (s.seatNumber === seatNumber) {
+          return {
+            ...s,
+            user: {
+              id: currentUser.id,
+              name: currentUser.name || 'مستخدم',
+              avatar: currentUser.avatarUrl || 'https://api.dicebear.com/7.x/avataaars/svg?seed=' + currentUser.id,
+              level: 1,
+              isSpeaking: false,
+              isMuted: true
             }
-          : s
-      ));
-      
+          };
+        }
+        return s;
+      }));
+
       setCurrentSeatNumber(seatNumber);
       showSuccess(`تم الانضمام للمقعد ${seatNumber}`);
-      
+
       // Update seat in Supabase (background - don't block on failure)
       if (isSupabaseReady && supabase) {
         const seatData = {
@@ -462,9 +490,9 @@ const AuthenticLamaVoiceRoom: React.FC = () => {
           is_speaking: false,
           is_muted: true
         };
-        
+
         console.log('📤 Sending seat data to Supabase:', seatData);
-        
+
         // Use async function for proper error handling
         (async () => {
           try {
@@ -474,28 +502,28 @@ const AuthenticLamaVoiceRoom: React.FC = () => {
               .from('voice_room_seats')
               .delete()
               .match({ room_id: roomId, user_id: currentUser.id });
-            
+
             if (deleteUserError && deleteUserError.code !== 'PGRST116') { // PGRST116 = no rows found (ok)
               console.warn('Delete user from old seats warning:', deleteUserError);
             } else {
               console.log('✅ Removed user from old seats');
             }
-            
+
             // Then, delete any existing entry for this specific seat
             const { error: deleteSeatError } = await supabase
               .from('voice_room_seats')
               .delete()
               .match({ room_id: roomId, seat_number: seatNumber });
-            
+
             if (deleteSeatError && deleteSeatError.code !== 'PGRST116') {
               console.warn('Delete seat warning:', deleteSeatError);
             }
-            
+
             // Finally, insert the new seat data
             const { error: insertError } = await supabase
               .from('voice_room_seats')
               .insert(seatData);
-            
+
             if (insertError) {
               console.error('❌ Supabase insert error:', insertError);
             } else {
@@ -508,7 +536,7 @@ const AuthenticLamaVoiceRoom: React.FC = () => {
       } else {
         console.log('⚠️ Supabase not ready, working in demo mode');
       }
-      
+
       // Add system message
       const joinMessage: ChatMessage = {
         id: Date.now().toString(),
@@ -519,10 +547,10 @@ const AuthenticLamaVoiceRoom: React.FC = () => {
         timestamp: new Date(),
         type: 'system'
       };
-      
+
       // Always add to local state
       setMessages(prev => [...prev, joinMessage]);
-      
+
       // Also send to Supabase (background)
       if (isSupabaseReady && supabase) {
         (async () => {
@@ -562,11 +590,11 @@ const AuthenticLamaVoiceRoom: React.FC = () => {
     try {
       console.log('📤 Sending message...');
       console.log('Message:', newMsg);
-      
+
       // Always add to local state first for immediate feedback
       setMessages(prev => [...prev, newMsg]);
       setMessageInput('');
-      
+
       // Send to Supabase in background (don't block on failure)
       if (isSupabaseReady && supabase) {
         console.log('📤 Sending to Supabase...');
@@ -580,7 +608,7 @@ const AuthenticLamaVoiceRoom: React.FC = () => {
               message: newMsg.message,
               message_type: 'text'
             });
-            
+
             if (error) {
               console.error('❌ Supabase insert error:', error);
             } else {
@@ -603,11 +631,11 @@ const AuthenticLamaVoiceRoom: React.FC = () => {
     try {
       setCurrentTheme(theme);
       localStorage.setItem(`room_theme_${roomId}`, theme.id);
-      
+
       if (currentUser?.id) {
         RoomThemesService.activateTheme(currentUser.id, theme.id);
       }
-      
+
       showSuccess(`تم تطبيق ثيم ${theme.name}`);
       setShowThemePanel(false);
     } catch (error) {
@@ -615,7 +643,7 @@ const AuthenticLamaVoiceRoom: React.FC = () => {
       showError('فشل تطبيق الثيم');
     }
   };
-  
+
   // Voice Effect Handler
   const handleEffectChange = async (effect: VoiceEffect) => {
     try {
@@ -656,10 +684,10 @@ const AuthenticLamaVoiceRoom: React.FC = () => {
       } else {
         setMessages(prev => [...prev, giftMsg]);
       }
-      
+
       setShowGiftPanel(false);
       showSuccess(`تم إرسال ${gift.name}!`);
-      
+
       // Update announcement banner for high-value gifts
       if (gift.price >= 100) {
         setAnnouncementText(`${currentUser?.name || 'مستخدم'} أرسل ${gift.name} بقيمة ${gift.price} 💎`);
@@ -679,16 +707,16 @@ const AuthenticLamaVoiceRoom: React.FC = () => {
     try {
       const newMicState = !isMicActive;
       setIsMicActive(newMicState);
-      
+
       // Apply voice effect if active and mic is on
       if (newMicState && currentEffect) {
         try {
           // Get current audio stream
           const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-          
+
           // Apply the voice effect
           const processedStream = VoiceEffectsService.applyEffect(stream, currentEffect);
-          
+
           // Here you would replace the TRTC stream with the processed one
           // Note: TRTC SDK integration would be needed here
           console.log('Applied voice effect:', currentEffect.name, 'to microphone stream');
@@ -697,13 +725,13 @@ const AuthenticLamaVoiceRoom: React.FC = () => {
           // Continue without effect
         }
       }
-      
+
       showSuccess(newMicState ? 'تم تشغيل المايكروفون' : 'تم كتم المايكروفون');
 
       // Update seat mic status in Supabase
       if (isSupabaseReady) {
         await supabase!.from('voice_room_seats')
-          .update({ 
+          .update({
             is_muted: !newMicState,
             is_speaking: newMicState
           })
@@ -714,13 +742,13 @@ const AuthenticLamaVoiceRoom: React.FC = () => {
         setSeats(prev => prev.map(seat =>
           seat.seatNumber === currentSeatNumber && seat.user
             ? {
-                ...seat,
-                user: {
-                  ...seat.user,
-                  isMuted: !newMicState,
-                  isSpeaking: newMicState
-                }
+              ...seat,
+              user: {
+                ...seat.user,
+                isMuted: !newMicState,
+                isSpeaking: newMicState
               }
+            }
             : seat
         ));
       }
@@ -730,10 +758,29 @@ const AuthenticLamaVoiceRoom: React.FC = () => {
     }
   };
 
+  const handleLeaveSeat = async () => {
+    if (!currentUser || !selectedSeatForMenu) return;
+
+    const seatNum = selectedSeatForMenu;
+    setSelectedSeatForMenu(null);
+    setCurrentSeatNumber(null);
+    setIsMicActive(false); // Turn off mic logic
+
+    // Optimistic Update
+    setSeats(prev => prev.map(s => s.seatNumber === seatNum ? { ...s, user: null } : s));
+    showSuccess('تم مغادرة المقعد');
+
+    if (isSupabaseReady && supabase) {
+      try {
+        await supabase.from('voice_room_seats').delete().match({ room_id: roomId, seat_number: seatNum });
+      } catch (e) { console.error('Error leaving seat DB:', e); }
+    }
+  };
+
   // ===================================================================
   // Render: Authentic Lama Chat UI (Based on Screenshot)
   // ===================================================================
-  
+
   // Show mic permission dialog first
   if (showMicPermission) {
     return (
@@ -752,16 +799,16 @@ const AuthenticLamaVoiceRoom: React.FC = () => {
   }
 
   return (
-    <div 
-      className="h-screen w-full flex flex-col bg-gradient-to-br transition-all duration-700" 
+    <div
+      className="h-screen w-full flex flex-col bg-gradient-to-br transition-all duration-700"
       dir="rtl"
       style={{
-        backgroundImage: currentTheme 
+        backgroundImage: currentTheme
           ? `linear-gradient(135deg, ${currentTheme.colors.primary}, ${currentTheme.colors.secondary})`
           : 'linear-gradient(135deg, #1e3a8a, #1e40af, #1e3a8a)'
       }}
     >
-      
+
       {/* Top Animated Banner - Gift/Prize Announcements */}
       <div className="bg-gradient-to-r from-yellow-500/95 via-orange-500/95 to-pink-500/95 backdrop-blur-sm overflow-hidden h-10 flex items-center">
         <div className="animate-marquee whitespace-nowrap flex items-center gap-8 text-white font-bold text-sm">
@@ -785,8 +832,8 @@ const AuthenticLamaVoiceRoom: React.FC = () => {
 
       {/* Room Info - Left Top Corner */}
       <div className="absolute top-12 left-3 z-30 flex items-center gap-2 bg-black/50 backdrop-blur-md rounded-xl px-3 py-2">
-        <img 
-          src={roomInfo.coverImage} 
+        <img
+          src={roomInfo.coverImage}
           alt={roomInfo.name}
           className="w-10 h-10 rounded-lg object-cover border border-white/30"
         />
@@ -822,7 +869,7 @@ const AuthenticLamaVoiceRoom: React.FC = () => {
 
         {/* Content Over Background */}
         <div className="relative h-full flex flex-col px-3 py-2">
-          
+
           {/* Seats Grid - 4 Rows x 5 Columns = 20 Seats */}
           <div className="mb-3">
             <div className="grid grid-cols-5 gap-2 max-w-md mx-auto">
@@ -836,8 +883,8 @@ const AuthenticLamaVoiceRoom: React.FC = () => {
                   <div className={`
                     relative w-14 h-14 rounded-full flex items-center justify-center
                     transition-all duration-300
-                    ${seat.user 
-                      ? 'border-2 border-blue-400 shadow-lg shadow-blue-400/30' 
+                    ${seat.user
+                      ? 'border-2 border-blue-400 shadow-lg shadow-blue-400/30'
                       : seat.isLocked
                         ? 'border-2 border-gray-600 bg-gray-700/50'
                         : 'border-2 border-white/30 bg-blue-800/30 hover:bg-blue-700/50'
@@ -851,14 +898,14 @@ const AuthenticLamaVoiceRoom: React.FC = () => {
                           alt={seat.user.name}
                           className="w-full h-full rounded-full object-cover"
                         />
-                        
+
                         {/* VIP Crown Badge */}
                         {seat.user.vipLevel && seat.user.vipLevel > 0 && (
                           <div className="absolute -top-1 -right-1 w-5 h-5 bg-yellow-500 rounded-full flex items-center justify-center border border-white shadow-sm">
                             <Crown className="w-2.5 h-2.5 text-white" />
                           </div>
                         )}
-                        
+
                         {/* Mic Status Badge */}
                         {seat.user.isSpeaking && (
                           <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-5 h-5 bg-green-500 rounded-full flex items-center justify-center border border-white shadow-sm">
@@ -876,10 +923,10 @@ const AuthenticLamaVoiceRoom: React.FC = () => {
                       <UserPlus className="w-6 h-6 text-white/40" />
                     )}
                   </div>
-                  
+
                   {/* Seat Number */}
                   <span className="text-xs font-bold text-white">{seat.seatNumber}</span>
-                  
+
                   {/* Username (only if occupied) */}
                   {seat.user && (
                     <span className="text-xs text-white/70 truncate max-w-[55px]">
@@ -900,8 +947,8 @@ const AuthenticLamaVoiceRoom: React.FC = () => {
                     key={msg.id}
                     className={`
                       flex items-start gap-2 p-2 rounded-lg
-                      ${msg.type === 'system' 
-                        ? 'bg-blue-500/20 justify-center' 
+                      ${msg.type === 'system'
+                        ? 'bg-blue-500/20 justify-center'
                         : msg.type === 'gift'
                           ? 'bg-yellow-500/20'
                           : 'bg-white/5'
@@ -946,8 +993,8 @@ const AuthenticLamaVoiceRoom: React.FC = () => {
             onClick={toggleMic}
             className={`
               p-2.5 rounded-full transition-all flex-shrink-0
-              ${isMicActive 
-                ? 'bg-green-600 hover:bg-green-700 shadow-lg shadow-green-500/30' 
+              ${isMicActive
+                ? 'bg-green-600 hover:bg-green-700 shadow-lg shadow-green-500/30'
                 : 'bg-red-600 hover:bg-red-700 shadow-lg shadow-red-500/30'
               }
             `}
@@ -1064,7 +1111,7 @@ const AuthenticLamaVoiceRoom: React.FC = () => {
                 <X className="w-5 h-5" />
               </button>
             </div>
-            
+
             {currentTheme && (
               <div className="mb-4 p-3 bg-green-900/30 rounded-lg border border-green-500/30">
                 <p className="text-sm text-green-300 flex items-center gap-2">
@@ -1083,7 +1130,7 @@ const AuthenticLamaVoiceRoom: React.FC = () => {
                     ${currentTheme?.id === theme.id ? 'ring-4 ring-green-500 shadow-lg shadow-green-500/30' : ''}
                   `}
                 >
-                  <div 
+                  <div
                     className="h-32 bg-gradient-to-br p-4 flex flex-col justify-between"
                     style={{
                       backgroundImage: `linear-gradient(135deg, ${theme.colors.primary}, ${theme.colors.secondary})`
@@ -1148,8 +1195,8 @@ const AuthenticLamaVoiceRoom: React.FC = () => {
                   onClick={() => handleEffectChange(effect)}
                   className={`
                     w-full p-4 rounded-xl transition-all hover:scale-[1.02]
-                    ${currentEffect?.id === effect.id 
-                      ? 'bg-green-600/30 border-2 border-green-500 shadow-lg shadow-green-500/30' 
+                    ${currentEffect?.id === effect.id
+                      ? 'bg-green-600/30 border-2 border-green-500 shadow-lg shadow-green-500/30'
                       : 'bg-white/10 hover:bg-white/20 border-2 border-transparent'
                     }
                   `}
@@ -1187,7 +1234,31 @@ const AuthenticLamaVoiceRoom: React.FC = () => {
           </div>
         </div>
       )}
-    </div>
+      {/* Leave Seat Modal/Menu */}
+      {selectedSeatForMenu && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={() => setSelectedSeatForMenu(null)}>
+          <div className="bg-slate-900 border border-white/10 rounded-2xl p-6 w-80 shadow-2xl transform transition-all scale-100" onClick={e => e.stopPropagation()}>
+            <h3 className="text-white text-lg font-bold mb-2 text-center">خيارات المقعد</h3>
+            <p className="text-gray-400 text-sm text-center mb-6">هل تريد مغادرة المقعد (المايك)؟</p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setSelectedSeatForMenu(null)}
+                className="flex-1 py-3 rounded-xl bg-white/5 text-white hover:bg-white/10 transition-all font-medium"
+              >
+                إلغاء
+              </button>
+              <button
+                onClick={handleLeaveSeat}
+                className="flex-1 py-3 rounded-xl bg-red-500 hover:bg-red-600 text-white transition-all font-medium shadow-lg shadow-red-500/20"
+              >
+                مغادرة
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+    </div> // End of main container
   );
 };
 

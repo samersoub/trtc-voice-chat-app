@@ -22,7 +22,7 @@ export interface RoomParticipant {
  * - Track user online status
  */
 export class RoomParticipantService {
-  
+
   /**
    * إضافة مستخدم للغرفة (دخول الغرفة)
    * Join a room as a participant
@@ -91,10 +91,10 @@ export class RoomParticipantService {
       }
 
       console.log(`[RoomParticipant] User ${userId} left room ${roomId}`);
-      
+
       // التحقق إذا كانت الغرفة فارغة الآن
       await this.checkAndHideEmptyRoom(roomId);
-      
+
       return true;
     } catch (err) {
       console.error('[RoomParticipant] Exception leaving room:', err);
@@ -181,7 +181,7 @@ export class RoomParticipantService {
 
     try {
       const count = await this.getParticipantCount(roomId);
-      
+
       if (count === 0) {
         // إخفاء الغرفة إذا كانت فارغة
         await supabase
@@ -336,9 +336,63 @@ export class RoomParticipantService {
       }
 
       return count;
+      return count;
     } catch (err) {
       console.error('[RoomParticipant] Exception cleaning up inactive:', err);
       return 0;
+    }
+  }
+
+  /**
+   * الانضمام إلى مقعد (تحديث رقم المقعد)
+   * Join a specific seat
+   */
+  static async joinSeat(roomId: string, userId: string, seatNumber: number): Promise<boolean> {
+    if (!isSupabaseReady || !supabase) return false;
+
+    try {
+      // First ensure user is in the room
+      await this.joinRoom(roomId, userId, 'speaker');
+
+      const { error } = await supabase
+        .from('room_participants')
+        .update({ mic_seat: seatNumber, role: 'speaker' })
+        .eq('room_id', roomId)
+        .eq('user_id', userId);
+
+      if (error) {
+        console.error('[RoomParticipant] Failed to join seat:', error);
+        return false;
+      }
+      return true;
+    } catch (err) {
+      console.error('[RoomParticipant] Exception joining seat:', err);
+      return false;
+    }
+  }
+
+  /**
+   * مغادرة المقعد (العودة لكونه مستمعاً)
+   * Leave seat (become listener)
+   */
+  static async leaveSeat(roomId: string, userId: string): Promise<boolean> {
+    if (!isSupabaseReady || !supabase) return false;
+
+    try {
+      const { error } = await supabase
+        .from('room_participants')
+        .update({ mic_seat: null, role: 'listener' })
+        .eq('room_id', roomId)
+        .eq('user_id', userId);
+
+      if (error) {
+        console.error('[RoomParticipant] Failed to leave seat:', error);
+        return false;
+      }
+      return true;
+    } catch (err) {
+      console.error('[RoomParticipant] Exception leaving seat:', err);
+      return false;
     }
   }
 }

@@ -383,36 +383,37 @@ ALTER TABLE public.lucky_bag_participants ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.lucky_bag_winners ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.user_lucky_bag_stats ENABLE ROW LEVEL SECURITY;
 
--- Policies: Templates (everyone can view)
+DROP POLICY IF EXISTS "Anyone can view active templates" ON public.lucky_bag_templates;
 CREATE POLICY "Anyone can view active templates"
   ON public.lucky_bag_templates
   FOR SELECT
   USING (is_active = true);
 
--- Policies: Lucky bags
+DROP POLICY IF EXISTS "Anyone can view active bags" ON public.lucky_bags;
 CREATE POLICY "Anyone can view active bags"
   ON public.lucky_bags
   FOR SELECT
   USING (status IN ('open', 'filling', 'ready', 'drawn'));
 
+DROP POLICY IF EXISTS "Users can create bags" ON public.lucky_bags;
 CREATE POLICY "Users can create bags"
   ON public.lucky_bags
   FOR INSERT
   WITH CHECK (auth.uid() = creator_id);
 
--- Policies: Participants
+DROP POLICY IF EXISTS "Anyone can view participants" ON public.lucky_bag_participants;
 CREATE POLICY "Anyone can view participants"
   ON public.lucky_bag_participants
   FOR SELECT
   USING (true);
 
--- Policies: Winners
+DROP POLICY IF EXISTS "Anyone can view winners" ON public.lucky_bag_winners;
 CREATE POLICY "Anyone can view winners"
   ON public.lucky_bag_winners
   FOR SELECT
   USING (true);
 
--- Policies: Stats
+DROP POLICY IF EXISTS "Users can view own stats" ON public.user_lucky_bag_stats;
 CREATE POLICY "Users can view own stats"
   ON public.user_lucky_bag_stats
   FOR SELECT

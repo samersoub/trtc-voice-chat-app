@@ -84,7 +84,7 @@ export const AuthService = {
     // Demo admin login (credentials from env or defaults for development)
     const adminUsername = (import.meta as any).env.VITE_ADMIN_USERNAME || "admin";
     const adminPassword = (import.meta as any).env.VITE_ADMIN_PASSWORD || "admin123";
-    
+
     if (login.trim().toLowerCase() === adminUsername.toLowerCase() && password === adminPassword) {
       const user: User = {
         id: "admin-demo",
@@ -96,7 +96,7 @@ export const AuthService = {
       };
       localStorage.setItem(KEY, JSON.stringify(user));
       localStorage.setItem("admin:token", "demo-token");
-      
+
       // Set user status as online
       UserStatusService.setOnline(user.id);
 
@@ -145,15 +145,16 @@ export const AuthService = {
         id: u.id,
         email,
         name: prof.username,
+        displayId: prof.display_id || undefined,
         phone: prof.phone,
         avatarUrl: prof.profile_image || undefined,
         createdAt: prof.created_at,
       };
       localStorage.setItem(KEY, JSON.stringify(user));
-      
+
       // Set user status as online
       UserStatusService.setOnline(user.id);
-      
+
       void NotificationHelper.notify("Login Successful", `Welcome back, ${prof.username}!`, { meta: { kind: "security" } });
       rate.reset(`login:${login}`);
       return user;
@@ -167,10 +168,10 @@ export const AuthService = {
       throw new Error("Invalid credentials");
     }
     localStorage.setItem(KEY, JSON.stringify(stored));
-    
+
     // Set user status as online
     UserStatusService.setOnline(stored.id);
-    
+
     void NotificationHelper.notify("Login Successful", `Welcome back, ${stored.name || "user"}!`, { meta: { kind: "security" } });
     rate.reset(`login:${login}`);
     return stored as User;
@@ -199,7 +200,7 @@ export const AuthService = {
         username,
         email,
         phone,
-        
+
         // Profile fields matching users table
         full_name: username,
         avatar_url: null,
@@ -208,33 +209,33 @@ export const AuthService = {
         date_of_birth: null,
         country: null,
         language: 'ar',
-        
+
         // Voice chat
         voice_quality: 'medium',
         total_voice_minutes: 0,
-        
+
         // Economy
         coins: 1000, // Welcome bonus
         diamonds: 0,
-        
+
         // Wealth
         wealth_level: 1,
         total_recharge: 0,
         monthly_recharge: 0,
         total_gifts_sent: 0,
         total_gifts_received: 0,
-        
+
         // Social & Gaming
         level: 1,
         followers: [],
         following: [],
         interests: [],
-        
+
         // Location
         location_lat: null,
         location_lng: null,
         city: null,
-        
+
         // Status
         is_online: false,
         last_seen: null,
@@ -242,7 +243,7 @@ export const AuthService = {
         is_verified: !!u.email_confirmed_at,
         is_banned: false,
         is_premium: false,
-        
+
         // Metadata
         role: "user",
         created_at: new Date().toISOString(),
@@ -282,39 +283,39 @@ export const AuthService = {
       username,
       email,
       phone,
-      
+
       // Profile fields
       full_name: username,
       avatar_url: null,
       bio: null,
       language: 'ar',
-      
+
       // Voice chat
       voice_quality: 'medium',
       total_voice_minutes: 0,
-      
+
       // Economy
       coins: 1000,
       diamonds: 0,
-      
+
       // Wealth
       wealth_level: 1,
       total_recharge: 0,
       monthly_recharge: 0,
       total_gifts_sent: 0,
       total_gifts_received: 0,
-      
+
       // Social & Gaming
       level: 1,
       followers: [],
       following: [],
       interests: [],
-      
+
       // Status
       is_active: true,
       is_verified: false,
       is_premium: false,
-      
+
       // Metadata
       role: "user",
       created_at: user.createdAt,
@@ -390,7 +391,7 @@ export const AuthService = {
     });
 
     if (error) throw error;
-    
+
     // OAuth will redirect to callback URL
     // User will be available after redirect
     return data as unknown as User;

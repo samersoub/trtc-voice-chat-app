@@ -19,23 +19,30 @@ export const MicPermissionDialog: React.FC<MicPermissionDialogProps> = ({
     setError(null);
 
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ 
+      const stream = await navigator.mediaDevices.getUserMedia({
         audio: true,
-        video: false 
+        video: false
       });
-      
+
       // إيقاف الـ stream مؤقتاً (سيتم إعادة تشغيله في TRTC)
       stream.getTracks().forEach(track => track.stop());
-      
+
       onPermissionGranted();
     } catch (err) {
       const error = err as { name?: string };
       console.error('Microphone permission denied:', err);
-      setError(error.name === 'NotAllowedError' 
-        ? 'تم رفض صلاحية الميكروفون. يرجى السماح بالوصول من إعدادات المتصفح.'
-        : 'فشل الوصول للميكروفون. تأكد من أن الميكروفون متصل وغير مستخدم من تطبيق آخر.'
-      );
-      onPermissionDenied();
+
+      let errorMessage = 'فشل الوصول للميكروفون. تأكد من أن الميكروفون متصل وغير مستخدم من تطبيق آخر.';
+
+      if (error.name === 'NotAllowedError') {
+        errorMessage = 'تم رفض صلاحية الميكروفون. يرجى السماح بالوصول من إعدادات المتصفح.';
+      } else if (error.name === 'NotFoundError') {
+        errorMessage = 'لم يتم العثور على ميكروفون. يرجى توصيل ميكروفون والمحاولة مرة أخرى.';
+      }
+
+      setError(errorMessage);
+      // Remove auto-close so user can see the error and choose to retry or join as listener
+      // onPermissionDenied(); 
     } finally {
       setIsRequesting(false);
     }

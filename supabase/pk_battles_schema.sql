@@ -165,6 +165,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+DROP TRIGGER IF EXISTS trigger_update_battle_score ON public.pk_battle_gifts;
 CREATE TRIGGER trigger_update_battle_score
   AFTER INSERT ON public.pk_battle_gifts
   FOR EACH ROW
@@ -294,17 +295,19 @@ ALTER TABLE public.pk_battle_invites ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.pk_battle_gifts ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.pk_battle_history ENABLE ROW LEVEL SECURITY;
 
--- Policies: pk_battles
+DROP POLICY IF EXISTS "Anyone can view active battles" ON public.pk_battles;
 CREATE POLICY "Anyone can view active battles"
   ON public.pk_battles
   FOR SELECT
   USING (status IN ('active', 'countdown', 'finished'));
 
+DROP POLICY IF EXISTS "Hosts can create battles" ON public.pk_battles;
 CREATE POLICY "Hosts can create battles"
   ON public.pk_battles
   FOR INSERT
   WITH CHECK (auth.uid() = created_by);
 
+DROP POLICY IF EXISTS "Hosts can update own battles" ON public.pk_battles;
 CREATE POLICY "Hosts can update own battles"
   ON public.pk_battles
   FOR UPDATE
@@ -313,7 +316,7 @@ CREATE POLICY "Hosts can update own battles"
     OR auth.uid() = room2_host_id
   );
 
--- Policies: pk_battle_invites
+DROP POLICY IF EXISTS "Users can view own invites" ON public.pk_battle_invites;
 CREATE POLICY "Users can view own invites"
   ON public.pk_battle_invites
   FOR SELECT
@@ -322,33 +325,37 @@ CREATE POLICY "Users can view own invites"
     OR auth.uid() = to_host_id
   );
 
+DROP POLICY IF EXISTS "Hosts can send invites" ON public.pk_battle_invites;
 CREATE POLICY "Hosts can send invites"
   ON public.pk_battle_invites
   FOR INSERT
   WITH CHECK (auth.uid() = from_host_id);
 
+DROP POLICY IF EXISTS "Recipients can respond to invites" ON public.pk_battle_invites;
 CREATE POLICY "Recipients can respond to invites"
   ON public.pk_battle_invites
   FOR UPDATE
   USING (auth.uid() = to_host_id);
 
--- Policies: pk_battle_gifts
+DROP POLICY IF EXISTS "Users can view battle gifts" ON public.pk_battle_gifts;
 CREATE POLICY "Users can view battle gifts"
   ON public.pk_battle_gifts
   FOR SELECT
   USING (true);
 
+DROP POLICY IF EXISTS "Users can send battle gifts" ON public.pk_battle_gifts;
 CREATE POLICY "Users can send battle gifts"
   ON public.pk_battle_gifts
   FOR INSERT
   WITH CHECK (auth.uid() = sender_id);
 
--- Policies: pk_battle_history
+DROP POLICY IF EXISTS "Users can view own history" ON public.pk_battle_history;
 CREATE POLICY "Users can view own history"
   ON public.pk_battle_history
   FOR SELECT
   USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Anyone can view leaderboard" ON public.pk_battle_history;
 CREATE POLICY "Anyone can view leaderboard"
   ON public.pk_battle_history
   FOR SELECT

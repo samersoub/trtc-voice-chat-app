@@ -32,7 +32,10 @@ import {
   Video,
   Calendar,
   Home,
+  ShoppingBag,
 } from 'lucide-react';
+
+import StoreManagement from '@/components/admin/StoreManagement';
 
 export default function AdvancedAdminPanel() {
   const { t, dir } = useLocale();
@@ -43,7 +46,11 @@ export default function AdvancedAdminPanel() {
   const [activities, setActivities] = useState<AdminActivity[]>([]);
   const [alerts, setAlerts] = useState<SystemAlert[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('overview');
+
+  // Read tab from URL or default to 'overview'
+  const searchParams = new URLSearchParams(window.location.search);
+  const initialTab = searchParams.get('tab') || 'overview';
+  const [activeTab, setActiveTab] = useState(initialTab);
 
   useEffect(() => {
     loadDashboardData();
@@ -85,7 +92,7 @@ export default function AdvancedAdminPanel() {
       performedBy: 'current_admin',
       timestamp: Date.now(),
     });
-    
+
     if (success) {
       alert(dir === 'rtl' ? 'تم حظر المستخدم بنجاح' : 'User banned successfully');
       loadDashboardData();
@@ -229,10 +236,14 @@ export default function AdvancedAdminPanel() {
 
         {/* Main Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-5 mb-6">
+          <TabsList className="grid w-full grid-cols-6 mb-6">
             <TabsTrigger value="overview">
               <Home className="w-4 h-4 mr-2" />
               {dir === 'rtl' ? 'نظرة عامة' : 'Overview'}
+            </TabsTrigger>
+            <TabsTrigger value="store">
+              <ShoppingBag className="w-4 h-4 mr-2" />
+              {dir === 'rtl' ? 'المتجر' : 'Store'}
             </TabsTrigger>
             <TabsTrigger value="users">
               <Users className="w-4 h-4 mr-2" />
@@ -251,6 +262,11 @@ export default function AdvancedAdminPanel() {
               {dir === 'rtl' ? 'الإعدادات' : 'Settings'}
             </TabsTrigger>
           </TabsList>
+
+          {/* Store Tab */}
+          <TabsContent value="store">
+            <StoreManagement />
+          </TabsContent>
 
           {/* Overview Tab */}
           <TabsContent value="overview">
@@ -410,7 +426,7 @@ export default function AdvancedAdminPanel() {
                   ? 'عرض وإدارة جميع المستخدمين في النظام'
                   : 'View and manage all users in the system'}
               </p>
-              
+
               {stats && (
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                   <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
@@ -439,7 +455,7 @@ export default function AdvancedAdminPanel() {
           <TabsContent value="reports">
             <Card className="p-6">
               <h3 className="text-lg font-bold mb-4">{dir === 'rtl' ? 'البلاغات المعلقة' : 'Pending Reports'}</h3>
-              
+
               <ScrollArea className="h-[600px]">
                 {reports.filter(r => r.status === 'pending').length === 0 ? (
                   <div className="text-center py-12">
@@ -456,8 +472,8 @@ export default function AdvancedAdminPanel() {
                           <div>
                             <Badge className={
                               report.priority === 'critical' ? 'bg-red-500' :
-                              report.priority === 'high' ? 'bg-orange-500' :
-                              report.priority === 'medium' ? 'bg-yellow-500' : 'bg-blue-500'
+                                report.priority === 'high' ? 'bg-orange-500' :
+                                  report.priority === 'medium' ? 'bg-yellow-500' : 'bg-blue-500'
                             }>
                               {report.priority}
                             </Badge>
@@ -467,11 +483,11 @@ export default function AdvancedAdminPanel() {
                             {new Date(report.createdAt).toLocaleDateString()}
                           </span>
                         </div>
-                        
+
                         <h4 className="font-semibold mb-1">{report.targetName}</h4>
                         <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">{report.reason}</p>
                         <p className="text-sm text-gray-500 mb-3">{report.description}</p>
-                        
+
                         <div className="flex gap-2">
                           <Button
                             size="sm"
@@ -533,8 +549,8 @@ export default function AdvancedAdminPanel() {
                         <p className="font-bold">${tx.amount}</p>
                         <Badge className={
                           tx.status === 'completed' ? 'bg-green-100 text-green-700' :
-                          tx.status === 'pending' ? 'bg-yellow-100 text-yellow-700' :
-                          'bg-red-100 text-red-700'
+                            tx.status === 'pending' ? 'bg-yellow-100 text-yellow-700' :
+                              'bg-red-100 text-red-700'
                         }>
                           {tx.status}
                         </Badge>
@@ -550,7 +566,7 @@ export default function AdvancedAdminPanel() {
           <TabsContent value="settings">
             <Card className="p-6">
               <h3 className="text-lg font-bold mb-4">{dir === 'rtl' ? 'إعدادات النظام' : 'System Settings'}</h3>
-              
+
               <div className="space-y-6">
                 {['general', 'features', 'limits'].map(category => {
                   const categorySettings = settings.filter(s => s.category === category);
@@ -592,6 +608,6 @@ export default function AdvancedAdminPanel() {
           </TabsContent>
         </Tabs>
       </div>
-    </div>
+    </div >
   );
 }

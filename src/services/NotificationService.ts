@@ -48,7 +48,7 @@ class NotificationServiceClass {
    */
   send(notification: Omit<Notification, 'id' | 'createdAt' | 'isRead'>): Notification {
     const userSettings = this.getUserSettings(notification.userId);
-    
+
     // Check if notification type is enabled
     const typeEnabled = this.isNotificationTypeEnabled(userSettings, notification.type);
     if (!typeEnabled) {
@@ -413,20 +413,20 @@ class NotificationServiceClass {
       const { LuckyWheelService } = await import('./LuckyWheelService');
 
       // Get uncompleted missions
-      const missions = await DailyMissionsService.getMissions(userId);
+      const missions = await DailyMissionsService.getDailyMissions(userId);
       const uncompletedMissions = missions.filter(m => !m.completed).length;
-      
+
       // Get unclaimed rewards (completed but not claimed)
       const unclaimedRewards = missions.filter(m => m.completed && !m.claimed).length;
-      
+
       // Get friend recommendations
       const recommendations = await FriendRecommendationService.getRecommendations(10);
       const newRecommendations = this.getNewRecommendationsCount(recommendations.length);
-      
+
       // Get available spins
       const wheelStats = await LuckyWheelService.getSpinStats(userId);
       const availableSpins = wheelStats.remainingSpins || 0;
-      
+
       const badges: Phase1Badges = {
         missions: uncompletedMissions,
         friends: newRecommendations,
@@ -434,14 +434,14 @@ class NotificationServiceClass {
         rewards: unclaimedRewards,
         total: uncompletedMissions + newRecommendations + availableSpins + unclaimedRewards
       };
-      
+
       // Cache badges
       localStorage.setItem('phase1_badges', JSON.stringify(badges));
-      
+
       return badges;
     } catch (error) {
       console.error('Failed to get Phase 1 badges:', error);
-      
+
       // Return cached badges if available
       const cached = localStorage.getItem('phase1_badges');
       if (cached) {
@@ -449,7 +449,7 @@ class NotificationServiceClass {
           return JSON.parse(cached);
         } catch { }
       }
-      
+
       // Return empty badges
       return {
         missions: 0,
@@ -471,7 +471,7 @@ class NotificationServiceClass {
         return JSON.parse(cached);
       } catch { }
     }
-    
+
     return {
       missions: 0,
       friends: 0,
@@ -487,11 +487,11 @@ class NotificationServiceClass {
   private getNewRecommendationsCount(totalCount: number): number {
     const lastCheck = localStorage.getItem('phase1_last_check');
     const lastCheckData = lastCheck ? JSON.parse(lastCheck) : null;
-    
+
     if (!lastCheckData || !lastCheckData.friendsCount) {
       return totalCount > 0 ? totalCount : 0;
     }
-    
+
     const newCount = Math.max(0, totalCount - lastCheckData.friendsCount);
     return newCount;
   }

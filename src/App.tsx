@@ -21,8 +21,9 @@ import PremiumVoiceRoom from "@/components/voice/PremiumVoiceRoom";
 import LamaStyleVoiceRoom from "@/components/voice/LamaStyleVoiceRoom";
 import RealLamaVoiceRoom from "@/components/voice/RealLamaVoiceRoom";
 import AuthenticLamaVoiceRoom from "@/components/voice/AuthenticLamaVoiceRoom";
-import Contacts from "./pages/contacts/Contacts";
-import InviteFriends from "./pages/contacts/InviteFriends";
+import MiniPlayer from "@/components/voice/MiniPlayer";
+import { VoiceRoomProvider } from "@/contexts/VoiceRoomContext";
+import Contacts from "./pages/contacts/Contacts"; import InviteFriends from "./pages/contacts/InviteFriends";
 import Profile from "./pages/profile/Profile";
 import ModernProfile from "./pages/profile/ModernProfile";
 import Settings from "./pages/profile/Settings";
@@ -35,15 +36,18 @@ import Aristocracy from "./pages/profile/Aristocracy";
 import LoveHouse from "./pages/love-house/LoveHouse";
 import AdminDashboard from "./pages/admin/Dashboard";
 import AdminUsers from "./pages/admin/Users";
+import IdLevelControl from "./pages/admin/IdLevelControl";
 import AdminRooms from "./pages/admin/Rooms";
 import AdminReports from "./pages/admin/Reports";
 import AdminSettings from "./pages/admin/Settings";
 import AppSettings from "./pages/admin/AppSettings";
 import AdminStatus from "./pages/admin/Status";
+import MyPremiumIds from "./pages/profile/MyPremiumIds";
 import BannersAdmin from "./pages/admin/Banners";
 import AgenciesAdmin from "./pages/admin/Agencies";
 import GiftsAdmin from "./pages/admin/Gifts";
 import CoinsAdmin from "./pages/admin/Coins";
+import PremiumIdManager from "./components/admin/PremiumIdManager";
 import Wallet from "./pages/finance/Wallet";
 import Wealth from "./pages/finance/Wealth";
 import HostAgency from "./pages/agency/HostAgency";
@@ -95,11 +99,11 @@ const queryClient = new QueryClient();
 const AppContent = () => {
   // ✅ استرجاع الجلسة المحفوظة تلقائياً
   const { isLoading } = useSessionRestore();
-  
+
   // ✅ بدء cleanup تلقائي للغرف الفارغة والمشاركين غير النشطين
   useEffect(() => {
     const stopCleanup = RoomCleanupService.startPeriodicCleanup(10); // كل 10 دقائق
-    
+
     return () => {
       stopCleanup(); // إيقاف cleanup عند unmount
     };
@@ -124,131 +128,137 @@ const AppContent = () => {
       <ErrorBoundary>
         <BrowserRouter>
           <Suspense fallback={<div className="flex items-center justify-center p-6 text-muted-foreground">Loading...</div>}>
-            <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/home" element={<Home />} />
-            {/* Admin Panel */}
-            <Route path="/admin" element={<AdminDashboard />} />
-            <Route path="/admin/login" element={<AdminLogin />} />
-            {/* ADDED: Admin Status */}
-            <Route path="/admin/status" element={<AdminStatus />} />
-            <Route path="/admin/users" element={<AdminUsers />} />
-            <Route path="/admin/rooms" element={<AdminRooms />} />
-            <Route path="/admin/reports" element={<AdminReports />} />
-            <Route path="/admin/agencies" element={<AgenciesAdmin />} />
-            <Route path="/admin/banners" element={<BannersAdmin />} />
-            <Route path="/admin/settings" element={<AppSettings />} />
-            <Route path="/admin/room-settings" element={<AdminSettings />} />
-            <Route path="/admin/gifts" element={<GiftsAdmin />} />
-            <Route path="/admin/coins" element={<CoinsAdmin />} />
-            <Route path="/admin/analytics" element={<Phase1Analytics />} />
-              {/* Auth */}
-              <Route path="/auth/login" element={<Login />} />
-              <Route path="/auth/register" element={<Register />} />
-              <Route path="/auth/verify" element={<PhoneVerification />} />
-              <Route path="/auth/forgot" element={<ForgotPassword />} />
-              <Route path="/auth/callback" element={<GoogleCallback />} />
-              {/* Voice Chat */}
-              <Route path="/voice/rooms" element={<RoomList />} />
-              <Route path="/voice/create" element={<CreateRoom />} />
-              <Route path="/voice/rooms/:id" element={<RoomDetails />} />
-              <Route path="/voice/rooms/:id/join" element={<AuthenticLamaVoiceRoom />} />
-              <Route path="/voice/rooms/:id/real" element={<RealLamaVoiceRoom />} />
-              <Route path="/voice/rooms/:id/lama" element={<LamaStyleVoiceRoom />} />
-              <Route path="/voice/rooms/:id/premium" element={<PremiumVoiceRoom />} />
-              <Route path="/voice/rooms/:id/classic" element={<VoiceChatRoomRedesign />} />
-              <Route path="/voice/themes" element={<RoomThemes />} />
-              <Route path="/voice/effects" element={<VoiceEffects />} />
-              {/* Finance & Store */}
-              <Route path="/wallet" element={<Wallet />} />
-              <Route path="/wealth" element={<Wealth />} />
-              <Route path="/store" element={<Store />} />
-              <Route path="/recharge" element={<Recharge />} />
-              {/* Earnings & Withdrawal */}
-              <Route path="/earnings" element={<Earnings />} />
-              <Route path="/withdrawal" element={<Withdrawal />} />
-              {/* Coin purchase */}
-              <Route path="/coins" element={<CoinPurchase />} />
-              {/* Music */}
-              <Route path="/music" element={<MusicLibrary />} />
-              {/* Games */}
-              <Route path="/games" element={<GamesPage />} />
-              <Route path="/games/ludo" element={<LudoGame />} />
-              <Route path="/games/uno" element={<UnoGame />} />
-              <Route path="/games/lucky-wheel" element={<LuckyWheel />} />
-              {/* Support */}
-              <Route path="/support" element={<SuperSupport />} />
-              {/* Advanced Search */}
-              <Route path="/search/advanced" element={<AdvancedSearch />} />
-              {/* Agency */}
-              <Route path="/agency/host" element={<HostAgency />} />
-              <Route path="/agency/recharge" element={<RechargeAgency />} />
-              {/* Social */}
-              <Route path="/moments" element={<Moments />} />
-              <Route path="/messages" element={<Messages />} />
-              <Route path="/hosts" element={<Hosts />} />
-              {/* Notifications */}
-              <Route path="/inbox" element={<Inbox />} />
-              {/* Contacts */}
-              <Route path="/contacts" element={<Contacts />} />
-              <Route path="/contacts/invite" element={<InviteFriends />} />
-              {/* Profile */}
-              <Route path="/profile" element={<ModernProfile />} />
-              <Route path="/profile/:userId" element={<ModernProfile />} />
-              <Route path="/settings" element={<Settings />} />
-              <Route path="/settings/personal" element={<PersonalSettings />} />
-              <Route path="/settings/account" element={<AccountSettings />} />
-              <Route path="/settings/blocklist" element={<Blocklist />} />
-              <Route path="/backpack" element={<Backpack />} />
-              <Route path="/svip" element={<SVIP />} />
-              <Route path="/aristocracy" element={<Aristocracy />} />
-              <Route path="/profile/missions" element={<DailyMissions />} />
-              <Route path="/profile/friends/recommendations" element={<FriendRecommendations />} />
-              {/* Premium */}
-              <Route path="/premium" element={<PremiumSubscription />} />
-              {/* Families */}
-              <Route path="/family" element={<FamilyDashboard />} />
-              <Route path="/family/create" element={<FamilyDashboard />} />
-              <Route path="/family/:id" element={<FamilyDashboard />} />
-              {/* Referral */}
-              <Route path="/referral" element={<ReferralPage />} />
-              {/* Live Streaming */}
-              <Route path="/stream/:streamId" element={<LiveStreamPage />} />
-              <Route path="/stream/create" element={<LiveStreamPage />} />
-              {/* Events */}
-              <Route path="/events" element={<EventsPage />} />
-              <Route path="/event/:eventId" element={<EventsPage />} />
-              <Route path="/event/create" element={<EventsPage />} />
-              {/* Creator Dashboard */}
-              <Route path="/creator/dashboard" element={<CreatorDashboard />} />
-              {/* Discover Enhanced */}
-              <Route path="/discover/enhanced" element={
-                <div className="min-h-screen bg-gradient-to-br from-gray-950 via-purple-950/20 to-gray-950 p-6">
-                  <div className="max-w-7xl mx-auto">
-                    <DiscoverEnhanced />
-                  </div>
-                </div>
-              } />
-              {/* AI Matching */}
-              <Route path="/matching/ai" element={<AIMatchingPage />} />
-              {/* Advanced Admin */}
-              <Route path="/admin/advanced" element={<AdvancedAdminPanel />} />
-              {/* Love House */}
-              <Route path="/love-house" element={<LoveHouse />} />
-              {/* Matching */}
-              <Route path="/matching" element={<Matching />} />
-              <Route path="/matching/call/:id" element={<PrivateCall />} />
-              <Route path="/matching/rate/:id" element={<RateMatch />} />
-              {/* Rankings */}
-              <Route path="/rankings" element={<Rankings />} />
-              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-              <Route path="*" element={<NotFound />} />
-              </Routes>
-            </Suspense>
             {/* Global bottom bar controller */}
+            <VoiceRoomProvider>
+              <Routes>
+                <Route path="/" element={<Index />} />
+                <Route path="/home" element={<Home />} />
+                {/* Admin Panel */}
+                <Route path="/admin" element={<AdminDashboard />} />
+                <Route path="/admin/login" element={<AdminLogin />} />
+                {/* ADDED: Admin Status */}
+                <Route path="/admin/status" element={<AdminStatus />} />
+                <Route path="/admin/users" element={<AdminUsers />} />
+                <Route path="/admin/ids-levels" element={<IdLevelControl />} />
+                <Route path="/admin/rooms" element={<AdminRooms />} />
+                <Route path="/admin/reports" element={<AdminReports />} />
+                <Route path="/admin/agencies" element={<AgenciesAdmin />} />
+                <Route path="/admin/banners" element={<BannersAdmin />} />
+                <Route path="/admin/settings" element={<AppSettings />} />
+                <Route path="/admin/room-settings" element={<AdminSettings />} />
+                <Route path="/admin/gifts" element={<GiftsAdmin />} />
+                <Route path="/admin/coins" element={<CoinsAdmin />} />
+                <Route path="/admin/premium-ids" element={<PremiumIdManager />} />
+                <Route path="/admin/analytics" element={<Phase1Analytics />} />
+                {/* Auth */}
+                <Route path="/auth/login" element={<Login />} />
+                <Route path="/auth/register" element={<Register />} />
+                <Route path="/auth/verify" element={<PhoneVerification />} />
+                <Route path="/auth/forgot" element={<ForgotPassword />} />
+                <Route path="/auth/callback" element={<GoogleCallback />} />
+                {/* Voice Chat */}
+                <Route path="/voice/rooms" element={<RoomList />} />
+                <Route path="/voice/create" element={<CreateRoom />} />
+                <Route path="/voice/rooms/:id" element={<RoomDetails />} />
+                <Route path="/voice/rooms/:id/join" element={<VoiceChatRoomRedesign />} />
+                <Route path="/voice/rooms/:id/real" element={<RealLamaVoiceRoom />} />
+                <Route path="/voice/rooms/:id/lama" element={<LamaStyleVoiceRoom />} />
+                <Route path="/voice/rooms/:id/premium" element={<PremiumVoiceRoom />} />
+                <Route path="/voice/rooms/:id/classic" element={<VoiceChatRoomRedesign />} />
+                <Route path="/voice/themes" element={<RoomThemes />} />
+                <Route path="/voice/effects" element={<VoiceEffects />} />
+                {/* Finance & Store */}
+                <Route path="/wallet" element={<Wallet />} />
+                <Route path="/wealth" element={<Wealth />} />
+                <Route path="/store" element={<Store />} />
+                <Route path="/recharge" element={<Recharge />} />
+                {/* Earnings & Withdrawal */}
+                <Route path="/earnings" element={<Earnings />} />
+                <Route path="/withdrawal" element={<Withdrawal />} />
+                {/* Coin purchase */}
+                <Route path="/coins" element={<CoinPurchase />} />
+                {/* Music */}
+                <Route path="/music" element={<MusicLibrary />} />
+                {/* Games */}
+                <Route path="/games" element={<GamesPage />} />
+                <Route path="/games/ludo" element={<LudoGame />} />
+                <Route path="/games/uno" element={<UnoGame />} />
+                <Route path="/games/lucky-wheel" element={<LuckyWheel />} />
+                {/* Support */}
+                <Route path="/support" element={<SuperSupport />} />
+                {/* Advanced Search */}
+                <Route path="/search/advanced" element={<AdvancedSearch />} />
+                {/* Agency */}
+                <Route path="/agency/host" element={<HostAgency />} />
+                <Route path="/agency/recharge" element={<RechargeAgency />} />
+                {/* Social */}
+                <Route path="/moments" element={<Moments />} />
+                <Route path="/messages" element={<Messages />} />
+                <Route path="/hosts" element={<Hosts />} />
+                {/* Notifications */}
+                <Route path="/inbox" element={<Inbox />} />
+                {/* Contacts */}
+                <Route path="/contacts" element={<Contacts />} />
+                <Route path="/contacts/invite" element={<InviteFriends />} />
+                {/* Profile */}
+                <Route path="/profile" element={<ModernProfile />} />
+                <Route path="/profile/:userId" element={<ModernProfile />} />
+                <Route path="/settings" element={<Settings />} />
+                <Route path="/settings/personal" element={<PersonalSettings />} />
+                <Route path="/settings/account" element={<AccountSettings />} />
+                <Route path="/settings/premium-ids" element={<MyPremiumIds />} />
+                <Route path="/settings/blocklist" element={<Blocklist />} />
+                <Route path="/backpack" element={<Backpack />} />
+                <Route path="/svip" element={<SVIP />} />
+                <Route path="/aristocracy" element={<Aristocracy />} />
+                <Route path="/profile/missions" element={<DailyMissions />} />
+                <Route path="/profile/friends/recommendations" element={<FriendRecommendations />} />
+                {/* Premium */}
+                <Route path="/premium" element={<PremiumSubscription />} />
+                {/* Families */}
+                <Route path="/family" element={<FamilyDashboard />} />
+                <Route path="/family/create" element={<FamilyDashboard />} />
+                <Route path="/family/:id" element={<FamilyDashboard />} />
+                {/* Referral */}
+                <Route path="/referral" element={<ReferralPage />} />
+                {/* Live Streaming */}
+                <Route path="/stream/:streamId" element={<LiveStreamPage />} />
+                <Route path="/stream/create" element={<LiveStreamPage />} />
+                {/* Events */}
+                <Route path="/events" element={<EventsPage />} />
+                <Route path="/event/:eventId" element={<EventsPage />} />
+                <Route path="/event/create" element={<EventsPage />} />
+                {/* Creator Dashboard */}
+                <Route path="/creator/dashboard" element={<CreatorDashboard />} />
+                {/* Discover Enhanced */}
+                <Route path="/discover/enhanced" element={
+                  <div className="min-h-screen bg-gradient-to-br from-gray-950 via-purple-950/20 to-gray-950 p-6">
+                    <div className="max-w-7xl mx-auto">
+                      <DiscoverEnhanced />
+                    </div>
+                  </div>
+                } />
+                {/* AI Matching */}
+                <Route path="/matching/ai" element={<AIMatchingPage />} />
+                {/* Advanced Admin */}
+                <Route path="/admin/advanced" element={<AdvancedAdminPanel />} />
+                {/* Love House */}
+                <Route path="/love-house" element={<LoveHouse />} />
+                {/* Matching */}
+                <Route path="/matching" element={<Matching />} />
+                <Route path="/matching/call/:id" element={<PrivateCall />} />
+                <Route path="/matching/rate/:id" element={<RateMatch />} />
+                {/* Rankings */}
+                <Route path="/rankings" element={<Rankings />} />
+                {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+              <MiniPlayer />
+            </VoiceRoomProvider>
             <BottomTabController />
-          </BrowserRouter>
-        </ErrorBoundary>
+          </Suspense>
+        </BrowserRouter>
+      </ErrorBoundary>
     </>
   );
 };

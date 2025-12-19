@@ -5,7 +5,7 @@ import { Link, useLocation } from "react-router-dom";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Activity, Users, Mic, FileChartColumn, Settings, Gift, Coins, Building2, Image as ImageIcon, Home, BarChart3 } from "lucide-react";
+import { Activity, Users, Mic, FileChartColumn, Settings, Gift, Coins, Building2, Image as ImageIcon, Home, BarChart3, ShoppingBag, Crown } from "lucide-react";
 
 type AdminItem = {
   title: string;
@@ -25,6 +25,8 @@ const items: AdminItem[] = [
   { title: "Banners", to: "/admin/banners", description: "Configure promotional banners", icon: ImageIcon },
   { title: "Gifts", to: "/admin/gifts", description: "Administer virtual gifts and pricing", icon: Gift },
   { title: "Coins", to: "/admin/coins", description: "Set coin packs and economy rules", icon: Coins },
+  { title: "Store Management", to: "/admin/advanced?tab=store", description: "Comprehensive store & item management", icon: ShoppingBag },
+  { title: "IDs & Levels", to: "/admin/ids-levels", description: "Grant IDs and update user levels", icon: Crown },
   { title: "App Settings", to: "/admin/settings", description: "General app configuration & features", icon: Settings },
 ];
 

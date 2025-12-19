@@ -34,26 +34,22 @@ CREATE POLICY "Enable read access for all users"
   ON public.users FOR SELECT
   USING (true);
 
--- 2. Allow authenticated users to INSERT their own profile during registration
 CREATE POLICY "Enable insert for authenticated users during registration"
   ON public.users FOR INSERT
   TO authenticated
   WITH CHECK (auth.uid() = id);
 
--- 3. Allow service_role to INSERT (for server-side operations)
 CREATE POLICY "Enable insert for service role"
   ON public.users FOR INSERT
   TO service_role
   WITH CHECK (true);
 
--- 4. Allow users to UPDATE their own profile
 CREATE POLICY "Enable update for users based on id"
   ON public.users FOR UPDATE
   TO authenticated
   USING (auth.uid() = id)
   WITH CHECK (auth.uid() = id);
 
--- 5. Allow admins to UPDATE any profile
 CREATE POLICY "Enable update for admins"
   ON public.users FOR UPDATE
   TO authenticated
@@ -65,10 +61,7 @@ CREATE POLICY "Enable update for admins"
     )
   );
 
--- STEP 3: Fix voice_room_seats RLS (for voice chat)
--- ============================================================
 
--- Create voice_room_seats table if not exists
 CREATE TABLE IF NOT EXISTS public.voice_room_seats (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   room_id TEXT NOT NULL,
@@ -86,40 +79,31 @@ CREATE TABLE IF NOT EXISTS public.voice_room_seats (
   UNIQUE(room_id, seat_number)
 );
 
--- Enable RLS
 ALTER TABLE public.voice_room_seats ENABLE ROW LEVEL SECURITY;
 
--- Drop existing policies
 DROP POLICY IF EXISTS "Anyone can view room seats" ON public.voice_room_seats;
 DROP POLICY IF EXISTS "Users can manage their own seats" ON public.voice_room_seats;
 
--- Allow everyone to read seats
 CREATE POLICY "Enable read access for all users"
   ON public.voice_room_seats FOR SELECT
   USING (true);
 
--- Allow authenticated users to INSERT their seat
 CREATE POLICY "Enable insert for authenticated users"
   ON public.voice_room_seats FOR INSERT
   TO authenticated
   WITH CHECK (auth.uid() = user_id OR auth.uid() IS NOT NULL);
 
--- Allow users to UPDATE their own seat
 CREATE POLICY "Enable update for seat owners"
   ON public.voice_room_seats FOR UPDATE
   TO authenticated
   USING (auth.uid() = user_id OR auth.uid() IS NOT NULL);
 
--- Allow users to DELETE their own seat (leave seat)
 CREATE POLICY "Enable delete for seat owners"
   ON public.voice_room_seats FOR DELETE
   TO authenticated
   USING (auth.uid() = user_id OR auth.uid() IS NOT NULL);
 
--- STEP 4: Fix voice_room_messages RLS
--- ============================================================
 
--- Create voice_room_messages table if not exists
 CREATE TABLE IF NOT EXISTS public.voice_room_messages (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   room_id TEXT NOT NULL,
@@ -132,26 +116,20 @@ CREATE TABLE IF NOT EXISTS public.voice_room_messages (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- Enable RLS
 ALTER TABLE public.voice_room_messages ENABLE ROW LEVEL SECURITY;
 
--- Drop existing policies
 DROP POLICY IF EXISTS "Anyone can view room messages" ON public.voice_room_messages;
 DROP POLICY IF EXISTS "Users can send messages" ON public.voice_room_messages;
 
--- Allow everyone to read messages
 CREATE POLICY "Enable read access for all users"
   ON public.voice_room_messages FOR SELECT
   USING (true);
 
--- Allow authenticated users to INSERT messages
 CREATE POLICY "Enable insert for authenticated users"
   ON public.voice_room_messages FOR INSERT
   TO authenticated
   WITH CHECK (auth.uid() = user_id OR auth.uid() IS NOT NULL);
 
--- STEP 5: Create Indexes for Performance
--- ============================================================
 
 CREATE INDEX IF NOT EXISTS idx_users_level ON public.users(level);
 CREATE INDEX IF NOT EXISTS idx_users_premium ON public.users(is_premium);
@@ -164,8 +142,6 @@ CREATE INDEX IF NOT EXISTS idx_voice_room_seats_user ON public.voice_room_seats(
 CREATE INDEX IF NOT EXISTS idx_voice_room_messages_room ON public.voice_room_messages(room_id);
 CREATE INDEX IF NOT EXISTS idx_voice_room_messages_user ON public.voice_room_messages(user_id);
 
--- STEP 6: Create Function to Handle New User Registration
--- ============================================================
 
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER AS $$
@@ -203,28 +179,20 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
--- Drop existing trigger if exists
 DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
 
--- Create trigger on auth.users table
 CREATE TRIGGER on_auth_user_created
   AFTER INSERT OR UPDATE ON auth.users
   FOR EACH ROW
   EXECUTE FUNCTION public.handle_new_user();
 
--- STEP 7: Grant Necessary Permissions
--- ============================================================
 
 GRANT USAGE ON SCHEMA public TO anon, authenticated;
 GRANT ALL ON public.users TO authenticated;
 GRANT ALL ON public.voice_room_seats TO authenticated;
 GRANT ALL ON public.voice_room_messages TO authenticated;
 
--- ============================================================
--- VERIFICATION QUERIES (Run these to check if everything works)
--- ============================================================
 
--- Check if all columns exist
 SELECT column_name, data_type, column_default
 FROM information_schema.columns 
 WHERE table_name = 'users' 
@@ -237,7 +205,6 @@ WHERE table_name = 'users'
   )
 ORDER BY column_name;
 
--- Check RLS policies on users table
 SELECT 
   schemaname,
   tablename,
@@ -251,13 +218,3 @@ FROM pg_policies
 WHERE tablename = 'users'
 ORDER BY policyname;
 
--- ============================================================
--- SUCCESS! ✅
--- ============================================================
--- الآن يمكنك:
--- 1. تسجيل حسابات جديدة ✅
--- 2. تسجيل الدخول بالإيميل والباسورد ✅
--- 3. تسجيل الدخول عبر Google (قريباً) ⏳
--- 4. الانضمام للغرف الصوتية ✅
--- 5. إرسال الرسائل في الغرف ✅
--- ============================================================

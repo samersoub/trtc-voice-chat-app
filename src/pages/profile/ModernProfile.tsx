@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Lottie from 'lottie-react';
-import { 
-  MapPin, 
-  Link as LinkIcon, 
-  Edit, 
+import {
+  MapPin,
+  Link as LinkIcon,
+  Edit,
   ChevronLeft,
   Star,
   Award,
@@ -87,7 +87,7 @@ const LoveAnimation: React.FC = () => {
 
   return (
     <div className="w-full h-full">
-      <Lottie 
+      <Lottie
         animationData={animationData}
         loop={true}
         autoplay={true}
@@ -137,7 +137,7 @@ const RelationshipLevelDisplay: React.FC<{ userId: string; partnerId: string }> 
               <span>{Math.round(progress)}%</span>
             </div>
             <div className="w-full h-3 bg-white/20 rounded-full overflow-hidden backdrop-blur-sm">
-              <div 
+              <div
                 className="h-full bg-white rounded-full transition-all duration-500 shadow-lg"
                 style={{ width: `${progress}%` }}
               />
@@ -204,13 +204,12 @@ const RelationshipLevelDisplay: React.FC<{ userId: string; partnerId: string }> 
         </summary>
         <div className="p-4 pt-0 space-y-3">
           {RelationshipLevelService.getAllLevels().map((level) => (
-            <div 
+            <div
               key={level.level}
-              className={`p-3 rounded-xl border-2 transition-all ${
-                level.level === currentLevel.level
+              className={`p-3 rounded-xl border-2 transition-all ${level.level === currentLevel.level
                   ? `border-${level.color} bg-gradient-to-r ${level.gradient} bg-opacity-20`
                   : 'border-white/10 bg-white/5'
-              }`}
+                }`}
             >
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
@@ -251,25 +250,25 @@ const ModernProfile: React.FC = () => {
   const { locale, dir } = useLocale();
   const currentUser = AuthService.getCurrentUser();
   const [profile, setProfile] = useState<Profile | null>(null);
-  
+
   // userName needs to be defined before states that use it
   const userName = profile?.username || currentUser?.name || 'أردني~يبحث عنك~!';
-  
+
   const [activeTab, setActiveTab] = useState<'profile' | 'relations' | 'moments' | 'badges'>('profile');
   const [earnedBadges, setEarnedBadges] = useState<Badge[]>([]);
   const [featuredBadge, setFeaturedBadge] = useState<Badge | null>(null);
   const [showBadgeDetail, setShowBadgeDetail] = useState<Badge | null>(null);
   const [isFollowing, setIsFollowing] = useState(false);
   const [moments, setMoments] = useState<string[]>([]);
-  
+
   // Moments state
   const [userPosts, setUserPosts] = useState<MomentPost[]>([]);
   const [showCreatePost, setShowCreatePost] = useState(false);
   const [newPostContent, setNewPostContent] = useState('');
   const [newPostImages, setNewPostImages] = useState<string[]>([]);
   const [showComments, setShowComments] = useState<string | null>(null);
-  const [commentInput, setCommentInput] = useState<{[key: string]: string}>({});
-  
+  const [commentInput, setCommentInput] = useState<{ [key: string]: string }>({});
+
   const [coverImage, setCoverImage] = useState<string>('/images/default-cover.jpeg');
   const [profileImage, setProfileImage] = useState<string>('https://api.dicebear.com/7.x/avataaars/svg?seed=Jordan');
   const [userGender, setUserGender] = useState<'male' | 'female'>('female'); // افتراضياً أنثى لعرض الإطار
@@ -279,7 +278,7 @@ const ModernProfile: React.FC = () => {
   const [userInterests, setUserInterests] = useState<Interest[]>([]);
   const [editingTagId, setEditingTagId] = useState<string | null>(null);
   const [editingTagText, setEditingTagText] = useState<string>('');
-  const [partner, setPartner] = useState<{name: string; avatar: string; id: string} | null>(null);
+  const [partner, setPartner] = useState<{ name: string; avatar: string; id: string } | null>(null);
   const [closeFriends, setCloseFriends] = useState<Friend[]>([]);
   const [showPartnerSearch, setShowPartnerSearch] = useState(false);
   const [showFriendSearch, setShowFriendSearch] = useState(false);
@@ -335,7 +334,7 @@ const ModernProfile: React.FC = () => {
       { id: '8', icon: <Crown className="w-4 h-4" />, label: 'عضو ملكي' },
     ];
     setUserInterests(defaultInterests);
-    
+
     // Load profile image if exists
     if (profile?.profile_image) {
       setProfileImage(profile.profile_image);
@@ -357,7 +356,7 @@ const ModernProfile: React.FC = () => {
     if (profileUserId) {
       const badges = BadgeService.getActiveBadges(profileUserId);
       setEarnedBadges(badges);
-      
+
       const featured = BadgeService.getFeaturedBadge(profileUserId);
       setFeaturedBadge(featured);
     }
@@ -385,7 +384,7 @@ const ModernProfile: React.FC = () => {
       // For now, we'll check if demo relationship exists
       const demoPartnerId = 'partner123';
       const relationship = RelationshipLevelService.getRelationship(currentUser.id, demoPartnerId);
-      
+
       if (relationship) {
         setPartner({
           id: relationship.partnerId,
@@ -396,7 +395,9 @@ const ModernProfile: React.FC = () => {
     }
   }, [currentUser?.id, partner]);
 
-  const userId_display = 'ID:101089646';
+  // Use profile display_id if available, fallback to user displayId, fallback to truncated UUID
+  const userId_display = profile?.display_id ? `ID:${profile.display_id}` :
+    (currentUser?.displayId ? `ID:${currentUser.displayId}` : `ID:${(profile?.id || currentUser?.id || '101089646').slice(0, 9)}`);
   const userLevel = 'LV.28';
   const userCoins = profile?.coins || 1200;
   const userLocation = '🇯🇴 الأردن';
@@ -410,7 +411,7 @@ const ModernProfile: React.FC = () => {
       reader.onloadend = async () => {
         const imageData = reader.result as string;
         setCoverImage(imageData);
-        
+
         // Upload to server
         if (currentUser?.id) {
           try {
@@ -432,7 +433,7 @@ const ModernProfile: React.FC = () => {
       reader.onloadend = async () => {
         const imageData = reader.result as string;
         setProfileImage(imageData);
-        
+
         // Upload to server
         if (currentUser?.id) {
           try {
@@ -458,7 +459,7 @@ const ModernProfile: React.FC = () => {
   const handleRemoveTag = (tagId: string) => {
     const updated = userInterests.filter(tag => tag.id !== tagId);
     setUserInterests(updated);
-    
+
     // Save to localStorage
     if (currentUser?.id) {
       const key = `profile:interests:${currentUser.id}`;
@@ -476,7 +477,7 @@ const ModernProfile: React.FC = () => {
     setUserInterests(updated);
     setEditingTagId(newTag.id);
     setEditingTagText(newTag.label);
-    
+
     // Save to localStorage
     if (currentUser?.id) {
       const key = `profile:interests:${currentUser.id}`;
@@ -490,13 +491,13 @@ const ModernProfile: React.FC = () => {
   };
 
   const handleSaveTag = (tagId: string) => {
-    const updated = userInterests.map(tag => 
+    const updated = userInterests.map(tag =>
       tag.id === tagId ? { ...tag, label: editingTagText } : tag
     );
     setUserInterests(updated);
     setEditingTagId(null);
     setEditingTagText('');
-    
+
     // Save to localStorage
     if (currentUser?.id) {
       const key = `profile:interests:${currentUser.id}`;
@@ -512,7 +513,7 @@ const ModernProfile: React.FC = () => {
         reader.onloadend = () => {
           const imageData = reader.result as string;
           setMoments(prev => [imageData, ...prev]);
-          
+
           // Save to localStorage
           if (currentUser?.id) {
             const key = `profile:moments:${currentUser.id}`;
@@ -528,7 +529,7 @@ const ModernProfile: React.FC = () => {
   const handleDeletePhoto = (index: number) => {
     const updated = moments.filter((_, i) => i !== index);
     setMoments(updated);
-    
+
     // Delete from localStorage
     if (currentUser?.id) {
       const key = `profile:moments:${currentUser.id}`;
@@ -550,26 +551,26 @@ const ModernProfile: React.FC = () => {
       showError('يرجى تسجيل الدخول أولاً');
       return;
     }
-    
+
     // If no ID entered, use default demo partner
     const partnerId = searchId.trim() || 'partner123';
-    const partnerName = searchId.trim() 
-      ? `مستخدم ${searchId}` 
+    const partnerName = searchId.trim()
+      ? `مستخدم ${searchId}`
       : 'سارة السورية';
     const partnerAvatar = `https://api.dicebear.com/7.x/avataaars/svg?seed=${partnerId}`;
-    
+
     console.log('🔍 Creating partner:', { partnerId, partnerName, partnerAvatar });
-    
+
     // Create new partner
     const newPartner = {
       id: partnerId,
       name: partnerName,
       avatar: partnerAvatar
     };
-    
+
     setPartner(newPartner);
     console.log('✅ Partner set in state:', newPartner);
-    
+
     // Initialize relationship in RelationshipLevelService
     const relationship = RelationshipLevelService.createRelationship(
       currentUser.id,
@@ -578,20 +579,20 @@ const ModernProfile: React.FC = () => {
       newPartner.avatar
     );
     console.log('📊 Relationship created:', relationship);
-    
+
     // If using demo partner, add demo points and stats
     if (partnerId === 'partner123') {
       console.log('🎁 Adding demo data for partner123...');
-      
+
       // Use addGiftPoints to properly add points (this also updates the level)
       RelationshipLevelService.addGiftPoints(currentUser.id, newPartner.id, 8500);
-      
+
       // Manually update additional demo stats
       const key = `${currentUser.id}_${newPartner.id}`;
       const updatedRelationship = RelationshipLevelService['relationships'].get(key);
       console.log('🔑 Relationship key:', key);
       console.log('📈 Updated relationship:', updatedRelationship);
-      
+
       if (updatedRelationship) {
         updatedRelationship.giftsGiven = 45;
         updatedRelationship.giftsReceived = 38;
@@ -608,15 +609,15 @@ const ModernProfile: React.FC = () => {
         console.error('❌ Could not find updated relationship');
       }
     }
-    
+
     setShowPartnerSearch(false);
     setSearchId('');
-    showSuccess(partnerId === 'partner123' 
-      ? 'تم إضافة الشريك التجريبي بنجاح ✨' 
+    showSuccess(partnerId === 'partner123'
+      ? 'تم إضافة الشريك التجريبي بنجاح ✨'
       : 'تم إضافة الشريك بنجاح'
     );
     console.log('✅ Partner search completed successfully');
-    
+
     // Save to localStorage
     if (currentUser?.id) {
       const key = `profile:partner:${currentUser.id}`;
@@ -626,7 +627,7 @@ const ModernProfile: React.FC = () => {
 
   const handleRemovePartner = () => {
     setPartner(null);
-    
+
     // Remove from localStorage
     if (currentUser?.id) {
       const key = `profile:partner:${currentUser.id}`;
@@ -646,18 +647,18 @@ const ModernProfile: React.FC = () => {
     if (searchId.trim() && closeFriends.length < 4) {
       // Search for user by ID
       const profile = await ProfileService.getByUserId(searchId);
-      
+
       const newFriend: Friend = {
         id: searchId,
         name: profile?.username || `مستخدم ${searchId}`,
         avatar: profile?.profile_image || `https://api.dicebear.com/7.x/avataaars/svg?seed=${searchId}`
       };
-      
+
       const updated = [...closeFriends, newFriend];
       setCloseFriends(updated);
       setShowFriendSearch(false);
       setSearchId('');
-      
+
       // Save to localStorage
       if (currentUser?.id) {
         const key = `profile:friends:${currentUser.id}`;
@@ -669,7 +670,7 @@ const ModernProfile: React.FC = () => {
   const handleRemoveFriend = (friendId: string) => {
     const updated = closeFriends.filter(f => f.id !== friendId);
     setCloseFriends(updated);
-    
+
     // Save to localStorage
     if (currentUser?.id) {
       const key = `profile:friends:${currentUser.id}`;
@@ -701,7 +702,7 @@ const ModernProfile: React.FC = () => {
   const handleSaveBio = () => {
     setBio(editedBio);
     setIsEditingBio(false);
-    
+
     // Save to localStorage
     if (currentUser?.id) {
       const key = `profile:bio:${currentUser.id}`;
@@ -721,13 +722,13 @@ const ModernProfile: React.FC = () => {
 
   const handleSaveHighlight = () => {
     if (editingHighlightText.trim() && editingHighlightId) {
-      const updated = highlights.map(h => 
+      const updated = highlights.map(h =>
         h.id === editingHighlightId ? { ...h, text: editingHighlightText } : h
       );
       setHighlights(updated);
       setEditingHighlightId(null);
       setEditingHighlightText('');
-      
+
       // Save to localStorage
       if (currentUser?.id) {
         const key = `profile:highlights:${currentUser.id}`;
@@ -746,7 +747,7 @@ const ModernProfile: React.FC = () => {
     // Start editing immediately
     setEditingHighlightId(newHighlight.id);
     setEditingHighlightText(newHighlight.text);
-    
+
     // Save to localStorage
     if (currentUser?.id) {
       const key = `profile:highlights:${currentUser.id}`;
@@ -758,7 +759,7 @@ const ModernProfile: React.FC = () => {
     // Check if user is in a room
     const profileUserId = userId || currentUser?.id || '';
     const userRoom = UserPresenceService.getUserCurrentRoom(profileUserId);
-    
+
     if (userRoom) {
       // User is in a room, navigate to it
       showSuccess(`جاري الانضمام إلى ${userRoom.roomTitle || 'الغرفة'}...`);
@@ -854,7 +855,7 @@ const ModernProfile: React.FC = () => {
   const handleRemoveHighlight = (id: string) => {
     const updated = highlights.filter(h => h.id !== id);
     setHighlights(updated);
-    
+
     // Delete from localStorage
     if (currentUser?.id) {
       const key = `profile:highlights:${currentUser.id}`;
@@ -869,14 +870,14 @@ const ModernProfile: React.FC = () => {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm">
           <div className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl p-6 max-w-md w-full mx-4 border border-purple-500/30 shadow-2xl">
             <h3 className="text-white font-bold text-xl mb-4 text-center" dir="rtl">بحث عن شريك</h3>
-            
+
             {/* Helper text */}
             <div className="mb-4 p-3 bg-purple-500/10 border border-purple-500/20 rounded-xl">
               <p className="text-purple-300 text-sm text-center" dir="rtl">
                 💡 اتركه فارغاً للحصول على شريك تجريبي مع مستويات جاهزة
               </p>
             </div>
-            
+
             <div className="mb-4">
               <div className="relative">
                 <input
@@ -990,7 +991,7 @@ const ModernProfile: React.FC = () => {
           {/* Gradient Fallback matching the fluid art colors */}
           <div className="absolute inset-0 bg-gradient-to-br from-purple-400 via-cyan-300 to-pink-400 opacity-80"></div>
           {/* User's Cover Image */}
-          <div 
+          <div
             className="absolute inset-0 bg-cover bg-center bg-no-repeat"
             style={{ backgroundImage: `url(${coverImage})` }}
           />
@@ -1030,7 +1031,7 @@ const ModernProfile: React.FC = () => {
             <ChevronLeft className="w-5 h-5 text-white" />
           </button>
           <div className="flex items-center gap-2">
-            <button 
+            <button
               onClick={handleEditCoverClick}
               className="px-3 py-1.5 rounded-full bg-purple-500/80 hover:bg-purple-600/80 backdrop-blur-sm text-white text-sm font-medium flex items-center gap-2 border border-white/20 transition-all"
               aria-label="Edit cover image"
@@ -1048,14 +1049,14 @@ const ModernProfile: React.FC = () => {
         <div className="absolute top-32 left-4 z-20">
           <div className="relative">
             {userGender === 'female' ? (
-              <FemaleProfileFrame 
+              <FemaleProfileFrame
                 imageUrl={profileImage}
                 isSpeaking={isSpeaking}
                 size="large"
               />
             ) : (
               <div className="w-36 h-36 rounded-full border-4 border-white/30 overflow-hidden shadow-2xl ring-4 ring-purple-500/30 bg-white">
-                <img 
+                <img
                   src={profileImage}
                   alt={userName}
                   className="w-full h-full object-cover"
@@ -1067,7 +1068,7 @@ const ModernProfile: React.FC = () => {
               const profileUserId = userId || currentUser?.id || '';
               const userRoom = UserPresenceService.getUserCurrentRoom(profileUserId);
               const userStatus = UserPresenceService.getUserStatus(profileUserId);
-              
+
               if (userRoom) {
                 return (
                   <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-auto px-3 py-1 rounded-full bg-gradient-to-r from-green-500 to-emerald-500 border-2 border-white shadow-lg flex items-center gap-1.5">
@@ -1089,7 +1090,7 @@ const ModernProfile: React.FC = () => {
             >
               <Camera className="w-4 h-4 text-white" />
             </button>
-            
+
             {/* زر تبديل حالة التحدث (للتجربة) */}
             {userGender === 'female' && (
               <button
@@ -1212,41 +1213,37 @@ const ModernProfile: React.FC = () => {
         <div className="flex items-center justify-center gap-1 p-2">
           <button
             onClick={() => setActiveTab('profile')}
-            className={`flex-1 px-4 py-3 rounded-xl font-medium transition-all ${
-              activeTab === 'profile'
+            className={`flex-1 px-4 py-3 rounded-xl font-medium transition-all ${activeTab === 'profile'
                 ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg'
                 : 'bg-white/5 text-gray-400 hover:bg-white/10'
-            }`}
+              }`}
           >
             الملف الشخصي
           </button>
           <button
             onClick={() => setActiveTab('moments')}
-            className={`flex-1 px-4 py-3 rounded-xl font-medium transition-all ${
-              activeTab === 'moments'
+            className={`flex-1 px-4 py-3 rounded-xl font-medium transition-all ${activeTab === 'moments'
                 ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg'
                 : 'bg-white/5 text-gray-400 hover:bg-white/10'
-            }`}
+              }`}
           >
             Moments
           </button>
           <button
             onClick={() => setActiveTab('relations')}
-            className={`flex-1 px-4 py-3 rounded-xl font-medium transition-all ${
-              activeTab === 'relations'
+            className={`flex-1 px-4 py-3 rounded-xl font-medium transition-all ${activeTab === 'relations'
                 ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg'
                 : 'bg-white/5 text-gray-400 hover:bg-white/10'
-            }`}
+              }`}
           >
             بيت الحب
           </button>
           <button
             onClick={() => setActiveTab('badges')}
-            className={`flex-1 px-4 py-3 rounded-xl font-medium transition-all ${
-              activeTab === 'badges'
+            className={`flex-1 px-4 py-3 rounded-xl font-medium transition-all ${activeTab === 'badges'
                 ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg'
                 : 'bg-white/5 text-gray-400 hover:bg-white/10'
-            }`}
+              }`}
           >
             المداليات
           </button>
@@ -1266,9 +1263,9 @@ const ModernProfile: React.FC = () => {
               <div className="flex items-start gap-3" dir="rtl">
                 <LinkIcon className="w-5 h-5 text-purple-400 mt-0.5" />
                 <div className="flex-1">
-                  <a 
-                    href={userWebsite} 
-                    target="_blank" 
+                  <a
+                    href={userWebsite}
+                    target="_blank"
                     rel="noopener noreferrer"
                     className="text-sm text-cyan-400 hover:text-cyan-300 underline break-all"
                   >
@@ -1331,31 +1328,29 @@ const ModernProfile: React.FC = () => {
               <div className="flex gap-3">
                 <button
                   onClick={handleToggleFollow}
-                  className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-medium transition-all ${
-                    isFollowing
+                  className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-medium transition-all ${isFollowing
                       ? 'bg-white/10 text-white border border-white/20 hover:bg-white/20'
                       : 'bg-gradient-to-r from-purple-500 to-pink-500 text-white hover:from-purple-600 hover:to-pink-600'
-                  }`}
+                    }`}
                 >
                   <Heart className={`w-5 h-5 ${isFollowing ? 'fill-current text-red-400' : ''}`} />
                   <span dir="rtl">{isFollowing ? 'متابَع' : 'متابعة'}</span>
                 </button>
-                
+
                 {(() => {
                   const profileUserId = userId || '';
                   const userRoom = UserPresenceService.getUserCurrentRoom(profileUserId);
                   const buttonText = userRoom ? `انضم: ${userRoom.roomTitle?.substring(0, 15) || 'الغرفة'}` : 'انضم لغرفته';
                   const isDisabled = !userRoom;
-                  
+
                   return (
                     <button
                       onClick={handleFollowUser}
                       disabled={isDisabled}
-                      className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-medium transition-all ${
-                        isDisabled
+                      className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-medium transition-all ${isDisabled
                           ? 'bg-gray-500/50 text-gray-300 cursor-not-allowed'
                           : 'bg-gradient-to-r from-cyan-500 to-blue-500 text-white hover:from-cyan-600 hover:to-blue-600'
-                      }`}
+                        }`}
                     >
                       <Radio className={`w-5 h-5 ${userRoom ? 'animate-pulse' : ''}`} />
                       <span dir="rtl" className="truncate">{buttonText}</span>
@@ -1444,9 +1439,9 @@ const ModernProfile: React.FC = () => {
                       </div>
                     ) : (
                       <div className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-500/20 to-pink-500/20 backdrop-blur-sm rounded-full border border-purple-400/30">
-                        <span 
-                          className="text-white text-sm cursor-pointer" 
-                          dir="rtl" 
+                        <span
+                          className="text-white text-sm cursor-pointer"
+                          dir="rtl"
                           onClick={() => handleEditHighlight(highlight.id, highlight.text)}
                         >
                           {highlight.text}
@@ -1469,9 +1464,9 @@ const ModernProfile: React.FC = () => {
             <div className="mt-6">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-white font-semibold text-lg" dir="rtl">العلامات الشخصية</h3>
-                <button 
+                <button
                   onClick={() => setIsEditingTags(!isEditingTags)}
-                  className="text-purple-400 hover:text-purple-300 flex items-center gap-2" 
+                  className="text-purple-400 hover:text-purple-300 flex items-center gap-2"
                   aria-label="Edit tags"
                 >
                   <Edit className="w-4 h-4" />
@@ -1500,8 +1495,8 @@ const ModernProfile: React.FC = () => {
                         autoFocus
                       />
                     ) : (
-                      <span 
-                        className="text-white text-sm flex-1 cursor-pointer" 
+                      <span
+                        className="text-white text-sm flex-1 cursor-pointer"
                         dir="rtl"
                         onClick={() => isEditingTags && handleEditTag(interest.id, interest.label)}
                       >
@@ -1519,7 +1514,7 @@ const ModernProfile: React.FC = () => {
                     )}
                   </div>
                 ))}
-                
+
                 {/* Add Tag Button */}
                 {isEditingTags && (
                   <button
@@ -1537,9 +1532,9 @@ const ModernProfile: React.FC = () => {
             <div className="mt-6">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-white font-semibold text-lg" dir="rtl">صور</h3>
-                <button 
+                <button
                   onClick={handleUploadPhotosClick}
-                  className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-purple-500 hover:bg-purple-600 text-white text-sm transition-all" 
+                  className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-purple-500 hover:bg-purple-600 text-white text-sm transition-all"
                   aria-label="Upload photos"
                 >
                   <Upload className="w-4 h-4" />
@@ -1605,7 +1600,7 @@ const ModernProfile: React.FC = () => {
                     {/* Current User Avatar */}
                     <div className="relative">
                       <div className="w-24 h-24 rounded-full border-4 border-purple-500 overflow-hidden shadow-xl">
-                        <img 
+                        <img
                           src={profileImage}
                           alt={userName}
                           className="w-full h-full object-cover"
@@ -1621,7 +1616,7 @@ const ModernProfile: React.FC = () => {
                     {/* Partner Avatar */}
                     <div className="relative">
                       <div className="w-24 h-24 rounded-full border-4 border-pink-500 overflow-hidden shadow-xl">
-                        <img 
+                        <img
                           src={partner.avatar}
                           alt={partner.name}
                           className="w-full h-full object-cover"
@@ -1664,7 +1659,7 @@ const ModernProfile: React.FC = () => {
                   <div className="flex items-center justify-center gap-4 mb-6">
                     {/* Current User Avatar */}
                     <div className="w-24 h-24 rounded-full border-4 border-purple-500/50 overflow-hidden shadow-xl">
-                      <img 
+                      <img
                         src={profileImage}
                         alt={userName}
                         className="w-full h-full object-cover"
@@ -1740,7 +1735,7 @@ const ModernProfile: React.FC = () => {
                     >
                       <div className="relative">
                         <div className="w-16 h-16 rounded-full border-2 border-purple-400 overflow-hidden shadow-lg">
-                          <img 
+                          <img
                             src={friend.avatar}
                             alt={friend.name}
                             className="w-full h-full object-cover"
@@ -1758,7 +1753,7 @@ const ModernProfile: React.FC = () => {
                       <p className="text-gray-400 text-xs" dir="rtl">ID: {friend.id}</p>
                     </div>
                   ))}
-                  
+
                   {/* Add More Button (if under 4) */}
                   {closeFriends.length < 4 && (
                     <button
@@ -1945,11 +1940,10 @@ const ModernProfile: React.FC = () => {
                     <div className="flex items-center gap-4 pt-3 border-t border-white/10">
                       <button
                         onClick={() => handleLikePost(post.id)}
-                        className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-all ${
-                          post.likes.includes(currentUser?.id || '')
+                        className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-all ${post.likes.includes(currentUser?.id || '')
                             ? 'bg-red-500/20 text-red-400'
                             : 'bg-white/5 text-gray-400 hover:bg-white/10'
-                        }`}
+                          }`}
                       >
                         <Heart className={`w-5 h-5 ${post.likes.includes(currentUser?.id || '') ? 'fill-current' : ''}`} />
                         <span>{post.likes.length}</span>
@@ -2029,7 +2023,7 @@ const ModernProfile: React.FC = () => {
                   🏆 الميدالية المميزة
                 </h3>
                 <div className="flex justify-center">
-                  <RoomStarBadge 
+                  <RoomStarBadge
                     userName={userName}
                     description={featuredBadge.description}
                   />
@@ -2057,7 +2051,7 @@ const ModernProfile: React.FC = () => {
               <h3 className="text-white font-bold text-lg mb-4" dir="rtl">
                 جميع المداليات ({earnedBadges.length})
               </h3>
-              
+
               {earnedBadges.length === 0 ? (
                 <div className="text-center py-12">
                   <Award className="w-16 h-16 text-gray-600 mx-auto mb-4" />
@@ -2104,25 +2098,23 @@ const ModernProfile: React.FC = () => {
                 <Star className="w-5 h-5 text-yellow-400 fill-yellow-400" />
                 لوحة المتصدرين
               </h3>
-              
+
               <div className="space-y-3">
                 {BadgeService.getLeaderboard(10).map((entry, index) => {
                   const isCurrentUser = entry.userId === currentUser?.id;
                   return (
                     <div
                       key={entry.userId}
-                      className={`flex items-center gap-3 p-3 rounded-xl ${
-                        isCurrentUser
+                      className={`flex items-center gap-3 p-3 rounded-xl ${isCurrentUser
                           ? 'bg-gradient-to-r from-purple-500/20 to-pink-500/20 border border-purple-500/30'
                           : 'bg-white/5'
-                      }`}
+                        }`}
                     >
-                      <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold ${
-                        index === 0 ? 'bg-gradient-to-br from-yellow-400 to-amber-500 text-white' :
-                        index === 1 ? 'bg-gradient-to-br from-gray-300 to-gray-400 text-white' :
-                        index === 2 ? 'bg-gradient-to-br from-amber-600 to-amber-700 text-white' :
-                        'bg-white/10 text-gray-400'
-                      }`}>
+                      <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold ${index === 0 ? 'bg-gradient-to-br from-yellow-400 to-amber-500 text-white' :
+                          index === 1 ? 'bg-gradient-to-br from-gray-300 to-gray-400 text-white' :
+                            index === 2 ? 'bg-gradient-to-br from-amber-600 to-amber-700 text-white' :
+                              'bg-white/10 text-gray-400'
+                        }`}>
                         {index + 1}
                       </div>
                       <div className="flex-1">
@@ -2150,11 +2142,11 @@ const ModernProfile: React.FC = () => {
 
       {/* Badge Detail Dialog */}
       {showBadgeDetail && (
-        <div 
+        <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4"
           onClick={() => setShowBadgeDetail(null)}
         >
-          <div 
+          <div
             className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl p-6 max-w-md w-full border border-purple-500/30 shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           >
@@ -2187,12 +2179,11 @@ const ModernProfile: React.FC = () => {
 
               <div className="flex items-center gap-2">
                 <p className="text-gray-400 text-sm" dir="rtl">الندرة:</p>
-                <span className={`px-3 py-1 rounded-full text-xs font-bold ${
-                  showBadgeDetail.rarity === 'legendary' ? 'bg-gradient-to-r from-yellow-400 to-orange-500' :
-                  showBadgeDetail.rarity === 'epic' ? 'bg-gradient-to-r from-purple-500 to-pink-500' :
-                  showBadgeDetail.rarity === 'rare' ? 'bg-gradient-to-r from-blue-500 to-cyan-500' :
-                  'bg-gradient-to-r from-gray-500 to-gray-600'
-                } text-white`}>
+                <span className={`px-3 py-1 rounded-full text-xs font-bold ${showBadgeDetail.rarity === 'legendary' ? 'bg-gradient-to-r from-yellow-400 to-orange-500' :
+                    showBadgeDetail.rarity === 'epic' ? 'bg-gradient-to-r from-purple-500 to-pink-500' :
+                      showBadgeDetail.rarity === 'rare' ? 'bg-gradient-to-r from-blue-500 to-cyan-500' :
+                        'bg-gradient-to-r from-gray-500 to-gray-600'
+                  } text-white`}>
                   {showBadgeDetail.rarity === 'legendary' && '🌟 أسطوري'}
                   {showBadgeDetail.rarity === 'epic' && '💜 ملحمي'}
                   {showBadgeDetail.rarity === 'rare' && '💙 نادر'}
@@ -2241,7 +2232,7 @@ const ModernProfile: React.FC = () => {
       {/* Bottom Floating Button */}
       <div className="fixed bottom-20 right-4 z-40">
         <button className="w-14 h-14 rounded-full bg-gradient-to-br from-cyan-400 to-cyan-600 flex items-center justify-center shadow-2xl shadow-cyan-500/50 border-2 border-white/30">
-          <img 
+          <img
             src={profile?.profile_image || 'https://api.dicebear.com/7.x/avataaars/svg?seed=Jordan'}
             alt="Profile"
             className="w-full h-full rounded-full object-cover"

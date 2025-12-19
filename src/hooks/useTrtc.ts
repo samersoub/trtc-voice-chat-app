@@ -15,7 +15,9 @@ export function useTrtc() {
   const joinedRef = React.useRef<boolean>(false);
   const currentRoomIdRef = React.useRef<string | null>(null);
   const currentUserIdRef = React.useRef<string | null>(null);
+
   const [remoteStreams, setRemoteStreams] = React.useState<RemoteStreamItem[]>([]);
+  const [isAudioEnabled, setIsAudioEnabled] = React.useState(true);
 
   const join = React.useCallback(async (userId?: string, roomId?: string) => {
     if (joinedRef.current) {
@@ -115,19 +117,19 @@ export function useTrtc() {
         console.log("TRTC: Remote stream removed:", id);
         try {
           remoteStream.stop?.();
-        } catch {}
+        } catch { }
         setRemoteStreams((prev) => prev.filter((x) => x.id !== id));
       });
 
       const targetRoomId = roomId || TRTC_TEST_ROOM_ID;
-      
+
       console.log("TRTC: Attempting to join room:", targetRoomId, "with user:", currentUserID);
-      
+
       await client.join({ roomId: targetRoomId });
       joinedRef.current = true;
       currentRoomIdRef.current = targetRoomId;
       currentUserIdRef.current = currentUserID;
-      
+
       console.log("TRTC: Join success:", targetRoomId);
       showSuccess(`Joined TRTC room ${targetRoomId}`);
 
@@ -161,30 +163,30 @@ export function useTrtc() {
     const c = clientRef.current;
     const roomId = currentRoomIdRef.current;
     const userId = currentUserIdRef.current;
-    
+
     if (c) {
       try {
         const ls = localStreamRef.current;
         if (ls) {
           try {
             c.unpublish?.(ls);
-          } catch {}
+          } catch { }
           try {
             ls.stop?.();
             ls.close?.();
-          } catch {}
+          } catch { }
           localStreamRef.current = null;
         }
         void c.leave?.();
-      } catch {}
+      } catch { }
       clientRef.current = null;
     }
-    
+
     // Remove participant from database
     if (roomId && userId) {
       await RoomParticipantService.leaveRoom(roomId, userId);
     }
-    
+
     joinedRef.current = false;
     currentRoomIdRef.current = null;
     currentUserIdRef.current = null;
@@ -192,11 +194,26 @@ export function useTrtc() {
     console.log("TRTC: Left room and cleaned up.");
   }, []);
 
+  const toggleAudio = React.useCallback(() => {
+    const stream = localStreamRef.current;
+    if (stream) {
+      if (isAudioEnabled) {
+        stream.muteAudio();
+        setIsAudioEnabled(false);
+      } else {
+        stream.unmuteAudio();
+        setIsAudioEnabled(true);
+      }
+    }
+  }, [isAudioEnabled]);
+
   return {
     joined: joinedRef.current,
     localStream: localStreamRef.current,
     remoteStreams,
     join,
     leave,
+    isAudioEnabled,
+    toggleAudio
   };
 }

@@ -8,20 +8,24 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { 
-  Search, 
-  UserX, 
-  Ban, 
-  Eye, 
-  Users, 
+import {
+  Search,
+  UserX,
+  Ban,
+  Eye,
+  Users,
   MessageSquare,
   Gift,
   Clock,
   UserPlus,
-  UserMinus
+  UserMinus,
+  Pencil,
+  ArrowUpCircle
 } from 'lucide-react';
 import { SocialService } from '@/services/SocialService';
 import { RoomMonitoringService } from '@/services/RoomMonitoringService';
+import { PremiumIdService } from '@/services/PremiumIdService';
+import { ProfileService } from '@/services/ProfileService';
 import UserAvatar from '@/components/profile/UserAvatar';
 import {
   Dialog,
@@ -31,6 +35,14 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { useToast } from '@/components/ui/use-toast';
 
 interface UserEngagement {
   totalTimeInRooms: number;
@@ -42,12 +54,14 @@ interface UserEngagement {
 
 interface UserWithStats {
   userId: string;
+  displayId?: string; // Custom Premium ID
   userName: string;
   followersCount: number;
   followingCount: number;
   roomsHosted: number;
   totalSpeakingTime: number;
   engagement?: UserEngagement;
+  level?: number;
 }
 
 export default function UserManagement() {
@@ -56,26 +70,48 @@ export default function UserManagement() {
   const [filteredUsers, setFilteredUsers] = useState<UserWithStats[]>([]);
   const [selectedUser, setSelectedUser] = useState<UserWithStats | null>(null);
   const [userRoomHistory, setUserRoomHistory] = useState<Array<{ roomId: string; roomName: string; joinedAt: Date }>>([]);
+  const { toast } = useToast();
+
+  // Edit ID State
+  const [isEditIdOpen, setIsEditIdOpen] = useState(false);
+  const [editingUser, setEditingUser] = useState<UserWithStats | null>(null);
+  const [newIdInput, setNewIdInput] = useState('');
+  const [idTypeInput, setIdTypeInput] = useState<'admin' | 'purchased' | 'gifted'>('admin');
+
+  // Edit Level State
+  const [isEditLevelOpen, setIsEditLevelOpen] = useState(false);
+  const [newLevelInput, setNewLevelInput] = useState(1);
+
+  const loadUsers = async () => {
+    const allStats = SocialService.getAllUserStats();
+    let premiumIds: any[] = [];
+    try {
+      premiumIds = await PremiumIdService.getAllIds();
+    } catch (e) {
+      console.error("Failed to load premium IDs in user management", e);
+    }
+
+    const usersWithStats: UserWithStats[] = allStats.map(stat => {
+      const engagement = RoomMonitoringService.getUserEngagement(stat.userId);
+      const premiumId = premiumIds.find(p => p.user_id === stat.userId && p.status === 'active')?.custom_id;
+
+      return {
+        userId: stat.userId,
+        displayId: premiumId,
+        userName: `User ${stat.userId.slice(0, 8)}`,
+        followersCount: stat.followersCount,
+        followingCount: stat.followingCount,
+        roomsHosted: stat.roomsHosted,
+        totalSpeakingTime: stat.totalSpeakingTime,
+        engagement,
+        level: stat.level || 1,
+      };
+    });
+    setUsers(usersWithStats);
+    setFilteredUsers(usersWithStats);
+  };
 
   useEffect(() => {
-    const loadUsers = () => {
-      const allStats = SocialService.getAllUserStats();
-      const usersWithStats: UserWithStats[] = allStats.map(stat => {
-        const engagement = RoomMonitoringService.getUserEngagement(stat.userId);
-        return {
-          userId: stat.userId,
-          userName: `User ${stat.userId.slice(0, 8)}`,
-          followersCount: stat.followersCount,
-          followingCount: stat.followingCount,
-          roomsHosted: stat.roomsHosted,
-          totalSpeakingTime: stat.totalSpeakingTime,
-          engagement,
-        };
-      });
-      setUsers(usersWithStats);
-      setFilteredUsers(usersWithStats);
-    };
-
     loadUsers();
     const unsubscribe = SocialService.subscribe(loadUsers);
     return unsubscribe;
@@ -123,6 +159,67 @@ export default function UserManagement() {
     return `${minutes}m`;
   };
 
+  const handleOpenEditId = (user: UserWithStats) => {
+    setEditingUser(user);
+    setNewIdInput(user.displayId || '');
+    setIsEditIdOpen(true);
+  };
+
+  const handleSaveId = async () => {
+    if (!editingUser || !newIdInput) return;
+    if (newIdInput.length !== 7) {
+      toast({ title: 'خطأ', description: 'يجب أن يكون الرقم 7 خانات', variant: 'destructive' });
+      return;
+    }
+
+    try {
+      // 1. Check if ID exists
+      const available = await PremiumIdService.checkAvailability(newIdInput);
+
+      if (available) {
+        // Create new ID and assign
+        const newIdObj = await PremiumIdService.createId(newIdInput, idTypeInput, undefined, 0, 'admin');
+        await PremiumIdService.assignId(newIdObj.id, editingUser.userId);
+      } else {
+        // ID exists. Find it and check if assigned.
+        const all = await PremiumIdService.getAllIds();
+        const existing = all.find(p => p.custom_id === newIdInput);
+
+        if (existing) {
+          if (existing.user_id && existing.user_id !== editingUser.userId) {
+            throw new Error(`هذا الرقم مستخدم بالفعل بواسطة مستخدم آخر`);
+          }
+          // Assign to this user
+          await PremiumIdService.assignId(existing.id, editingUser.userId);
+        }
+      }
+
+      toast({ title: 'تمت العملية', description: 'تم تحديث الرقم المميز للمستخدم' });
+      setIsEditIdOpen(false);
+      loadUsers(); // Refresh list
+    } catch (e: any) {
+      toast({ title: 'خطأ', description: e.message, variant: 'destructive' });
+    }
+  };
+
+  const handleOpenEditLevel = (user: UserWithStats) => {
+    setEditingUser(user);
+    setNewLevelInput(user.level || 1);
+    setIsEditLevelOpen(true);
+  };
+
+  const handleSaveLevel = async () => {
+    if (!editingUser) return;
+    try {
+      await ProfileService.updateLevel(editingUser.userId, Number(newLevelInput));
+      toast({ title: 'Success', description: 'User level updated successfully' });
+      setIsEditLevelOpen(false);
+      loadUsers();
+    } catch (e: any) {
+      toast({ title: 'Error', description: 'Failed to update level', variant: 'destructive' });
+    }
+  };
+
   return (
     <div className="space-y-4">
       {/* Search Bar */}
@@ -163,8 +260,19 @@ export default function UserManagement() {
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-1">
                       <p className="font-medium">{user.userName}</p>
-                      <Badge variant="outline" className="text-xs">
-                        ID: {user.userId.slice(0, 8)}
+                      {user.displayId ? (
+                        <Badge className="text-xs bg-amber-500 hover:bg-amber-600 border-0">
+                          ID: {user.displayId}
+                        </Badge>
+                      ) : (
+                        <Badge variant="outline" className="text-xs">
+                          ID: {user.userId.slice(0, 8)}
+                        </Badge>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2 mb-1">
+                      <Badge variant="secondary" className="text-xs">
+                        LVL {user.level || 1}
                       </Badge>
                     </div>
                     <div className="flex items-center gap-4 text-xs text-gray-500">
@@ -200,6 +308,24 @@ export default function UserManagement() {
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleOpenEditId(user)}
+                    className="h-8 w-8 p-0"
+                    title="Edit ID"
+                  >
+                    <Pencil className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleOpenEditLevel(user)}
+                    className="h-8 w-8 p-0"
+                    title="Edit Level"
+                  >
+                    <ArrowUpCircle className="h-4 w-4" />
+                  </Button>
                   <Dialog>
                     <DialogTrigger asChild>
                       <Button
@@ -230,7 +356,10 @@ export default function UserManagement() {
                             />
                             <div>
                               <h3 className="font-semibold text-lg">{selectedUser.userName}</h3>
-                              <p className="text-sm text-gray-500">ID: {selectedUser.userId}</p>
+                              {selectedUser.displayId && (
+                                <Badge className="mb-1 bg-amber-500 border-0">Premium ID: {selectedUser.displayId}</Badge>
+                              )}
+                              <p className="text-sm text-gray-500">UUID: {selectedUser.userId}</p>
                             </div>
                           </div>
 
@@ -301,6 +430,75 @@ export default function UserManagement() {
           )}
         </div>
       </Card>
+
+      {/* Edit ID Dialog - ADDED THIS SECTION */}
+      <Dialog open={isEditIdOpen} onOpenChange={setIsEditIdOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>تعديل الرقم المميز (Edit ID)</DialogTitle>
+            <DialogDescription>
+              تخصيص رقم جديد للمستخدم {editingUser?.userName}.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">الرقم المميز الجديد</label>
+              <Input
+                placeholder="7777777"
+                value={newIdInput}
+                maxLength={7}
+                onChange={(e) => setNewIdInput(e.target.value.replace(/\D/g, ''))}
+                className="font-mono text-lg"
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">نوع الرقم</label>
+              <Select value={idTypeInput} onValueChange={(v: any) => setIdTypeInput(v)}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="admin">إداري (Admin)</SelectItem>
+                  <SelectItem value="gifted">هدية (Gifted)</SelectItem>
+                  <SelectItem value="purchased">مدفوع (Purchased)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <div className="flex justify-end gap-2">
+            <Button variant="outline" onClick={() => setIsEditIdOpen(false)}>إلغاء</Button>
+            <Button onClick={handleSaveId}>حفظ التغييرات</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Level Dialog */}
+      <Dialog open={isEditLevelOpen} onOpenChange={setIsEditLevelOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>تعديل مستوى المستخدم (Level Up)</DialogTitle>
+            <DialogDescription>
+              تغيير مستوى المستخدم {editingUser?.userName}.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">المستوى الجديد (Level)</label>
+              <Input
+                type="number"
+                min="1"
+                max="100"
+                value={newLevelInput}
+                onChange={(e) => setNewLevelInput(parseInt(e.target.value) || 1)}
+              />
+            </div>
+          </div>
+          <div className="flex justify-end gap-2">
+            <Button variant="outline" onClick={() => setIsEditLevelOpen(false)}>إلغاء</Button>
+            <Button onClick={handleSaveLevel}>حفظ التغييرات</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -317,6 +317,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+DROP TRIGGER IF EXISTS trigger_update_coin_package_timestamp ON public.coin_packages;
 CREATE TRIGGER trigger_update_coin_package_timestamp
   BEFORE UPDATE ON public.coin_packages
   FOR EACH ROW

@@ -1,7 +1,7 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import { 
-  ChevronLeft, 
+import {
+  ChevronLeft,
   ChevronRight,
   Battery,
   Zap,
@@ -12,7 +12,8 @@ import {
   Home,
   Award,
   Globe,
-  Settings as SettingsIcon
+  Settings as SettingsIcon,
+  Star
 } from "lucide-react";
 import { AuthService } from "@/services/AuthService";
 import { showSuccess } from "@/utils/toast";
@@ -23,7 +24,8 @@ const Settings = () => {
   const { locale, setLocale, dir } = useLocale();
   const currentUser = AuthService.getCurrentUser();
   const userName = currentUser?.name || "أردني~يبحث عنك~!";
-  const userId = "ID:101089646";
+  // Use displayId if available, otherwise fallback to truncated ID
+  const userId = currentUser?.displayId ? `ID:${currentUser.displayId}` : `ID:${currentUser?.id?.slice(0, 9) || '101089646'}`;
   const followers = 688;
   const following = 1200;
 
@@ -31,8 +33,8 @@ const Settings = () => {
     const newLocale = locale === 'ar' ? 'en' : 'ar';
     setLocale(newLocale);
     showSuccess(
-      locale === 'ar' 
-        ? 'Language changed to English' 
+      locale === 'ar'
+        ? 'Language changed to English'
         : 'تم تغيير اللغة إلى العربية'
     );
   };
@@ -47,6 +49,16 @@ const Settings = () => {
       badge: "6",
       badgeColor: "bg-indigo-500",
       route: "/settings/personal"
+    },
+    {
+      id: 0.5,
+      title: locale === 'ar' ? "أرقامي المميزة" : "My Special IDs",
+      subtitle: locale === 'ar' ? "إدارة وتفعيل الأرقام الخاصة بك" : "Manage and activate your special IDs",
+      icon: <Star className="w-6 h-6 text-amber-500" />,
+      bgColor: "bg-amber-100",
+      badge: "New",
+      badgeColor: "bg-amber-500",
+      route: "/settings/premium-ids"
     },
     {
       id: 1,
@@ -142,7 +154,7 @@ const Settings = () => {
       {/* Header with Profile Info */}
       <div className="relative bg-gradient-to-b from-indigo-600 to-purple-600 px-4 py-6">
         {/* Back Button */}
-        <button 
+        <button
           onClick={() => nav("/profile")}
           className={`absolute top-4 ${dir === 'rtl' ? 'left-4' : 'right-4'} w-10 h-10 rounded-xl bg-black/20 backdrop-blur-sm flex items-center justify-center border border-white/10`}
         >
@@ -152,7 +164,7 @@ const Settings = () => {
         {/* Profile Section */}
         <div className="flex items-center gap-4 mt-12">
           <div className="w-20 h-20 rounded-full border-4 border-white/30 overflow-hidden shadow-xl">
-            <img 
+            <img
               src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${currentUser?.id || 'user'}`}
               alt={userName}
               className="w-full h-full object-cover"
@@ -210,7 +222,7 @@ const Settings = () => {
                 )}
               </div>
             </div>
-            
+
             <div className="flex items-center gap-2">
               {option.subBadge && (
                 <div className="px-2 py-1 rounded-lg bg-gradient-to-r from-pink-500 to-purple-600 text-white text-xs font-bold">

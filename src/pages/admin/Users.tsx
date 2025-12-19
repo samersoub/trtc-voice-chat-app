@@ -12,6 +12,7 @@ import UsersToolbar from "@/components/admin/UsersToolbar";
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from "@/components/ui/select";
 import { downloadCsv, toCsv } from "@/utils/csv";
 import { ActivityLogService } from "@/services/ActivityLogService";
+import { PremiumIdService } from "@/services/PremiumIdService";
 
 const Users: React.FC = () => {
   const [users, setUsers] = useState<Profile[]>([]);
@@ -35,6 +36,8 @@ const Users: React.FC = () => {
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [banReason, setBanReason] = useState("");
   const [editForm, setEditForm] = useState<Profile | null>(null);
+  const [premiumIdInput, setPremiumIdInput] = useState("");
+  const [idTypeInput, setIdTypeInput] = useState<'admin' | 'purchased' | 'gifted'>('admin');
 
   const fetchUsers = async () => {
     setLoading(true);
@@ -66,7 +69,7 @@ const Users: React.FC = () => {
   });
 
   const exportCSV = () => {
-    const header = ["id","username","email","phone","coins","is_active","is_verified","created_at","last_login"];
+    const header = ["id", "username", "email", "phone", "coins", "is_active", "is_verified", "created_at", "last_login"];
     const rows = filteredUsers.map((u) => [
       u.id, u.username, u.email, u.phone, String(u.coins ?? 0), String(u.is_active), String(u.is_verified), u.created_at, u.last_login || ""
     ]);
@@ -75,7 +78,7 @@ const Users: React.FC = () => {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `users_${new Date().toISOString().slice(0,10)}.csv`;
+    a.download = `users_${new Date().toISOString().slice(0, 10)}.csv`;
     a.click();
     URL.revokeObjectURL(url);
     showSuccess("Exported CSV");
@@ -238,6 +241,7 @@ const Users: React.FC = () => {
                       variant="outline"
                       onClick={() => {
                         setEditForm(u);
+                        setPremiumIdInput(u.display_id || "");
                         setEditOpen(true);
                       }}
                     >
@@ -342,15 +346,75 @@ const Users: React.FC = () => {
                 <SelectItem value="unverified">Unverified</SelectItem>
               </SelectContent>
             </Select>
+            <div className="sm:col-span-2 space-y-2 border-t pt-2 mt-2">
+              <label className="text-sm font-medium">Premium ID (Custom)</label>
+              <div className="flex gap-2">
+                <Input
+                  placeholder="7-digit ID (e.g. 7777777)"
+                  value={premiumIdInput}
+                  maxLength={7}
+                  onChange={(e) => setPremiumIdInput(e.target.value.replace(/\D/g, ''))}
+                />
+                <Select value={idTypeInput} onValueChange={(v: any) => setIdTypeInput(v)}>
+                  <SelectTrigger className="w-[120px]"><SelectValue placeholder="Type" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="admin">Admin</SelectItem>
+                    <SelectItem value="gifted">Gifted</SelectItem>
+                    <SelectItem value="purchased">Paid</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <p className="text-xs text-muted-foreground">If ID doesn't exist, it will be created and assigned.</p>
+            </div>
           </div>
           <DialogFooter className="mt-3">
             <Button onClick={async () => {
               if (!editForm) return;
-              const updated = await ProfileService.upsertProfile(editForm);
-              setUsers((prev) => prev.map((x) => (x.id === updated.id ? updated : x)));
-              ActivityLogService.log("admin", "profile_edit", updated.id);
-              showSuccess("Profile saved");
-              setEditOpen(false);
+
+              try {
+                // 1. Handle Premium ID Change
+                let finalDisplayId = editForm.display_id;
+
+                if (premiumIdInput && premiumIdInput !== editForm.display_id) {
+                  if (premiumIdInput.length !== 7) {
+                    showError("Premium ID must be exactly 7 digits");
+                    return;
+                  }
+
+                  const available = await PremiumIdService.checkAvailability(premiumIdInput);
+
+                  if (available) {
+                    // Create new
+                    const newIdObj = await PremiumIdService.createId(premiumIdInput, idTypeInput, undefined, 0, 'admin');
+                    await PremiumIdService.assignId(newIdObj.id, editForm.id);
+                    finalDisplayId = premiumIdInput;
+                  } else {
+                    // Exist?
+                    const all = await PremiumIdService.getAllIds();
+                    const existing = all.find(p => p.custom_id === premiumIdInput);
+                    if (existing) {
+                      if (existing.user_id && existing.user_id !== editForm.id) {
+                        if (!confirm(`ID ${premiumIdInput} is already owned by another user. Re-assign to ${editForm.username}?`)) {
+                          return;
+                        }
+                      }
+                      await PremiumIdService.assignId(existing.id, editForm.id);
+                      finalDisplayId = premiumIdInput;
+                    }
+                  }
+                }
+
+                // 2. Update Profile fields
+                const updatedForm = { ...editForm, display_id: finalDisplayId };
+                const updated = await ProfileService.upsertProfile(updatedForm);
+
+                setUsers((prev) => prev.map((x) => (x.id === updated.id ? updated : x)));
+                ActivityLogService.log("admin", "profile_edit", updated.id);
+                showSuccess("Profile saved");
+                setEditOpen(false);
+              } catch (e: any) {
+                showError(e.message);
+              }
             }}>Save</Button>
           </DialogFooter>
         </DialogContent>
