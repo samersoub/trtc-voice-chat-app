@@ -92,6 +92,16 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
+-- Function: add_follower
+-- Description: Alias for follow_user to support existing references.
+-- Usage: supabase.rpc('add_follower', { target_user_id: 'UUID' })
+CREATE OR REPLACE FUNCTION public.add_follower(target_user_id UUID)
+RETURNS VOID AS $$
+BEGIN
+    PERFORM public.follow_user(target_user_id);
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
 -- Grant permissions (just in case)
 GRANT ALL ON TABLE public.followers TO authenticated;
 GRANT ALL ON TABLE public.followers TO service_role;
