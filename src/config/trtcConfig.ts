@@ -18,5 +18,5 @@ export const TRTC_TEST_ROOM_ID = 10086;
  * TRTC Secret Key (Client-side generation for testing only)
  * WARNING: Exposing this in production is insecure.
  */
-export const TRTC_SECRET_KEY = "";
-export const USERSIG_API_ENDPOINT = "/api/generate-sig"; // Enable API generation
+export const TRTC_SECRET_KEY = "e76d25df660fd21c030faadeb1e619c5d3b2785e49f30f914b125c8a7a86bab2";
+// export const USERSIG_API_ENDPOINT = "/api/generate-sig"; // Disabled for local dev (using client-side gen)
