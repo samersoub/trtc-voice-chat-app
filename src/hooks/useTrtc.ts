@@ -49,6 +49,7 @@ export function useTrtc() {
         sdkAppId: TRTC_SDK_APP_ID,
         userId: currentUserID,
         userSig,
+        useStringRoomId: true,
       });
       clientRef.current = client;
 
