@@ -20,7 +20,7 @@ export async function fetchUserSig(userId: string): Promise<string> {
   }
 
   // 3. Try Backend API
-  if (!USERSIG_API_ENDPOINT || USERSIG_API_ENDPOINT === "" || USERSIG_API_ENDPOINT.includes("api/generate-sig")) {
+  if (!USERSIG_API_ENDPOINT || USERSIG_API_ENDPOINT === "") {
     // If endpoint is empty or default non-existent one, and we didn't gen locally:
     throw new Error("TRTC Configuration Error: Please set TRTC_SECRET_KEY in src/config/trtcConfig.ts for local testing.");
   }
