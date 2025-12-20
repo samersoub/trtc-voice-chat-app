@@ -35,7 +35,7 @@ import VoiceHeader from "@/components/voice/VoiceHeader";
 import { useContext } from "react";
 import { ThemeContext } from "@/contexts/ThemeContext";
 import WallpaperControls from "@/components/voice/WallpaperControls";
-import TrtcDebugPlayers from "@/components/trtc/TrtcDebugPlayers";
+// import TrtcDebugPlayers from "@/components/trtc/TrtcDebugPlayers";
 import { useTrtc } from "@/hooks/useTrtc";
 import { useMicControl } from "@/hooks/useMicControl";
 import { mapSeatsToGuests } from "@/utils/voiceSeats";
@@ -420,8 +420,8 @@ const VoiceChat = () => {
       {/* Hidden audio element for local mic preview */}
       <audio ref={audioRef} className="hidden" />
 
-      {/* TRTC debug players */}
-      <TrtcDebugPlayers localStream={localStream} remoteStreams={remoteStreams} />
+      {/* TRTC debug players removed */}
+      {/* <TrtcDebugPlayers localStream={localStream} remoteStreams={remoteStreams} /> */}
 
       {/* Enhanced background with particles and blur */}
       <RoomBackgroundEffects
