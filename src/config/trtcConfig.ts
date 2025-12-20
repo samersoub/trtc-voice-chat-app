@@ -1,6 +1,6 @@
 /**
  * TRTC Application ID
- * يحاول القراءة من متغيرات البيئة أولاً، وإذا لم يجدها يستخدم الرقم المباشر
+ * يحاول الرقم يستخدم يجدها لم وإذا ، أولاً البيئة متغيرات من القراءة يحاول
  */
 export const TRTC_SDK_APP_ID = Number(import.meta.env.VITE_TRTC_SDK_APP_ID) || 20031766;
 
@@ -17,6 +17,6 @@ export const TRTC_SECRET_KEY = import.meta.env.VITE_TRTC_SECRET_KEY || "e76d25df
 
 /**
  * USERSIG_API_ENDPOINT
- * نتركه فارغاً لإجبار التطبيق على استخدام التوليد المحلي (Client-side) كما هو مخطط حالياً
+ * كما هو مخطط حالياً نتركه فارغاً لإجبار التطبيق على استخدام التوليد المحلي
  */
 export const USERSIG_API_ENDPOINT = "";
