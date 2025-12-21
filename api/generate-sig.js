@@ -7,7 +7,7 @@ export default async function handler(req, res) {
     res.setHeader('Content-Type', 'application/json');
 
     const SDK_APP_ID = 20031795;
-    const SECRET_KEY = "17fd0c3daf9ec5b966c1946854683bd77bf2bf303dbc25d902464f2528dbffb";
+    const SECRET_KEY = "17fd0c3daf9ec5b96c1946854683bd77bf2bf303dbc25d902464f2528dbffb";
 
     const { userId } = req.query;
     if (!userId) return res.status(400).json({ error: "userId is required" });
