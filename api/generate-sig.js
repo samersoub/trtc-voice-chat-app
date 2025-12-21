@@ -1,26 +1,16 @@
 // api/generate-sig.js
-const crypto = require('crypto');
-const zlib = require('zlib');
+import crypto from 'crypto';
+import zlib from 'zlib';
 
-export default function handler(req, res) {
-    // إعدادات CORS للسماح بالاتصال
+export default async function handler(req, res) {
     res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
     res.setHeader('Content-Type', 'application/json');
 
-    if (req.method === 'OPTIONS') {
-        return res.status(200).end();
-    }
-
-    // المفاتيح الصحيحة مباشرة لضمان العمل
     const SDK_APP_ID = 20031795;
     const SECRET_KEY = "17fd0c3daf9ec5b966c1946854683bd77bf2bf303dbc25d902464f2528dbffb";
 
     const { userId } = req.query;
-
-    if (!userId) {
-        return res.status(400).json({ error: "userId is required" });
-    }
+    if (!userId) return res.status(400).json({ error: "userId is required" });
 
     try {
         const currTime = Math.floor(Date.now() / 1000);
@@ -45,6 +35,6 @@ export default function handler(req, res) {
 
         return res.status(200).json({ userSig, sdkAppID: SDK_APP_ID });
     } catch (e) {
-        return res.status(500).json({ error: "Server Error", details: e.message });
+        return res.status(500).json({ error: e.message });
     }
 }
