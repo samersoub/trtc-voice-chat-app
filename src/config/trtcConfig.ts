@@ -1,13 +1,11 @@
 // src/config/trtcConfig.ts
 
-// Get env vars with fallbacks for local dev (BUT PREFER ENV VARS)
-// Note: In Vite, use import.meta.env.VITE_...
-export const TRTC_SDK_APP_ID = Number(import.meta.env.VITE_TRTC_SDK_APP_ID) || 20031766;
+// 1. قم بتغيير الرقم إلى 20031795
+export const TRTC_SDK_APP_ID = Number(import.meta.env.VITE_TRTC_SDK_APP_ID) || 20031795;
 
 export const TRTC_TEST_ROOM_ID = Number(import.meta.env.VITE_TRTC_TEST_ROOM_ID) || 10086;
 
-// SECURITY WARNING: Never commit the secret key to public repos.
-// It is here as a fallback for local testing only.
-export const TRTC_SECRET_KEY = import.meta.env.VITE_TRTC_SECRET_KEY || "e76d25df660fd21c030faadeb1e619c5d3b2785e49f30f914b125c8a7a86bab2";
+// 2. قم باستبدال النص الطويل بالمفتاح السري الجديد
+export const TRTC_SECRET_KEY = import.meta.env.VITE_TRTC_SECRET_KEY || "17fd0c3daf9ec5b966c1946854683bd77bf2bf303dbc25d902464f2528dbffb";
 
 export const USERSIG_API_ENDPOINT = import.meta.env.VITE_USERSIG_API_ENDPOINT || "";
