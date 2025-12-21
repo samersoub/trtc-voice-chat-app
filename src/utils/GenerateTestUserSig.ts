@@ -2,8 +2,9 @@
 
 export async function genTestUserSig(userID: string): Promise<{ userSig: string; sdkAppID: number }> {
     try {
-        // نطلب التوقيع من ملف الـ API الذي أصلحناه سابقاً
-        const response = await fetch(`/api/generate-sig?userId=${userID}`);
+        // نطلب التوقيع من الـ API الذي نجح في المتصفح
+        // أضفنا timestamp (&t=...) لضمان جلب توقيع جديد كل مرة
+        const response = await fetch(`/api/generate-sig?userId=${userID}&t=${Date.now()}`);
 
         if (!response.ok) {
             throw new Error('Failed to fetch UserSig from API');
@@ -11,12 +12,17 @@ export async function genTestUserSig(userID: string): Promise<{ userSig: string;
 
         const data = await response.json();
 
+        if (!data.userSig) {
+            throw new Error('UserSig is missing in response');
+        }
+
         return {
             userSig: data.userSig,
-            sdkAppID: 20031795 // رقم تطبيقك الجديد الصحيح
+            sdkAppID: 20031795
         };
     } catch (error) {
-        console.error("TRTC Error:", error);
-        return { userSig: "", sdkAppID: 20031795 };
+        console.error("TRTC API Error:", error);
+        // في حال فشل الـ API، لا نرسل توقيعاً فارغاً بل نطلق خطأ
+        throw error;
     }
 }
