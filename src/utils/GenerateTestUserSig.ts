@@ -1,25 +1,24 @@
+// src/utils/GenerateTestUserSig.ts (أو المسار الموجود عندك)
+
 import { TRTC_SDK_APP_ID, TRTC_SECRET_KEY } from "@/config/trtcConfig";
 import LibGenerateTestUserSig from "./LibGenerateTestUserSig";
 
-/**
- * Generate a UserSig locally for testing purposes.
- * This simulates the backend logic.
- */
 export async function genTestUserSig(userID: string): Promise<{ userSig: string; sdkAppID: number }> {
-    if (TRTC_SECRET_KEY.includes("PLEASE_REPLACE") || TRTC_SECRET_KEY === "") {
-        console.error("TRTC Error: Using placeholder or empty Secret Key. Please update src/config/trtcConfig.ts");
-        return { userSig: "dummy_sig_replace_secret_key", sdkAppID: TRTC_SDK_APP_ID };
+    // التأكد من تحويل SDKAppID إلى رقم صحيح قبل استخدامه
+    const appId = Number(TRTC_SDK_APP_ID);
+    const secretKey = String(TRTC_SECRET_KEY).trim(); // إزالة أي مسافات مخفية
+
+    if (secretKey.includes("PLEASE_REPLACE") || secretKey === "") {
+        console.error("TRTC Error: Missing Secret Key");
+        return { userSig: "dummy", sdkAppID: appId };
     }
 
-    // Ensure SDKAppID is a valid number
-    if (typeof TRTC_SDK_APP_ID !== 'number' || TRTC_SDK_APP_ID <= 0) {
-        console.error("TRTC Error: Invalid SDKAppID. Check src/config/trtcConfig.ts");
-    }
-
-    const generator = new LibGenerateTestUserSig(TRTC_SDK_APP_ID, TRTC_SECRET_KEY, 604800);
+    // استخدام القيم المحققة والمحولة
+    const generator = new LibGenerateTestUserSig(appId, secretKey, 604800);
     const userSig = await generator.genTestUserSig(userID);
+
     return {
         userSig,
-        sdkAppID: TRTC_SDK_APP_ID,
+        sdkAppID: appId,
     };
 }
