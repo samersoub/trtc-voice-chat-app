@@ -1,24 +1,22 @@
-// src/utils/GenerateTestUserSig.ts (أو المسار الموجود عندك)
-
-import { TRTC_SDK_APP_ID, TRTC_SECRET_KEY } from "@/config/trtcConfig";
-import LibGenerateTestUserSig from "./LibGenerateTestUserSig";
+// src/utils/GenerateTestUserSig.ts
 
 export async function genTestUserSig(userID: string): Promise<{ userSig: string; sdkAppID: number }> {
-    // التأكد من تحويل SDKAppID إلى رقم صحيح قبل استخدامه
-    const appId = Number(TRTC_SDK_APP_ID);
-    const secretKey = String(TRTC_SECRET_KEY).trim(); // إزالة أي مسافات مخفية
+    try {
+        // نطلب التوقيع من ملف الـ API الذي أصلحناه سابقاً
+        const response = await fetch(`/api/generate-sig?userId=${userID}`);
 
-    if (secretKey.includes("PLEASE_REPLACE") || secretKey === "") {
-        console.error("TRTC Error: Missing Secret Key");
-        return { userSig: "dummy", sdkAppID: appId };
+        if (!response.ok) {
+            throw new Error('Failed to fetch UserSig from API');
+        }
+
+        const data = await response.json();
+
+        return {
+            userSig: data.userSig,
+            sdkAppID: 20031795 // رقم تطبيقك الجديد الصحيح
+        };
+    } catch (error) {
+        console.error("TRTC Error:", error);
+        return { userSig: "", sdkAppID: 20031795 };
     }
-
-    // استخدام القيم المحققة والمحولة
-    const generator = new LibGenerateTestUserSig(appId, secretKey, 604800);
-    const userSig = await generator.genTestUserSig(userID);
-
-    return {
-        userSig,
-        sdkAppID: appId,
-    };
 }
