@@ -8,6 +8,7 @@ import { genTestUserSig } from "./GenerateTestUserSig";
 export async function fetchUserSig(userId: string): Promise<string> {
   // 1. Try Local Generation (Dev/Test)
   if (TRTC_SECRET_KEY && TRTC_SECRET_KEY !== "" && !TRTC_SECRET_KEY.includes("PLEASE_REPLACE")) {
+    console.log(`TRTC: Generating local test UserSig for userId: "${userId}"`);
     const sig = await genTestUserSig(userId); // Now async
     return sig.userSig;
   }

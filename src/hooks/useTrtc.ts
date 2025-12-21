@@ -19,11 +19,19 @@ export function useTrtc() {
   const [remoteStreams, setRemoteStreams] = React.useState<RemoteStreamItem[]>([]);
   const [isAudioEnabled, setIsAudioEnabled] = React.useState(true);
 
+  const joiningRef = React.useRef<boolean>(false);
+
   const join = React.useCallback(async (userId?: string, roomId?: string) => {
     if (joinedRef.current) {
       console.log("TRTC: Already joined; skipping.");
       return;
     }
+    if (joiningRef.current) {
+      console.warn("TRTC: Join already in progress; skipping duplicate call.");
+      return;
+    }
+
+    joiningRef.current = true;
 
     const currentUserID =
       userId ||
@@ -42,6 +50,13 @@ export function useTrtc() {
       // Show endpoint being used for fetching UserSig
       showSuccess(`Requesting UserSig from: ${USERSIG_API_ENDPOINT}`);
       const userSig = await fetchUserSig(currentUserID);
+
+      // Double check if we were cancelled or joined in the meantime (unlikely but safe)
+      if (joinedRef.current) {
+        joiningRef.current = false;
+        return;
+      }
+
       showSuccess("UserSig received");
 
       const client = TRTC.createClient({
@@ -122,7 +137,7 @@ export function useTrtc() {
         setRemoteStreams((prev) => prev.filter((x) => x.id !== id));
       });
 
-      const targetRoomId = roomId || TRTC_TEST_ROOM_ID;
+      const targetRoomId = roomId || String(TRTC_TEST_ROOM_ID);
 
       console.log("TRTC: Attempting to join room:", targetRoomId, "with user:", currentUserID);
 
@@ -156,7 +171,15 @@ export function useTrtc() {
       showSuccess("Published local audio/video");
     } catch (err: any) {
       console.error("TRTC: Join/Publish failed", err);
+      // Reset logic so user can try again
+      joiningRef.current = false;
+      joinedRef.current = false;
+      clientRef.current = null;
       showError(err?.message || "Failed to join/publish TRTC");
+    } finally {
+      // Ensure we clear the lock, but only if we didn't succeed (if success, joinedRef handles it)
+      // Actually, joiningRef is just "in progress". Once done, it's false.
+      joiningRef.current = false;
     }
   }, []);
 
@@ -178,14 +201,17 @@ export function useTrtc() {
           } catch { }
           localStreamRef.current = null;
         }
-        void c.leave?.();
-      } catch { }
+        await c.leave?.();
+      } catch (e) {
+        console.warn("TRTC: Error during leave cleanup", e);
+      }
       clientRef.current = null;
     }
 
     // Remove participant from database
     if (roomId && userId) {
-      await RoomParticipantService.leaveRoom(roomId, userId);
+      // Don't await this to speed up UI feeling
+      RoomParticipantService.leaveRoom(roomId, userId).catch(err => console.error("DB leave room failed", err));
     }
 
     joinedRef.current = false;
