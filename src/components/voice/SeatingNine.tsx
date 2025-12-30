@@ -41,7 +41,6 @@ const SeatingNine: React.FC<SeatingNineProps> = ({
   onClickGuest,
   showFrame = true,
 }) => {
-  // Ensure exactly 8 guest slots
   const paddedGuests: GuestSeat[] = Array.from({ length: 8 }, (_, i) => {
     const found = guests.find((g) => g.index === i + 1);
     return (
@@ -62,10 +61,10 @@ const SeatingNine: React.FC<SeatingNineProps> = ({
       <div
         className={cn(
           "relative flex flex-col items-center justify-center",
-          "rounded-2xl p-4 bg-white/10 border border-yellow-500/30 shadow-lg backdrop-blur"
+          "rounded-2xl p-4 bg-gradient-to-br from-yellow-500/10 to-yellow-700/20 border border-yellow-500/50 shadow-xl backdrop-blur-lg"
         )}
       >
-        <div className="cursor-pointer" onClick={onClickHost}>
+        <div className="cursor-pointer hover:scale-105 transition-transform" onClick={onClickHost}>
           <Seat
             name={hostName}
             imageUrl={hostAvatarUrl}
@@ -73,38 +72,45 @@ const SeatingNine: React.FC<SeatingNineProps> = ({
             muted={false}
             locked={false}
             showFrame={showFrame}
-            avatarClassName={"h-10 w-10 sm:h-10 sm:w-10"}
+            avatarClassName={"h-12 w-12 sm:h-14 sm:w-14"}
           />
         </div>
 
         {/* Host info badges under seat */}
         <div className="mt-2 flex items-center gap-2">
           {flagEmoji && (
-            <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-yellow-500/20 border border-yellow-500/40 text-lg">
+            <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-yellow-500/30 border border-yellow-500/50 text-lg">
               {flagEmoji}
             </span>
           )}
-          <span className="text-xs px-2 py-1 rounded-full bg-yellow-600/20 border border-yellow-600/30 text-yellow-100">
+          <span className="text-sm px-3 py-1 rounded-full bg-yellow-600/30 border border-yellow-600/50 text-yellow-100">
             المضيف
           </span>
         </div>
       </div>
 
-      {/* 8 guest seats: 2 rows of 4 */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-6">
-        {paddedGuests.map((seat) => {
+      {/* Circular guest seats */}
+      <div className="relative w-[320px] h-[320px]">
+        {paddedGuests.map((seat, i) => {
+          const angle = (i / paddedGuests.length) * 360;
           const empty = !seat.userId;
           return (
-            <div key={seat.index} className="flex flex-col items-center">
+            <div
+              key={seat.index}
+              className="absolute transition-transform hover:scale-110"
+              style={{
+                transform: `rotate(${angle}deg) translate(150px) rotate(-${angle}deg)`,
+              }}
+            >
               {empty ? (
                 <button
                   type="button"
                   onClick={() => onClickGuest?.(seat.index, seat)}
-                  className="relative flex items-center justify-center h-12 w-12 sm:h-12 sm:w-12 rounded-full bg-white/10 border border-white/20 hover:bg-white/20 transition-colors backdrop-blur"
+                  className="relative flex items-center justify-center h-16 w-16 sm:h-18 sm:w-18 rounded-full bg-gradient-to-br from-white/10 to-white/20 border border-white/30 hover:bg-white/30 transition-colors backdrop-blur-md shadow-md"
                   aria-label={`Take seat ${seat.index}`}
                 >
-                  <Plus className="h-4 w-4 text-white/85" />
-                  <span className="absolute -bottom-4 text-[10px] text-white/80"> {seat.index} </span>
+                  <Plus className="h-6 w-6 text-white/85" />
+                  <span className="absolute -bottom-5 text-xs text-white/80"> {seat.index} </span>
                 </button>
               ) : (
                 <button
@@ -113,8 +119,14 @@ const SeatingNine: React.FC<SeatingNineProps> = ({
                   className="cursor-pointer"
                   aria-label={`Seat ${seat.index} • ${seat.name ?? "Guest"}`}
                 >
-                  <Seat name={seat.name || "Guest"} speaking={!!seat.speaking} muted={!!seat.muted} locked={!!seat.locked} showFrame={showFrame} />
-                  <div className="mt-1 text-[10px] text-white/75 text-center">{seat.index}</div>
+                  <Seat
+                    name={seat.name || "Guest"}
+                    speaking={!!seat.speaking}
+                    muted={!!seat.muted}
+                    locked={!!seat.locked}
+                    showFrame={showFrame}
+                  />
+                  <div className="mt-1 text-xs text-white/75 text-center">{seat.index}</div>
                 </button>
               )}
             </div>

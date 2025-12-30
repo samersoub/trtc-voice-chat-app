@@ -76,12 +76,55 @@ const VoiceRoom: React.FC = () => {
     WebkitBackdropFilter: 'blur(15px)', // دعم Safari
   };
 
+  // Add animation effect when a user joins the room
+  const [joinAnimation, setJoinAnimation] = useState(false);
+
+  // Trigger animation when the component mounts
+  React.useEffect(() => {
+    setJoinAnimation(true);
+  }, []);
+
+  // Add a CSS class for the animation
+  const animationClass = joinAnimation ? "animate-fade-in" : "";
+
+  // Add state for chat messages
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
+
+  // Function to handle sending a new message
+  const handleSendMessage = (text: string) => {
+    if (!text.trim()) return;
+
+    const newMessage: ChatMessage = {
+      id: Date.now(),
+      user: "You", // Replace with actual user name
+      text,
+      color: "text-blue-400",
+    };
+
+    // Update local state
+    setChatMessages((prevMessages) => [...prevMessages, newMessage]);
+
+    // TODO: Broadcast the message to other users via WebSocket or API
+  };
+
   return (
     // OUTER WRAPPER: Dark background for desktop - centers mobile view
-    <div className="min-h-screen w-full bg-gray-950 flex items-center justify-center p-0">
+    <div
+      className="min-h-screen w-full bg-gray-950 flex items-center justify-center p-0"
+      style={{
+        maxWidth: "100vw", // Ensure it fits within the viewport width
+        maxHeight: "100vh", // Ensure it fits within the viewport height
+      }}
+    >
       
       {/* MOBILE CONTAINER: Fixed width wrapper (max-w-[400px]) */}
-      <div className="w-full max-w-[400px] mx-auto shadow-2xl h-screen">
+      <div
+        className="w-full max-w-[400px] mx-auto shadow-2xl h-screen"
+        style={{
+          height: "calc(100vh - 20px)", // Add padding for better spacing
+          maxWidth: "90%", // Adjust width for smaller screens
+        }}
+      >
         
         {/* MOBILE UI CONTENT - Everything inside fixed-width container */}
         <div className="relative h-full w-full overflow-hidden bg-gradient-to-b from-[#1a1a2e] via-[#16213e] to-[#0f0f1e]">
@@ -173,6 +216,12 @@ const VoiceRoom: React.FC = () => {
                   type="text"
                   placeholder="Let's talk"
                   className="flex-1 bg-transparent text-xs text-white placeholder-gray-400 outline-none min-w-0"
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      handleSendMessage(e.currentTarget.value);
+                      e.currentTarget.value = ""; // Clear input field
+                    }
+                  }}
                 />
                 <button className="hover:opacity-80 transition-opacity shrink-0" aria-label="Add emoji">
                   <Smile className="w-3.5 h-3.5 text-gray-400" />
@@ -210,6 +259,23 @@ const VoiceRoom: React.FC = () => {
           
         </div>
       </div>
+
+      {/* Add media queries for better scaling */}
+      <style>
+        {`
+          @media (min-width: 768px) {
+            .voice-room-container {
+              max-width: 600px; /* Larger width for tablets */
+            }
+          }
+
+          @media (min-width: 1024px) {
+            .voice-room-container {
+              max-width: 800px; /* Larger width for desktops */
+            }
+          }
+        `}
+      </style>
     </div>
   );
 };
