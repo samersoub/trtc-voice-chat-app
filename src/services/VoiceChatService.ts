@@ -1,6 +1,6 @@
 import { ChatRoom } from "@/models/ChatRoom";
 import { supabase, isSupabaseReady, safe } from "@/services/db/supabaseClient";
-import { TRTC } from "trtc-js-sdk";
+import CryptoJS from "crypto-js";
 
 const KEY = "voice:rooms";
 
@@ -82,7 +82,7 @@ function generateUserSig(userId: string): string {
   };
 
   const sigString = JSON.stringify(sigData);
-  const hash = require("crypto").createHmac("sha256", SecretKey).update(sigString).digest("hex");
+  const hash = CryptoJS.HmacSHA256(sigString, SecretKey).toString(CryptoJS.enc.Hex);
 
   return hash;
 }
