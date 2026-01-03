@@ -1,5 +1,6 @@
 import { ChatRoom } from "@/models/ChatRoom";
 import { supabase, isSupabaseReady, safe } from "@/services/db/supabaseClient";
+import { TRTC } from "trtc-js-sdk";
 
 const KEY = "voice:rooms";
 
@@ -60,6 +61,30 @@ function syncUpsertRoom(room: ChatRoom) {
 function syncDeleteRoom(id: string) {
   if (!isSupabaseReady || !supabase) return;
   void safe(supabase.from("voice_rooms").delete().eq("id", id));
+}
+
+const SDKAppID = 20031795;
+const SecretKey = process.env.TRTC_SECRET_KEY;
+
+function generateUserSig(userId: string): string {
+  if (!SecretKey) {
+    throw new Error("TRTC SecretKey is not defined in environment variables.");
+  }
+
+  const expireTime = 604800; // 7 days
+  const currentTime = Math.floor(Date.now() / 1000);
+
+  const sigData = {
+    userId,
+    expireTime,
+    currentTime,
+    SDKAppID,
+  };
+
+  const sigString = JSON.stringify(sigData);
+  const hash = require("crypto").createHmac("sha256", SecretKey).update(sigString).digest("hex");
+
+  return hash;
 }
 
 export const VoiceChatService = {

@@ -563,6 +563,30 @@ export const ProfileService = {
       return await uploadLocally();
     }
   },
+
+  async fetchProfilesByUserIds(userIds: string[]): Promise<Profile[]> {
+    if (!isSupabaseReady || !supabase) {
+      console.warn("Supabase is not ready. Returning empty profiles.");
+      return [];
+    }
+
+    try {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("*")
+        .in("id", userIds);
+
+      if (error) {
+        console.error("Failed to fetch profiles:", error);
+        return [];
+      }
+
+      return data as Profile[];
+    } catch (error) {
+      console.error("Unexpected error while fetching profiles:", error);
+      return [];
+    }
+  },
 };
 
 export default ProfileService;

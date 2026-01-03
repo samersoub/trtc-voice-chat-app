@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { collection, query, where, onSnapshot, DocumentData, Unsubscribe } from "firebase/firestore";
 import { db } from "@/firebase";
+import { fetchProfilesByUserIds } from "@/services/ProfileService";
 
 export interface RoomUser {
   id: string;
@@ -13,11 +14,13 @@ export interface RoomUser {
 
 export function useRoomUsers(roomId: string) {
   const [users, setUsers] = useState<RoomUser[]>([]);
+  const [profiles, setProfiles] = useState<DocumentData[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
   useEffect(() => {
     if (!roomId) {
       setUsers([]);
+      setProfiles([]);
       setIsLoading(false);
       return;
     }
@@ -26,8 +29,8 @@ export function useRoomUsers(roomId: string) {
     const q = query(collection(db, "users"), where("roomId", "==", roomId));
     const unsubscribe: Unsubscribe = onSnapshot(
       q,
-      (snapshot) => {
-        const next = snapshot.docs.map((d) => {
+      async (snapshot) => {
+        const nextUsers = snapshot.docs.map((d) => {
           const data = d.data() as DocumentData;
           const joinedRaw = (data.joinedAt as string) ?? "";
           const joinedAt = joinedRaw ? new Date(joinedRaw) : new Date(0);
@@ -39,12 +42,25 @@ export function useRoomUsers(roomId: string) {
           };
           return user;
         });
-        setUsers(next);
+
+        setUsers(nextUsers);
+
+        // Fetch profiles manually
+        const userIds = nextUsers.map((user) => user.id);
+        try {
+          const fetchedProfiles = await fetchProfilesByUserIds(userIds);
+          setProfiles(fetchedProfiles);
+        } catch (error) {
+          console.error("Failed to fetch profiles:", error);
+          setProfiles([]);
+        }
+
         setIsLoading(false);
       },
-      (err) => {
-        console.error("useRoomUsers:onSnapshot error:", err);
+      (error) => {
+        console.error("Failed to fetch users:", error);
         setUsers([]);
+        setProfiles([]);
         setIsLoading(false);
       }
     );
@@ -59,5 +75,5 @@ export function useRoomUsers(roomId: string) {
     };
   }, [roomId]);
 
-  return { users, isLoading };
+  return { users, profiles, isLoading };
 }
