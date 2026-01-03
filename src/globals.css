@@ -1,0 +1,931 @@
+/* Ensure input bar is visually contained between seats and bottom buttons */
+.voicechat-input-bar {
+  position: fixed;
+  /* place input above control bar using a shared variable */
+  bottom: calc(env(safe-area-inset-bottom) + var(--vc-input-bottom, 80px));
+  left: 50%;
+  transform: translateX(-50%);
+  width: clamp(280px, 90%, 500px);
+  max-width: 500px;
+  /* limit height so it doesn't cover the seats area; responsive cap */
+  max-height: min(120px, calc(100vh - (var(--vc-seats-bottom, 240px) + var(--vc-input-bottom, 80px) + 40px)));
+  z-index: 100;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem;
+  overflow-y: auto;
+}
+
+/* Input element specific styling to ensure it stays above buttons and doesn't overlap seats */
+.vc-text-input {
+  /* Keep the input inside the fixed input bar; do not use fixed here */
+  position: relative;
+  left: 0;
+  transform: none;
+  width: 100%;
+  box-sizing: border-box;
+  /* enforce visual limits */
+  max-height: 120px;
+  overflow-y: auto;
+  padding: 0.5rem 0.75rem;
+}
+
+/* Responsive tweaks: narrow screens get slightly different spacing */
+@media (max-width: 420px) {
+  .voicechat-input-bar {
+    bottom: calc(env(safe-area-inset-bottom) + 72px);
+    width: calc(100% - 2rem);
+    max-width: calc(100% - 2rem);
+    padding: 0.4rem;
+  }
+  .vc-text-input {
+    max-height: 100px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .voicechat-input-bar {
+    bottom: calc(env(safe-area-inset-bottom) + 96px);
+    width: min(720px, 90%);
+  }
+}
+
+/* Ensure inner wrapper takes full width and input scrolls if needed */
+.voicechat-input-bar .mx-0 {
+  width: 100%;
+}
+
+.voicechat-input-bar input,
+.voicechat-input-bar .input {
+  width: 100%;
+  max-height: 120px;
+  overflow-y: auto;
+}
+/* Room background override */
+.room {
+  background-color: #800000 !important;
+}
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Fix: Mobile-first global type scale and media fluidity */
+@layer base {
+  html {
+    /* Fix: Use clamp for scalable base font-size across viewport sizes */
+    font-size: clamp(15px, 1rem + 0.25vw, 18px);
+    /* Fix: Better text rendering across devices */
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* Fix: Responsive media defaults (images, videos, iframes) */
+  img,
+  svg,
+  video,
+  canvas,
+  iframe {
+    max-width: 100%;
+    height: auto;
+    display: block; /* Fix: Avoid inline gaps and ensure block flow */
+  }
+
+  /* Fix: Tables should be fluid without forcing horizontal scroll at page level */
+  table {
+    width: 100%;
+    table-layout: auto;
+  }
+  th,
+  td {
+    word-break: break-word; /* Fix: Prevent overflow from long content */
+  }
+
+  /* Fix: Headings scale with viewport using clamp; readable line-height */
+  h1 {
+    font-size: clamp(1.5rem, 1.25rem + 2vw, 2.5rem);
+    line-height: 1.2;
+  }
+  h2 {
+    font-size: clamp(1.375rem, 1.1rem + 1.5vw, 2rem);
+    line-height: 1.25;
+  }
+  h3 {
+    font-size: clamp(1.25rem, 1.05rem + 1vw, 1.75rem);
+    line-height: 1.3;
+  }
+  h4 {
+    font-size: clamp(1.125rem, 1rem + 0.75vw, 1.5rem);
+    line-height: 1.35;
+  }
+  p,
+  small,
+  li {
+    font-size: clamp(0.95rem, 0.9rem + 0.25vw, 1.1rem);
+    line-height: 1.55;
+  }
+
+  /* Fix: Use border-box globally to make fluid width calculations predictable */
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+}
+
+/* Keep existing CSS variables and theme tokens */
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+
+    --primary: 222.2 47.4% 11.2%;
+    --primary-foreground: 210 40% 98%;
+
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 222.2 47.4% 11.2%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 222.2 84% 4.9%;
+
+    --radius: 0.5rem;
+
+    --sidebar-background: 0 0% 98%;
+
+    --sidebar-foreground: 240 5.3% 26.1%;
+
+    --sidebar-primary: 240 5.9% 10%;
+
+    --sidebar-primary-foreground: 0 0% 98%;
+
+    --sidebar-accent: 240 4.8% 95.9%;
+
+    --sidebar-accent-foreground: 240 5.9% 10%;
+
+    --sidebar-border: 220 13% 91%;
+
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+
+  .dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+
+    --primary: 210 40% 98%;
+    --primary-foreground: 222.2 47.4% 11.2%;
+
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 212.7 26.8% 83.9%;
+    --sidebar-background: 240 5.9% 10%;
+    --sidebar-foreground: 240 4.8% 95.9%;
+    --sidebar-primary: 224.3 76.3% 48%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 240 3.7% 15.9%;
+    --sidebar-accent-foreground: 240 4.8% 95.9%;
+    --sidebar-border: 240 3.7% 15.9%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+}
+
+/* Keep Tailwind base application and add small global layout safety */
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    /* Fix: Fluid background and text color via design tokens */
+    @apply bg-background text-foreground;
+    /* Fix: Prevent accidental global horizontal overflow while allowing component-level scrolls */
+    overflow-x: hidden;
+    min-height: 100svh; /* Fix: Use small viewport height unit for mobile browser UI */
+  }
+
+  /* Fix: Root container fluid padding using clamp, avoids cramped mobile or huge desktop spacing */
+  #root {
+    padding-left: clamp(0.75rem, 2vw, 2rem);
+    padding-right: clamp(0.75rem, 2vw, 2rem);
+    padding-top: clamp(0.75rem, 2vw, 2rem);
+    padding-bottom: clamp(0.75rem, 2vw, 2rem);
+    width: 100%;
+  }
+}
+
+/* Voice chat specific utilities */
+@layer components {
+  .vc-chat-overlay-bottom {
+    bottom: calc(env(safe-area-inset-bottom) + 180px);
+  }
+  /* Variables controlling chat bounds (can be tuned) */
+  :root {
+    --vc-seats-bottom: 240px; /* distance from top to lowest seat row */
+    --vc-input-bottom: 90px; /* distance from bottom occupied by input/control bar */
+  }
+
+  /* Position chat overlay with strict top/bottom bounds so it never overlaps seats or input */
+  .vc-chat-overlay-bounds {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    top: calc(env(safe-area-inset-top) + var(--vc-seats-bottom));
+    bottom: calc(env(safe-area-inset-bottom) + var(--vc-input-bottom));
+    z-index: 50;
+    display: flex;
+    align-items: stretch;
+    justify-content: center;
+    pointer-events: none;
+  }
+  /* Subtle page background gradient used on voice chat page */
+  .vc-bg-gradient {
+    background: linear-gradient(180deg, #f7fafc 0%, #ffffff 100%);
+    transition: background 300ms ease, color 300ms ease;
+  }
+  /* Dark theme variant for the voice chat background */
+  .dark-theme .vc-bg-gradient {
+    /* Soft, comfortable solid dark background for better contrast/readability */
+    background: #1e1e1e;
+  }
+  /* Light-theme contrast overrides scoped to the header controls for maintainability */
+  .light-theme .voice-controls-header .text-white {
+    color: #111827 !important; /* Tailwind gray-900 */
+  }
+  .light-theme .voice-controls-header .text-white\/80 {
+    color: rgba(17,24,39,0.8) !important;
+  }
+  .light-theme .voice-controls-header .bg-white\/15 {
+    background-color: rgba(0,0,0,0.04) !important; /* subtle light button bg */
+  }
+  .light-theme .voice-controls-header .border-white\/30 {
+    border-color: rgba(0,0,0,0.06) !important;
+  }
+  .light-theme .voice-controls-header .hover\:bg-white\/25:hover {
+    background-color: rgba(0,0,0,0.06) !important;
+  }
+  /* Apply a smooth transition for theme-related properties on top-level container */
+  .light-theme, .dark-theme {
+    transition: background 300ms ease, color 300ms ease;
+  }
+  /* Utility to visually hide native scrollbars while preserving scrolling */
+  .hide-scrollbar {
+    -ms-overflow-style: none; /* IE and Edge */
+  }
+  .hide-scrollbar::-webkit-scrollbar {
+    display: none; /* Chrome, Safari, Opera */
+  }
+  
+  /* Scrollbar hide utility for smooth horizontal scrolling */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+  
+  .vc-input-bottom-safe {
+    bottom: calc(env(safe-area-inset-bottom) + 76px);
+  }
+
+  /* Custom Animations */
+  @keyframes heartBeat {
+    0%, 100% { transform: scale(1); }
+    10%, 30% { transform: scale(0.9); }
+    20%, 40% { transform: scale(1.1); }
+    50% { transform: scale(1.15); }
+    60% { transform: scale(1.05); }
+  }
+
+  @keyframes slideInRight {
+    from {
+      transform: translateX(100%);
+      opacity: 0;
+    }
+    to {
+      transform: translateX(0);
+      opacity: 1;
+    }
+  }
+
+  @keyframes slideOutRight {
+    from {
+      transform: translateX(0);
+      opacity: 1;
+    }
+    to {
+      transform: translateX(100%);
+      opacity: 0;
+    }
+  }
+
+  @keyframes fadeInUp {
+    from {
+      transform: translateY(20px);
+      opacity: 0;
+    }
+    to {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  }
+
+  @keyframes fadeOut {
+    from {
+      opacity: 1;
+    }
+    to {
+      opacity: 0;
+    }
+  }
+
+  @keyframes scaleIn {
+    from {
+      transform: scale(0.8);
+      opacity: 0;
+    }
+    to {
+      transform: scale(1);
+      opacity: 1;
+    }
+  }
+
+  @keyframes ripple {
+    0% {
+      box-shadow: 0 0 0 0 currentColor,
+                  0 0 0 0 currentColor;
+    }
+    100% {
+      box-shadow: 0 0 0 8px transparent,
+                  0 0 0 16px transparent;
+    }
+  }
+
+  @keyframes shimmer {
+    0% {
+      background-position: -200% 0;
+    }
+    100% {
+      background-position: 200% 0;
+    }
+  }
+
+  @keyframes bounce-subtle {
+    0%, 100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-4px);
+    }
+  }
+
+@keyframes rotate {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Enhanced voice room animations */
+@keyframes pulse-ring {
+  0% {
+    transform: scale(1);
+    opacity: 0.8;
+  }
+  50% {
+    transform: scale(1.15);
+    opacity: 0.4;
+  }
+  100% {
+    transform: scale(1.3);
+    opacity: 0;
+  }
+}
+
+@keyframes pulse-ring-delayed {
+  0% {
+    transform: scale(1);
+    opacity: 0.6;
+  }
+  50% {
+    transform: scale(1.2);
+    opacity: 0.3;
+  }
+  100% {
+    transform: scale(1.4);
+    opacity: 0;
+  }
+}
+
+@keyframes particles-float {
+  0%, 100% {
+    transform: translateY(0) translateX(0);
+    opacity: 0.3;
+  }
+  25% {
+    transform: translateY(-20px) translateX(10px);
+    opacity: 0.6;
+  }
+  50% {
+    transform: translateY(-40px) translateX(-5px);
+    opacity: 0.4;
+  }
+  75% {
+    transform: translateY(-60px) translateX(15px);
+    opacity: 0.2;
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-pulse-ring {
+  animation: pulse-ring 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+.animate-pulse-ring-delayed {
+  animation: pulse-ring-delayed 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+.animate-particles-float {
+  animation: particles-float 8s ease-in-out infinite;
+}
+
+.animate-fade-in {
+  animation: fade-in 0.3s ease-out;
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up 0.5s ease-out;
+}
+
+.animation-delay-300 {
+  animation-delay: 300ms;
+}  /* Animation utility classes */
+  .animate-heart-beat {
+    animation: heartBeat 0.6s ease-in-out;
+  }
+
+  .animate-slide-in-right {
+    animation: slideInRight 0.3s ease-out;
+  }
+
+  .animate-slide-out-right {
+    animation: slideOutRight 0.3s ease-in;
+  }
+
+  .animate-fade-in-up {
+    animation: fadeInUp 0.4s ease-out;
+  }
+
+  .animate-fade-out {
+    animation: fadeOut 0.3s ease-out;
+  }
+
+  .animate-scale-in {
+    animation: scaleIn 0.2s ease-out;
+  }
+
+  .animate-ripple {
+    animation: ripple 1.5s ease-out infinite;
+  }
+
+  .animate-shimmer {
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      rgba(255, 255, 255, 0.1) 50%,
+      transparent 100%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 2s linear infinite;
+  }
+
+  .animate-bounce-subtle {
+    animation: bounce-subtle 2s ease-in-out infinite;
+  }
+
+  .animate-spin-slow {
+    animation: rotate 3s linear infinite;
+  }
+
+  /* Staggered fade-in for lists */
+  .stagger-item {
+    opacity: 0;
+    animation: fadeInUp 0.5s ease-out forwards;
+  }
+
+  .stagger-item:nth-child(1) { animation-delay: 0.05s; }
+  .stagger-item:nth-child(2) { animation-delay: 0.1s; }
+  .stagger-item:nth-child(3) { animation-delay: 0.15s; }
+  .stagger-item:nth-child(4) { animation-delay: 0.2s; }
+  .stagger-item:nth-child(5) { animation-delay: 0.25s; }
+  .stagger-item:nth-child(6) { animation-delay: 0.3s; }
+  .stagger-item:nth-child(7) { animation-delay: 0.35s; }
+  .stagger-item:nth-child(8) { animation-delay: 0.4s; }
+  .stagger-item:nth-child(9) { animation-delay: 0.45s; }
+
+  /* Button press effect */
+  .btn-press {
+    transition: transform 0.1s ease, box-shadow 0.1s ease;
+  }
+
+  .btn-press:active {
+    transform: scale(0.95);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+
+  /* Smooth transitions */
+  .transition-smooth {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .transition-bounce {
+    transition: all 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  }
+
+  /* Touch-friendly utilities */
+  .touch-manipulation {
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* Responsive text sizes */
+  .text-responsive-xs {
+    font-size: clamp(0.625rem, 0.5rem + 0.5vw, 0.75rem);
+  }
+
+  .text-responsive-sm {
+    font-size: clamp(0.75rem, 0.625rem + 0.5vw, 0.875rem);
+  }
+
+  .text-responsive-base {
+    font-size: clamp(0.875rem, 0.75rem + 0.5vw, 1rem);
+  }
+
+  .text-responsive-lg {
+    font-size: clamp(1rem, 0.875rem + 0.5vw, 1.125rem);
+  }
+
+  .text-responsive-xl {
+    font-size: clamp(1.125rem, 1rem + 0.5vw, 1.25rem);
+  }
+
+  /* Safe area padding for mobile */
+  .safe-area-bottom {
+    padding-bottom: max(1rem, env(safe-area-inset-bottom));
+  }
+
+  .safe-area-top {
+    padding-top: max(1rem, env(safe-area-inset-top));
+  }
+
+  /* Responsive grid gaps */
+  @media (max-width: 640px) {
+    .grid-responsive {
+      gap: 0.75rem;
+    }
+  }
+
+  @media (min-width: 641px) and (max-width: 1024px) {
+    .grid-responsive {
+      gap: 1rem;
+    }
+  }
+
+  @media (min-width: 1025px) {
+    .grid-responsive {
+      gap: 1.5rem;
+    }
+  }
+
+  /* Hide scrollbar utility */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Animation delay utilities */
+  .animate-delay-0 {
+    animation-delay: 0ms;
+  }
+
+  .animate-delay-150 {
+    animation-delay: 150ms;
+  }
+
+  .animate-delay-300 {
+    animation-delay: 300ms;
+  }
+
+  .animate-delay-600 {
+    animation-delay: 0.6s;
+  }
+
+  .animate-delay-800 {
+    animation-delay: 0.8s;
+  }
+
+  .animate-delay-1000 {
+    animation-delay: 1s;
+  }
+
+  .animate-delay-1200 {
+    animation-delay: 1.2s;
+  }
+
+  .animate-delay-2000 {
+    animation-delay: 2s;
+  }
+
+  .animate-delay-4000 {
+    animation-delay: 4s;
+  }
+
+  /* Safe area padding for mobile devices */
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  /* ===== Advanced UI/UX Animations ===== */
+  
+  /* Fade In Animation */
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  .animate-fade-in {
+    animation: fadeIn 0.6s ease-out forwards;
+  }
+
+  /* Slide Up Animation */
+  @keyframes slideUp {
+    from {
+      opacity: 0;
+      transform: translateY(30px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .animate-slide-up {
+    animation: slideUp 0.5s ease-out forwards;
+  }
+
+  /* Slide Down Animation */
+  @keyframes slideDown {
+    from {
+      opacity: 0;
+      transform: translateY(-20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .animate-slide-down {
+    animation: slideDown 0.4s ease-out forwards;
+  }
+
+  /* Gradient Animation */
+  @keyframes gradient {
+    0%, 100% {
+      background-position: 0% 50%;
+    }
+    50% {
+      background-position: 100% 50%;
+    }
+  }
+
+  .animate-gradient {
+    background-size: 200% 200%;
+    animation: gradient 3s ease infinite;
+  }
+
+  /* Pulse Subtle */
+  @keyframes pulseSubtle {
+    0%, 100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.8;
+    }
+  }
+
+  .animate-pulse-subtle {
+    animation: pulseSubtle 2s ease-in-out infinite;
+  }
+
+  /* Bounce Subtle */
+  @keyframes bounceSubtle {
+    0%, 100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-5px);
+    }
+  }
+
+  .animate-bounce-subtle {
+    animation: bounceSubtle 2s ease-in-out infinite;
+  }
+
+  /* Glow Effect */
+  @keyframes glow {
+    0%, 100% {
+      box-shadow: 0 0 20px rgba(168, 85, 247, 0.4);
+    }
+    50% {
+      box-shadow: 0 0 30px rgba(168, 85, 247, 0.8);
+    }
+  }
+
+  .animate-glow {
+    animation: glow 2s ease-in-out infinite;
+  }
+
+  /* Scale Animation */
+  @keyframes scaleIn {
+    from {
+      opacity: 0;
+      transform: scale(0.9);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  .animate-scale-in {
+    animation: scaleIn 0.3s ease-out forwards;
+  }
+
+  /* Shimmer Effect */
+  @keyframes shimmer {
+    0% {
+      background-position: -1000px 0;
+    }
+    100% {
+      background-position: 1000px 0;
+    }
+  }
+
+  .animate-shimmer {
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(255, 255, 255, 0.1),
+      transparent
+    );
+    background-size: 1000px 100%;
+    animation: shimmer 2s infinite;
+  }
+
+  /* Rotate Animation */
+  @keyframes rotate {
+    from {
+      transform: rotate(0deg);
+    }
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  .animate-rotate {
+    animation: rotate 2s linear infinite;
+  }
+
+  /* Float Animation */
+  @keyframes float {
+    0%, 100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-10px);
+    }
+  }
+
+  .animate-float {
+    animation: float 3s ease-in-out infinite;
+  }
+
+  /* Backdrop Blur Enhancement */
+  .backdrop-blur-enhanced {
+    backdrop-filter: blur(16px) saturate(180%);
+    -webkit-backdrop-filter: blur(16px) saturate(180%);
+  }
+
+  /* Glass Morphism Effect */
+  .glass-effect {
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  /* Hover Lift Effect */
+  .hover-lift {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+  }
+
+  .hover-lift:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+  }
+
+  /* Text Gradient */
+  .text-gradient {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .text-gradient-purple {
+    background: linear-gradient(135deg, #a855f7 0%, #ec4899 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* Smooth Transitions */
+  .transition-smooth {
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  /* Card Hover Effect */
+  .card-hover {
+    transition: all 0.3s ease;
+  }
+
+  .card-hover:hover {
+    transform: translateY(-8px) scale(1.02);
+    box-shadow: 0 20px 40px rgba(168, 85, 247, 0.3);
+  }
+}
